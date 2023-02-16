@@ -14,23 +14,11 @@ class Token {
 }
 
 export default class Lexer {
-  /**@desc `sourceCode` supplied to Lexer*/
-  public sourceCode: string;
-  /**@desc `sourceCode` character array*/
-  public src: string[];
-
-  public tokens: Token[];
-
-  constructor(sourceCode: string) {
-    this.sourceCode = sourceCode;
-    this.tokens = [];
-    this.src = sourceCode.split("");
-  }
-
   /**@desc parses `sourceCode` into Token[]*/
-  public tokenize(): Token[] {
-    // SHORTHANDS:
-    const src = this.src;
+  public tokenize(sourceCode: string): Token[] {
+    /**@desc `sourceCode` character array*/
+    const src = sourceCode.split("");
+    const tokens: Token[] = [];
 
     while (src.length > 0) {
       const char = src[0];
@@ -45,7 +33,7 @@ export default class Lexer {
             // BUILD `intStr`
             while (src.length > 0 && this.isInt(src[0])) intStr += src.shift();
 
-            this.tokens.push(new Token(TokenType.NUMBER, intStr));
+            tokens.push(new Token(TokenType.NUMBER, intStr));
 
             // SKIPABLE
           } else if (this.isWhitespace(char)) src.shift(); // skip whitespace character
@@ -55,9 +43,9 @@ export default class Lexer {
       }
     }
 
-    this.tokens.push(new Token(TokenType.EOF, "EndOfFile"));
+    tokens.push(new Token(TokenType.EOF, "EndOfFile"));
 
-    return this.tokens;
+    return tokens;
   }
 
   // UTILITIES
