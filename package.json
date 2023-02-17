@@ -6,8 +6,7 @@
   "scripts": {
     "start": "npm run start:r",
     "start:r": "ts-node ./src/main.ts -r",
-    "start:f": "ts-node ./src/main.ts -f",
-    "start:fe": "ts-node ./src/main.ts -f ./example.input"
+    "start:f": "ts-node ./src/main.ts -f"
   },
   "repository": {
     "type": "git",

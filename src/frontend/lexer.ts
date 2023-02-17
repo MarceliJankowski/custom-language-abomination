@@ -6,6 +6,10 @@ export enum TokenType {
   EOF = "EOF",
 }
 
+enum Sign {
+  COMMENT = "#",
+}
+
 type TokenPosition = [row: number, column: number];
 
 /**@desc represents `valid` language Token
@@ -19,8 +23,6 @@ class Token {
     public end: TokenPosition
   ) {}
 }
-
-// FIX logic with row and column
 
 export default class Lexer {
   /**@desc `sourceCode` character array*/
@@ -53,19 +55,26 @@ export default class Lexer {
           // INT
           if (this.isInt(char)) {
             const startPosition: TokenPosition = this.getCurrentPosition();
-            let intStr = "";
+            let intStr = this.eat();
 
             // BUILD `intStr`
             while (this.isSrcNotEmpty() && this.isInt(this.at())) {
-              if (intStr.length > 0) this.column++; // if it's first int character don't increment column counter
               intStr += this.eat();
+              this.column++;
             }
 
             this.addToken(TokenType.NUMBER, intStr, startPosition, this.getCurrentPosition());
+          }
 
-            // WHITESPACE
-          } else if (this.isWhitespace(char)) {
-            if (/\n/.test(char)) {
+          // COMMENT
+          else if (char === Sign.COMMENT) {
+            // eat away whole comment until '\n'
+            while (this.isSrcNotEmpty() && !this.isNewLine(this.at())) this.eat();
+          }
+
+          // WHITESPACE
+          else if (this.isWhitespace(char)) {
+            if (this.isNewLine(char)) {
               this.row++; // if character is a new-line increment row counter
               this.column = 0; // set column back to 0
             }
@@ -121,5 +130,9 @@ export default class Lexer {
   /**@desc determine whether `char` is a whitespace /[ \n\t\r]/*/
   private isWhitespace(char: string): boolean {
     return /\s/.test(char);
+  }
+
+  private isNewLine(char: string): boolean {
+    return char === "\n";
   }
 }
