@@ -6,7 +6,9 @@
   "scripts": {
     "start": "npm run start:r",
     "start:r": "ts-node ./src/main.ts -r",
-    "start:f": "ts-node ./src/main.ts -f"
+    "start:f": "ts-node ./src/main.ts -f",
+    "test": "./test.sh",
+    "prepare": "husky install "
   },
   "repository": {
     "type": "git",
@@ -24,6 +26,7 @@
   "devDependencies": {
     "@types/node": "^18.13.0",
     "@types/prompt-sync": "^4.2.0",
+    "husky": "^8.0.3",
     "ts-node": "^10.9.1",
     "typescript": "^4.9.5"
   },
