@@ -6,49 +6,112 @@ export enum TokenType {
   EOF = "EOF",
 }
 
+type TokenPosition = [row: number, column: number];
+
 /**@desc represents `valid` language Token
 @param type TokenType
 @param value TokenValue (string)*/
 class Token {
-  constructor(public type: TokenType, public value: string) {}
+  constructor(
+    public type: TokenType,
+    public value: string,
+    public start: TokenPosition,
+    public end: TokenPosition
+  ) {}
 }
 
-export default class Lexer {
-  /**@desc parses `sourceCode` into Token[]*/
-  public tokenize(sourceCode: string): Token[] {
-    /**@desc `sourceCode` character array*/
-    const src = sourceCode.split("");
-    const tokens: Token[] = [];
+// FIX logic with row and column
 
-    while (src.length > 0) {
-      const char = src[0];
+export default class Lexer {
+  /**@desc `sourceCode` character array*/
+  private src: string[];
+
+  private tokens: Token[];
+
+  /**@desc tracks current character row*/
+  private row: number;
+  /**@desc tracks current character column*/
+  private column: number;
+
+  constructor(sourceCode: string) {
+    this.src = sourceCode.split("");
+    this.tokens = new Array<Token>();
+
+    this.row = this.isSrcNotEmpty() ? 1 : 0;
+    this.column = 0; // tokenize will increment column to 1 by default
+  }
+
+  /**@desc parses `sourceCode` into Token[]*/
+  public tokenize(): Token[] {
+    while (this.isSrcNotEmpty()) {
+      const char = this.at();
+      this.column++; // increment column because new character is being parsed
 
       switch (char) {
         // HANDLE MULTICHARACTER TOKENS
         default: {
           // INT
           if (this.isInt(char)) {
+            const startPosition: TokenPosition = this.getCurrentPosition();
             let intStr = "";
 
             // BUILD `intStr`
-            while (src.length > 0 && this.isInt(src[0])) intStr += src.shift();
+            while (this.isSrcNotEmpty() && this.isInt(this.at())) {
+              if (intStr.length > 0) this.column++; // if it's first int character don't increment column counter
+              intStr += this.eat();
+            }
 
-            tokens.push(new Token(TokenType.NUMBER, intStr));
+            this.addToken(TokenType.NUMBER, intStr, startPosition, this.getCurrentPosition());
 
-            // SKIPABLE
-          } else if (this.isWhitespace(char)) src.shift(); // skip whitespace character
+            // WHITESPACE
+          } else if (this.isWhitespace(char)) {
+            if (/\n/.test(char)) {
+              this.row++; // if character is a new-line increment row counter
+              this.column = 0; // set column back to 0
+            }
+
+            this.eat(); // skip whitespace character
+          }
+
           // UNRECOGNIZED
-          else throw `Unrecognized character found in source: '${char}'`;
+          else
+            throw `Unrecognized character found in source: '${char}' at position: ${this.getCurrentPosition()}`;
         }
       }
     }
 
-    tokens.push(new Token(TokenType.EOF, "EndOfFile"));
+    this.addToken(TokenType.EOF, "EndOfFile", this.getCurrentPosition(), this.getCurrentPosition());
 
-    return tokens;
+    return this.tokens;
   }
 
   // UTILITIES
+
+  /**@desc append Token to `tokens` array*/
+  private addToken(type: TokenType, value: string, start: TokenPosition, end: TokenPosition): void {
+    this.tokens.push(new Token(type, value, start, end));
+  }
+
+  /**@return currently processed `src` character*/
+  private at(): string {
+    return this.src[0];
+  }
+
+  /**@desc shift current character from `src` and return it*/
+  private eat(): string {
+    if (!this.isSrcNotEmpty()) throw "Lexer internal error: cannot eat when src is empty!";
+
+    return this.src.shift()!;
+  }
+
+  /**@desc determine whether `src` is empty*/
+  private isSrcNotEmpty(): boolean {
+    return this.src.length > 0;
+  }
+
+  private getCurrentPosition(): TokenPosition {
+    return [this.row, this.column];
+  }
 
   /**@desc determine whether `char` is an int*/
   private isInt(char: string): boolean {
