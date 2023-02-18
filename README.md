@@ -6,7 +6,14 @@ This is a side-project, little hobby thingy without any actual purpose.
 I don't have any expierience nor knowledge regarding interpreter implementation, hence this is purely an educational endeavor.
 I intend on developing this interpreter in my spare time whenever I desire to do so (hopefully more than once).
 
+In this project I don't concern myself with optimization/performance whatsoever, to the point where I'm consciously using inefficient loop traversals/functions, shifting array elements, and heavily relying on RegExp.
+
 I'm making this repository public as means of motivating myself to actually "_finish the job_", as I feel that live recording will have a positive impact on my commitment (yeah... I do struggle with finishing stuff).
+
+## Usage:
+
+You can look into `codeExamples` to see what interpreter is currently capable of.
+For more details please read the **manual** or run interpreter with 'h' option.
 
 ## Goals/Expectations:
 

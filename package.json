@@ -4,9 +4,7 @@
   "description": "Basic Interpreter Written In TS",
   "main": "./src/main.ts",
   "scripts": {
-    "start": "npm run start:r",
-    "start:r": "ts-node ./src/main.ts -r",
-    "start:f": "ts-node ./src/main.ts -f",
+    "start": "ts-node ./src/main.ts",
     "test": "./test.sh",
     "prepare": "husky install "
   },
