@@ -32,6 +32,10 @@ EXIT CODES
 
       0  Interpreter succeeded, no exceptions were raised
 
-      1  Interpreter failed, an exception was raised (note: IMPROVE ERROR CODES!)
+      1  Required argument is missing (like 'filePath' after -f)
+
+      2  Provided argument is invalid
+
+      3  Interpretation process failed, an exception was raised
 
       255  Internal interpreter error / developer fu**ed up!

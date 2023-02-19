@@ -5,6 +5,8 @@ import promptSync from "prompt-sync";
 const prompt = promptSync();
 
 // PROJECT MODULES
+import { ErrorCode } from "./constants";
+import { Err } from "./utils";
 import Lexer from "./frontend/lexer";
 
 /**@desc embodiment of the interpreter / interface for interacting with it*/
@@ -28,22 +30,18 @@ class Interpreter {
 
       // FILE EXECUTION
       case "file": {
-        try {
-          this.execFile();
-        } catch (err) {
-          console.error(err);
-          process.exit(1);
-        }
-
+        this.execFile();
         break;
       }
 
       // INVALID interactionMethod
       default: {
-        console.error(
-          `Internal interpreter error: invalid interactionMethod, value: ${this.interactionMethod}`
+        this.handleErr(
+          new Err(
+            `Internal interpreter error: invalid interactionMethod, value: ${this.interactionMethod}`,
+            "internal"
+          )
         );
-        process.exit(255);
       }
     }
   }
@@ -97,8 +95,7 @@ class Interpreter {
         }
 
         default:
-          console.error(`Unknown arg: '${arg}'`);
-          process.exit(2);
+          this.handleErr(new Err(`Invalid argument: '${arg}'`, "invalidArg"));
       }
     }
   }
@@ -121,32 +118,40 @@ class Interpreter {
           this.printBreakLine();
         }
       } catch (err) {
-        console.error(err);
+        // custom err handling, because I don't want to exit process within REPL
+        if (err instanceof Err) console.error(err.message);
+        else console.log(err);
       }
     }
   }
 
   /**@desc execute supplied file*/
   private execFile() {
-    if (!this.filePath) throw "filepath hasn't been provided!";
-    if (!fs.existsSync(this.filePath)) throw `file: '${this.filePath}' was not found`;
+    if (!this.filePath) throw new Err("filepath hasn't been provided!", "missingArg");
+    if (!fs.existsSync(this.filePath)) throw new Err(`file: '${this.filePath}' was not found`, "invalidArg");
 
-    const src = fs.readFileSync(this.filePath, { encoding: "utf-8" }).trimEnd();
-    const lexerOutput = new Lexer(src).tokenize();
+    try {
+      const src = fs.readFileSync(this.filePath, { encoding: "utf-8" }).trimEnd();
+      const lexerOutput = new Lexer(src).tokenize();
 
-    // VERBOSE OUTPUT
-    if (this.isVerbose) {
-      this.outputLog("SRC:", src);
-      this.outputLog("LEXER OUTPUT:", lexerOutput);
-      this.printBreakLine();
+      // VERBOSE OUTPUT
+      if (this.isVerbose) {
+        this.outputLog("SRC:", src);
+        this.outputLog("LEXER OUTPUT:", lexerOutput);
+        this.printBreakLine();
+      }
+
+      // HANDLE EXCEPTION
+    } catch (err) {
+      this.handleErr(err);
     }
   }
 
   /**@desc print interpreter manual*/
   private printManual(): void {
     const manual = fs.readFileSync(path.join(__dirname, "../manual"), { encoding: "utf-8" });
-    console.log(manual);
 
+    console.log(manual);
     process.exit(0);
   }
 
@@ -164,6 +169,17 @@ class Interpreter {
   private printBreakLine(length = 100): void {
     const breakChar = "-";
     console.log("\n" + breakChar.repeat(length));
+  }
+
+  /**@desc handle exceptions*/
+  private handleErr(err: unknown): never {
+    if (err instanceof Err) {
+      console.error(err.message);
+      process.exit(err.exitCode);
+    } else {
+      console.error(err);
+      process.exit(ErrorCode.INTERNAL);
+    }
   }
 }
 

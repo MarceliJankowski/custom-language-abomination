@@ -1,3 +1,6 @@
+// PROJECT MODULES
+import { Err } from "../utils";
+
 export enum TokenType {
   // LITERALS
   NUMBER = "NUMBER",
@@ -84,7 +87,9 @@ export default class Lexer {
 
           // UNRECOGNIZED
           else
-            throw `Unrecognized character found in source: '${char}' at position: ${this.getCurrentPosition()}`;
+            throw new Err(
+              `Unrecognized character found in source: '${char}' at position: ${this.getCurrentPosition()}`
+            );
         }
       }
     }
@@ -108,7 +113,8 @@ export default class Lexer {
 
   /**@desc shift current character from `src` and return it*/
   private eat(): string {
-    if (!this.isSrcNotEmpty()) throw "Lexer internal error: cannot eat when src is empty!";
+    if (!this.isSrcNotEmpty())
+      throw new Err("Lexer internal error: cannot eat when src is empty!", "internal");
 
     return this.src.shift()!;
   }
