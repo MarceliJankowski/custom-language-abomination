@@ -106,8 +106,9 @@ class Interpreter {
 
     while (true) {
       const input = prompt("> ");
+      const trimmedinput = input.trim();
 
-      if (input === "exit" || input === "exit()") process.exit(1);
+      if (trimmedinput === "exit" || trimmedinput === "exit()") process.exit(1);
 
       try {
         const lexerOutput = new Lexer(input).tokenize();
@@ -127,10 +128,11 @@ class Interpreter {
 
   /**@desc execute supplied file*/
   private execFile() {
-    if (!this.filePath) throw new Err("filepath hasn't been provided!", "missingArg");
-    if (!fs.existsSync(this.filePath)) throw new Err(`file: '${this.filePath}' was not found`, "invalidArg");
-
     try {
+      if (!this.filePath) throw new Err("filepath hasn't been provided!", "missingArg");
+      if (!fs.existsSync(this.filePath))
+        throw new Err(`file: '${this.filePath}' was not found`, "invalidArg");
+
       const src = fs.readFileSync(this.filePath, { encoding: "utf-8" }).trimEnd();
       const lexerOutput = new Lexer(src).tokenize();
 

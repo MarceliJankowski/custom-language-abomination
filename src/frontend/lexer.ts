@@ -1,16 +1,20 @@
 // PROJECT MODULES
 import { Err } from "../utils";
 
+enum Sign {
+  COMMENT = "#",
+  ESCAPE = "\\",
+  STRING_1 = '"',
+  STRING_2 = "'",
+}
+
 export enum TokenType {
   // LITERALS
   NUMBER = "NUMBER",
+  STRING = "STRING",
 
   // OTHER
   EOF = "EOF",
-}
-
-enum Sign {
-  COMMENT = "#",
 }
 
 type TokenPosition = [row: number, column: number];
@@ -26,6 +30,10 @@ class Token {
     public end: TokenPosition
   ) {}
 }
+
+// -----------------------------------------------
+//                    LEXER
+// -----------------------------------------------
 
 export default class Lexer {
   /**@desc `sourceCode` character array*/
@@ -58,15 +66,104 @@ export default class Lexer {
           // INT
           if (this.isInt(char)) {
             const startPosition: TokenPosition = this.getCurrentPosition();
-            let intStr = this.eat();
+            let value = this.eat();
 
             // BUILD `intStr`
             while (this.isSrcNotEmpty() && this.isInt(this.at())) {
-              intStr += this.eat();
+              value += this.eat();
               this.column++;
             }
 
-            this.addToken(TokenType.NUMBER, intStr, startPosition, this.getCurrentPosition());
+            this.addToken(TokenType.NUMBER, value, startPosition, this.getCurrentPosition());
+          }
+
+          // STRING
+          else if (this.isStringSign(char)) {
+            const startPosition: TokenPosition = this.getCurrentPosition();
+            const strSign = this.eat(); // get string-sign which was used for creating this string literal
+
+            let value = "";
+            let isEscaped = false; // track whether next character is escaped
+            let isStrEnded = false; // track whether string ends with strSign
+
+            // BUILD `str`
+            while (this.isSrcNotEmpty()) {
+              let char = this.eat();
+              this.column++;
+
+              // handle escape-sign (allow for double escape-sign, like '\\' with: !isEscaped)
+              if (char === Sign.ESCAPE && !isEscaped) {
+                isEscaped = true;
+                continue;
+              }
+
+              // handle escape sequences
+              if (isEscaped) {
+                // cases form a list of valid escapable characters (javascript supported escape sequences)
+                // switch statement is necessary because in JS: "\\" + "b" does not equal: "\b" but: "\\b"
+                switch (char) {
+                  case Sign.ESCAPE:
+                  case Sign.STRING_1:
+                  case Sign.STRING_2: {
+                    // these escape sequences don't require explicit character assignment
+                    break;
+                  }
+
+                  case "b": {
+                    char = "\b";
+                    break;
+                  }
+
+                  case "f": {
+                    char = "\f";
+                    break;
+                  }
+
+                  case "n": {
+                    char = "\n";
+                    break;
+                  }
+
+                  case "r": {
+                    char = "\r";
+                    break;
+                  }
+
+                  case "t": {
+                    char = "\t";
+                    break;
+                  }
+
+                  case "v": {
+                    char = "\v";
+                    break;
+                  }
+
+                  default:
+                    throw new Err(
+                      `Invalid escape character: '\\${char}' at position: ${this.getCurrentPosition()}`
+                    );
+                }
+              }
+
+              // handle string end
+              if (char === strSign && isEscaped == false) {
+                isStrEnded = true;
+                break;
+              }
+
+              value += char;
+              isEscaped = false;
+            }
+
+            // check whether string was ended
+            if (!isStrEnded) {
+              throw new Err(
+                `String: '${value}' lacks ending: ${strSign} at position: ${this.getCurrentPosition()}`
+              );
+            }
+
+            this.addToken(TokenType.STRING, value, startPosition, this.getCurrentPosition());
           }
 
           // COMMENT
@@ -138,7 +235,13 @@ export default class Lexer {
     return /\s/.test(char);
   }
 
+  /**@desc determine whether `char` is a new-line '\n'*/
   private isNewLine(char: string): boolean {
     return char === "\n";
+  }
+
+  /**@desc determine whether `char` is a string-sign*/
+  private isStringSign(char: string): boolean {
+    return new RegExp(`[${Sign.STRING_1}${Sign.STRING_2}]`).test(char);
   }
 }
