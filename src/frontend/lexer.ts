@@ -12,10 +12,20 @@ export enum TokenType {
   // LITERALS
   NUMBER = "NUMBER",
   STRING = "STRING",
+  IDENTIFIER = "IDENTIFIER",
+
+  // KEYWORDS
+  LET = "LET",
+  CONST = "CONST",
 
   // OTHER
   EOF = "EOF",
 }
+
+const KEYWORDS: { [key: string]: TokenType } = {
+  let: TokenType.LET,
+  const: TokenType.CONST,
+};
 
 type TokenPosition = [row: number, column: number];
 
@@ -166,6 +176,26 @@ export default class Lexer {
             this.addToken(TokenType.STRING, value, startPosition, this.getCurrentPosition());
           }
 
+          // IDENTIFIER
+          else if (this.isAlpha(char)) {
+            const startPosition: TokenPosition = this.getCurrentPosition();
+            let identifier = "";
+
+            // BUILD identifier
+            while (this.isSrcNotEmpty() && this.isAlpha(this.at())) {
+              identifier += this.eat();
+              this.column++;
+            }
+
+            const currentPosition = this.getCurrentPosition();
+
+            // HANDLE RESERVED KEYWORDS
+            const keywordType = KEYWORDS[identifier];
+
+            if (keywordType) this.addToken(keywordType, identifier, startPosition, currentPosition);
+            else this.addToken(TokenType.IDENTIFIER, identifier, startPosition, currentPosition);
+          }
+
           // COMMENT
           else if (char === Sign.COMMENT) {
             // eat away whole comment until '\n'
@@ -228,6 +258,11 @@ export default class Lexer {
   /**@desc determine whether `char` is an int*/
   private isInt(char: string): boolean {
     return /\d/.test(char);
+  }
+
+  /**@desc determine whether `char` is alphanumeric or is an underscore*/
+  private isAlpha(char: string): boolean {
+    return /\w/.test(char);
   }
 
   /**@desc determine whether `char` is a whitespace /[ \n\t\r]/*/
