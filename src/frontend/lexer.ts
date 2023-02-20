@@ -1,6 +1,10 @@
 // PROJECT MODULES
 import { Err } from "../utils";
 
+// -----------------------------------------------
+//                    STUFF
+// -----------------------------------------------
+
 enum Sign {
   COMMENT = "#",
   ESCAPE = "\\",
@@ -37,7 +41,7 @@ type TokenPosition = [row: number, column: number];
 /**@desc represents `valid` language Token
 @param type TokenType
 @param value TokenValue (string)*/
-class Token {
+export class Token {
   constructor(
     public type: TokenType,
     public value: string,
@@ -50,7 +54,7 @@ class Token {
 //                    LEXER
 // -----------------------------------------------
 
-export default class Lexer {
+export class Lexer {
   /**@desc `sourceCode` character array*/
   private src: string[];
 
@@ -181,7 +185,8 @@ export default class Lexer {
 
                   default:
                     throw new Err(
-                      `Invalid escape character: '\\${char}' at position: ${this.getCurrentPosition()}`
+                      `Invalid escape character: '\\${char}' at position: ${this.getCurrentPosition()}`,
+                      "lexer"
                     );
                 }
               }
@@ -199,7 +204,8 @@ export default class Lexer {
             // check whether string was ended
             if (!isStrEnded) {
               throw new Err(
-                `String: '${value}' lacks ending: ${strSign} at position: ${this.getCurrentPosition()}`
+                `String: '${value}' lacks ending: ${strSign} at position: ${this.getCurrentPosition()}`,
+                "lexer"
               );
             }
 
@@ -245,7 +251,8 @@ export default class Lexer {
           // UNRECOGNIZED
           else
             throw new Err(
-              `Unrecognized character found in source: '${char}' at position: ${this.getCurrentPosition()}`
+              `Unrecognized character found in source: '${char}' at position: ${this.getCurrentPosition()}`,
+              "lexer"
             );
         }
       }
@@ -256,7 +263,9 @@ export default class Lexer {
     return this.tokens;
   }
 
-  // UTILITIES
+  // -----------------------------------------------
+  //                  UTILITIES
+  // -----------------------------------------------
 
   /**@desc append Token to `tokens` array*/
   private addToken(type: TokenType, value: string, start: TokenPosition, end: TokenPosition): void {

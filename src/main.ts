@@ -7,7 +7,11 @@ const prompt = promptSync();
 // PROJECT MODULES
 import { ErrorCode } from "./constants";
 import { Err } from "./utils";
-import Lexer from "./frontend/lexer";
+import { Lexer, Parser } from "./frontend";
+
+// -----------------------------------------------
+//                 INTERPRETER
+// -----------------------------------------------
 
 /**@desc embodiment of the interpreter / interface for interacting with it*/
 class Interpreter {
@@ -112,16 +116,18 @@ class Interpreter {
 
       try {
         const lexerOutput = new Lexer(input).tokenize();
+        const AST = new Parser(lexerOutput).buildAST();
 
         // VERBOSE OUTPUT
         if (this.isVerbose) {
           this.outputLog("LEXER OUTPUT:", lexerOutput);
+          this.outputLog("AST:", AST);
           this.printBreakLine();
         }
       } catch (err) {
         // custom err handling, because I don't want to exit process within REPL
         if (err instanceof Err) console.error(err.message);
-        else console.log(err);
+        else console.error(err);
       }
     }
   }
@@ -135,11 +141,13 @@ class Interpreter {
 
       const src = fs.readFileSync(this.filePath, { encoding: "utf-8" }).trimEnd();
       const lexerOutput = new Lexer(src).tokenize();
+      const AST = new Parser(lexerOutput).buildAST();
 
       // VERBOSE OUTPUT
       if (this.isVerbose) {
         this.outputLog("SRC:", src);
         this.outputLog("LEXER OUTPUT:", lexerOutput);
+        this.outputLog("AST:", AST);
         this.printBreakLine();
       }
 
@@ -157,13 +165,17 @@ class Interpreter {
     process.exit(0);
   }
 
+  // -----------------------------------------------
+  //                  UTILITIES
+  // -----------------------------------------------
+
   /**@desc log `output` into std-output with break-lines included
   @param header header describing output / text preceding output
   @param output actual output / comes after header*/
   private outputLog(header: string, output: unknown): void {
     this.printBreakLine();
     console.log(header + "\n");
-    console.log(output);
+    console.log(JSON.stringify(output, null, 4));
   }
 
   /**@desc print break-line

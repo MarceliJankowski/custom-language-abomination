@@ -36,6 +36,10 @@ EXIT CODES
 
       2  Provided argument is invalid
 
-      3  Interpretation process failed, an exception was raised
+      3  Lexer failed, exception was raised during tokenization process
+
+      4  Parser failed, exception was raised during AST build process
+
+      5  Interpretation process failed, an exception was raised during AST evaluation
 
       255  Internal interpreter error / developer fu**ed up!

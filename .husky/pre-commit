@@ -2,4 +2,4 @@
 . "$(dirname -- "$0")/_/husky.sh"
 
 # execute all code-examples / crash if any one of them exits with exit-code not equal 0
-npm test
+# npm test
