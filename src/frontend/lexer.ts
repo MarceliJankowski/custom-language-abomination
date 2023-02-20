@@ -18,6 +18,11 @@ export enum TokenType {
   LET = "LET",
   CONST = "CONST",
 
+  // OPERATORS
+  OPEN_PAREN = "(",
+  CLOSE_PAREN = ")",
+  BINARY_OPERATOR = "BINARY_OPERATOR",
+
   // OTHER
   EOF = "EOF",
 }
@@ -71,7 +76,32 @@ export default class Lexer {
       this.column++; // increment column because new character is being parsed
 
       switch (char) {
-        // HANDLE MULTICHARACTER TOKENS
+        // HANDLE SINGLE-CHARACTER TOKENS
+
+        case "(": {
+          const position = this.getCurrentPosition();
+          this.addToken(TokenType.OPEN_PAREN, this.eat(), position, position);
+          break;
+        }
+
+        case ")": {
+          const position = this.getCurrentPosition();
+          this.addToken(TokenType.CLOSE_PAREN, this.eat(), position, position);
+          break;
+        }
+
+        // BINARY OPERATORS
+        case "+":
+        case "-":
+        case "*":
+        case "%":
+        case "/": {
+          const position = this.getCurrentPosition();
+          this.addToken(TokenType.BINARY_OPERATOR, this.eat(), position, position);
+          break;
+        }
+
+        // HANDLE MULTI-CHARACTER TOKENS
         default: {
           // INT
           if (this.isInt(char)) {
