@@ -13,6 +13,7 @@ type AST_Node =
 
   // LITERALS
   | "NumericLiteral"
+  | "StringLiteral"
   | "Identifier";
 
 /**@desc doesn't return any value at run-time*/
@@ -33,6 +34,12 @@ interface AST_Expression extends AST_Statement {}
 interface AST_NumericLiteral extends AST_Expression {
   kind: "NumericLiteral";
   value: number;
+}
+
+/**@desc represents numberic literal / fixed number*/
+interface AST_StringLiteral extends AST_Expression {
+  kind: "StringLiteral";
+  value: string;
 }
 
 /**@desc consists of two `sides` (sides are expressions) seperated by `operator`*/

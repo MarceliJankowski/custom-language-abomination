@@ -90,6 +90,9 @@ export class Parser {
       case TokenType.NUMBER:
         return { kind: "NumericLiteral", value: Number(this.eat().value) } as AST_NumericLiteral;
 
+      case TokenType.STRING:
+        return { kind: "StringLiteral", value: this.eat().value } as AST_StringLiteral;
+
       case TokenType.OPEN_PAREN: {
         this.eat(); // advance past open-paren
 

@@ -8,13 +8,25 @@ const prompt = promptSync();
 import { ErrorCode } from "./constants";
 import { Err } from "./utils";
 import { Lexer, Parser } from "./frontend";
+import { Interpreter } from "./backend";
 
 // -----------------------------------------------
-//                 INTERPRETER
+//                    TYPES
+// -----------------------------------------------
+// here because I can't define them within Class
+
+interface EvaluateSrcOutput {
+  lexer: ReturnType<typeof Lexer.prototype.tokenize>;
+  parser: ReturnType<typeof Parser.prototype.buildAST>;
+  interpreter: ReturnType<typeof Interpreter.prototype.evaluate>;
+}
+
+// -----------------------------------------------
+//            INTERPRETER INTERFACE
 // -----------------------------------------------
 
 /**@desc embodiment of the interpreter / interface for interacting with it*/
-class Interpreter {
+class InterpreterInterface {
   private isVerbose = false;
   private filePath: string | undefined;
 
@@ -115,15 +127,13 @@ class Interpreter {
       if (trimmedinput === "exit" || trimmedinput === "exit()") process.exit(1);
 
       try {
-        const lexerOutput = new Lexer(input).tokenize();
-        const AST = new Parser(lexerOutput).buildAST();
+        const output = this.evaluateSrc(input);
 
-        // VERBOSE OUTPUT
-        if (this.isVerbose) {
-          this.outputLog("LEXER OUTPUT:", lexerOutput);
-          this.outputLog("AST:", AST);
-          this.printBreakLine();
-        }
+        // LOG OUTPUT
+        if (this.isVerbose) this.verboseOutput(output);
+        else console.log(output.interpreter);
+
+        // HANDLE EXCEPTION
       } catch (err) {
         // custom err handling, because I don't want to exit process within REPL
         if (err instanceof Err) console.error(err.message);
@@ -140,16 +150,13 @@ class Interpreter {
         throw new Err(`file: '${this.filePath}' was not found`, "invalidArg");
 
       const src = fs.readFileSync(this.filePath, { encoding: "utf-8" }).trimEnd();
-      const lexerOutput = new Lexer(src).tokenize();
-      const AST = new Parser(lexerOutput).buildAST();
+      const output = this.evaluateSrc(src);
 
-      // VERBOSE OUTPUT
+      // LOG OUTPUT
       if (this.isVerbose) {
         this.outputLog("SRC:", src);
-        this.outputLog("LEXER OUTPUT:", lexerOutput);
-        this.outputLog("AST:", AST);
-        this.printBreakLine();
-      }
+        this.verboseOutput(output);
+      } else console.log(output.interpreter);
 
       // HANDLE EXCEPTION
     } catch (err) {
@@ -165,9 +172,31 @@ class Interpreter {
     process.exit(0);
   }
 
+  /**@desc interpret/evaluate `src` param
+  @return object with outputs of each interpreter stage*/
+  private evaluateSrc(src: string): EvaluateSrcOutput {
+    const lexerOutput = new Lexer(src).tokenize();
+    const AST = new Parser(lexerOutput).buildAST();
+    const interpreterOutput = new Interpreter().evaluate(AST);
+
+    return {
+      lexer: lexerOutput,
+      parser: AST,
+      interpreter: interpreterOutput,
+    };
+  }
+
   // -----------------------------------------------
   //                  UTILITIES
   // -----------------------------------------------
+
+  /**@desc output verbose information*/
+  private verboseOutput(output: EvaluateSrcOutput): void {
+    this.outputLog("LEXER OUTPUT:", output.lexer);
+    this.outputLog("PARSER OUTPUT:", output.parser);
+    this.outputLog("INTERPRETER OUTPUT:", output.interpreter);
+    this.printBreakLine();
+  }
 
   /**@desc log `output` into std-output with break-lines included
   @param header header describing output / text preceding output
@@ -198,4 +227,4 @@ class Interpreter {
 }
 
 // RUN INTERPRETER
-new Interpreter().run();
+new InterpreterInterface().run();
