@@ -42,3 +42,9 @@ interface AST_BinaryExp extends AST_Expression {
   right: Expression;
   operator: string;
 }
+
+/**@desc represents user-defined identifier like function/variable name*/
+interface AST_Identifier extends Expression {
+  kind: "Identifier";
+  symbol: string;
+}
