@@ -176,7 +176,7 @@ class InterpreterInterface {
   @return object with outputs of each interpreter stage*/
   private evaluateSrc(src: string): EvaluateSrcOutput {
     const lexerOutput = new Lexer(src).tokenize();
-    const AST = new Parser(lexerOutput).buildAST();
+    const AST = new Parser([...lexerOutput]).buildAST(); // passing shallow-copy of lexerOutput because parser modifies it and I need original for the verboseOutput
     const interpreterOutput = new Interpreter().evaluate(AST);
 
     return {
