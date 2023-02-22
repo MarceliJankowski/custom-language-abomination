@@ -22,7 +22,7 @@ OPTIONS
       -r
           Interact with interpreter through REPL
 
-      -f filePath
+      -f filePath (when used with: 'npm start' is relative to the project's home directory)
           Interpret/Evaluate file located at 'filePath'
 
 EXIT CODES
