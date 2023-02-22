@@ -84,17 +84,25 @@ export class Parser {
     const tokenType = this.at().type;
 
     switch (tokenType) {
-      case TokenType.STRING:
-        return { kind: "StringLiteral", value: this.eat().value } as AST_StringLiteral;
+      case TokenType.STRING: {
+        const stringNode: AST_StringLiteral = { kind: "StringLiteral", value: this.eat().value };
+        return stringNode;
+      }
 
-      case TokenType.IDENTIFIER:
-        return { kind: "Identifier", value: this.eat().value } as AST_Identifier;
+      case TokenType.IDENTIFIER: {
+        const identifierNode: AST_Identifier = { kind: "Identifier", value: this.eat().value };
+        return identifierNode;
+      }
 
-      case TokenType.NUMBER:
-        return { kind: "NumericLiteral", value: Number(this.eat().value) } as AST_NumericLiteral;
+      case TokenType.NUMBER: {
+        const numberNode: AST_NumericLiteral = { kind: "NumericLiteral", value: Number(this.eat().value) };
+        return numberNode;
+      }
 
-      case TokenType.STRING:
-        return { kind: "StringLiteral", value: this.eat().value } as AST_StringLiteral;
+      case TokenType.STRING: {
+        const stringNode: AST_StringLiteral = { kind: "StringLiteral", value: this.eat().value };
+        return stringNode;
+      }
 
       case TokenType.OPEN_PAREN: {
         this.eat(); // advance past open-paren

@@ -18,13 +18,13 @@ type AST_Node =
 
 /**@desc doesn't return any value at run-time*/
 interface AST_Statement {
-  kind: NodeType;
+  kind: AST_Node;
 }
 
 /**@desc it's `AST` root node, represents whole program and contains all statements*/
 interface AST_Program extends AST_Statement {
   kind: "Program";
-  body: Statement[];
+  body: AST_Statement[];
 }
 
 /**@desc returns value at run-time*/
@@ -45,19 +45,19 @@ interface AST_StringLiteral extends AST_Expression {
 /**@desc consists of two `sides` (sides are expressions) seperated by `operator`*/
 interface AST_BinaryExp extends AST_Expression {
   kind: "BinaryExp";
-  left: Expression;
-  right: Expression;
+  left: AST_Expression;
+  right: AST_Expression;
   operator: string;
 }
 
 /**@desc represents user-defined identifier like function/variable name*/
-interface AST_Identifier extends Expression {
+interface AST_Identifier extends AST_Expression {
   kind: "Identifier";
   value: string;
 }
 
 /**@desc represents string literal / fixed list of characters*/
-interface AST_StringLiteral extends Expression {
+interface AST_StringLiteral extends AST_Expression {
   kind: "StringLiteral";
   value: string;
 }
