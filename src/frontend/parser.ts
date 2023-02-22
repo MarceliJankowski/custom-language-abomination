@@ -84,8 +84,11 @@ export class Parser {
     const tokenType = this.at().type;
 
     switch (tokenType) {
+      case TokenType.STRING:
+        return { kind: "StringLiteral", value: this.eat().value } as AST_StringLiteral;
+
       case TokenType.IDENTIFIER:
-        return { kind: "Identifier", symbol: this.eat().value } as AST_Identifier;
+        return { kind: "Identifier", value: this.eat().value } as AST_Identifier;
 
       case TokenType.NUMBER:
         return { kind: "NumericLiteral", value: Number(this.eat().value) } as AST_NumericLiteral;

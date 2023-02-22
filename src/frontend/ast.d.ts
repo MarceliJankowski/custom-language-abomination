@@ -36,7 +36,7 @@ interface AST_NumericLiteral extends AST_Expression {
   value: number;
 }
 
-/**@desc represents numberic literal / fixed number*/
+/**@desc represents string literal / fixed character list*/
 interface AST_StringLiteral extends AST_Expression {
   kind: "StringLiteral";
   value: string;
@@ -53,5 +53,11 @@ interface AST_BinaryExp extends AST_Expression {
 /**@desc represents user-defined identifier like function/variable name*/
 interface AST_Identifier extends Expression {
   kind: "Identifier";
-  symbol: string;
+  value: string;
+}
+
+/**@desc represents string literal / fixed list of characters*/
+interface AST_StringLiteral extends Expression {
+  kind: "StringLiteral";
+  value: string;
 }

@@ -9,3 +9,7 @@ export function NULL(): Runtime_Null {
 export function NUMBER(value: number): Runtime_Number {
   return { type: "number", value };
 }
+
+export function STRING(value: string): Runtime_String {
+  return { type: "string", value };
+}

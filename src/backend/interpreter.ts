@@ -19,6 +19,9 @@ export class Interpreter {
       case "NumericLiteral":
         return MK.NUMBER((astNode as AST_NumericLiteral).value);
 
+      case "StringLiteral":
+        return MK.STRING((astNode as AST_StringLiteral).value);
+
       default:
         throw new Err(
           `This AST node-kind has not yet been setup for interpretation.\nNode kind: '${astNode.kind}'`,
@@ -43,11 +46,35 @@ export class Interpreter {
     const left = this.evaluate(binop.left);
     const right = this.evaluate(binop.right);
 
-    if (left.type === "number" && right.type === "number")
+    // NUMBER
+    if (left.type === "number" && right.type === "number") {
       return this.evalNumericBinaryExp(left as Runtime_Number, binop.operator, right as Runtime_Number);
+    }
 
-    // handle invalid binary operation
-    return MK.NULL();
+    // STRING
+    else if (/(number,string|string,string|string,number)/.test(left.type + "," + right.type)) {
+      return this.evalStringBinaryExp(left as Runtime_String, binop.operator, right as Runtime_Number);
+
+      // HANDLE INVALID BINARY OPERATION
+    } else
+      throw new Err(`Invalid binary-operation: ${left.type} ${binop.operator} ${right.type}`, "interpreter");
+  }
+
+  private evalStringBinaryExp(left: Runtime_String, operator: string, right: Runtime_String): Runtime_String;
+  private evalStringBinaryExp(left: Runtime_Number, operator: string, right: Runtime_String): Runtime_String;
+  private evalStringBinaryExp(left: Runtime_String, operator: string, right: Runtime_Number): Runtime_String;
+  private evalStringBinaryExp(left: any, operator: string, right: any): Runtime_String {
+    if (operator === "+") {
+      return MK.STRING(left.value + right.value);
+    }
+
+    // UNSUPPORTED OPERATOR
+    else {
+      throw new Err(
+        `Invalid string binary-operation. Unsupported use of operator: '${operator}'`,
+        "interpreter"
+      );
+    }
   }
 
   private evalNumericBinaryExp(
@@ -79,7 +106,7 @@ export class Interpreter {
       // UNRECOGNIZED OPERATOR
       default:
         throw new Err(
-          `This AST binary-operator has not yet been setup for interpretation.\nOperator: '${operator}'`,
+          `This binary-operator has not yet been setup for interpretation.\nOperator: '${operator}'`,
           "internal"
         );
     }
