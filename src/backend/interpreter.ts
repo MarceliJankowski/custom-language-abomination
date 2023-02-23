@@ -30,7 +30,7 @@ export class Interpreter {
 
       default:
         throw new Err(
-          `This AST node-kind has not yet been setup for interpretation.\nNode kind: '${astNode.kind}', at position: '${astNode.start}'`,
+          `This AST node-kind has not yet been setup for interpretation.\nNode kind: '${astNode.kind}', at position: ${astNode.start}`,
           "internal"
         );
     }
@@ -107,7 +107,7 @@ export class Interpreter {
         // handle division by: '0'
         if (rhs === 0)
           throw new Err(
-            `Invalid division operation.\nOperation: '${lhs} ${operator} ${rhs}' (division by '0' is forbidden), at position: '${start}'`,
+            `Invalid division operation.\nOperation: '${lhs} ${operator} ${rhs}' (division by '0' is forbidden), at position: ${start}`,
             "interpreter"
           );
 
@@ -117,7 +117,7 @@ export class Interpreter {
       // UNRECOGNIZED OPERATOR
       default:
         throw new Err(
-          `This binary-operator has not yet been setup for interpretation.\nOperator: '${operator}', at position: '${start}'`,
+          `This binary-operator has not yet been setup for interpretation.\nOperator: '${operator}', at position: ${start}`,
           "internal"
         );
     }
@@ -136,7 +136,7 @@ export class Interpreter {
     // UNSUPPORTED OPERATOR
     else {
       throw new Err(
-        `Invalid string binary-operation. Unsupported use of operator: '${operator}', at position: '${start}'`,
+        `Invalid string binary-operation. Unsupported use of operator: '${operator}', at position: ${start}`,
         "interpreter"
       );
     }

@@ -169,7 +169,7 @@ export class Parser {
 
     if (!token || token.type !== type)
       throw new Err(
-        err + `\nToken: '${token.value}', at position: '${token.start}', expected: '${type}'.`,
+        err + `\nToken: '${token.value}', expected: '${type}', at position: ${token.start}`,
         "parser"
       );
 
