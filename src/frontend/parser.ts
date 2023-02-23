@@ -10,13 +10,20 @@ export class Parser {
   constructor(private tokens: Token[]) {}
 
   public buildAST(): AST_Program {
-    const program: AST_Program = {
-      kind: "Program",
-      body: [],
-    };
+    const programBody: Pick<AST_Program, "body">["body"] = [];
+    const programStart = this.tokens[0].start; // define programStart before 'tokens' array get's eaten by parser
 
     // BUILD AST
-    while (this.notEOF()) program.body.push(this.parseStatement());
+    while (this.notEOF()) programBody.push(this.parseStatement());
+
+    const program: AST_Program = {
+      kind: "Program",
+      body: programBody,
+
+      // handle empty-program case with 'nullish coalescing' operator
+      start: programStart ?? [0, 0],
+      end: this.tokens.at(-1)?.end ?? [0, 0], // last token is EOF
+    };
 
     return program;
   }
@@ -50,12 +57,16 @@ export class Parser {
       const operator = this.eat().value;
       const right = this.parseMultiplicativeExp();
 
-      left = {
+      const value: AST_BinaryExp = {
         kind: "BinaryExp",
         left,
         operator,
         right,
-      } as AST_BinaryExp;
+        start: left.start,
+        end: right.end,
+      };
+
+      left = value;
     }
 
     return left;
@@ -69,12 +80,16 @@ export class Parser {
       const operator = this.eat().value;
       const right = this.parsePrimaryExp();
 
-      left = {
+      const value: AST_BinaryExp = {
         kind: "BinaryExp",
         left,
         operator,
         right,
-      } as AST_BinaryExp;
+        start: left.start,
+        end: right.end,
+      };
+
+      left = value;
     }
 
     return left;
@@ -85,22 +100,26 @@ export class Parser {
 
     switch (tokenType) {
       case TokenType.STRING: {
-        const stringNode: AST_StringLiteral = { kind: "StringLiteral", value: this.eat().value };
+        const { value, start, end } = this.eat();
+        const stringNode: AST_StringLiteral = { kind: "StringLiteral", value, start, end };
         return stringNode;
       }
 
       case TokenType.IDENTIFIER: {
-        const identifierNode: AST_Identifier = { kind: "Identifier", value: this.eat().value };
+        const { value, start, end } = this.eat();
+        const identifierNode: AST_Identifier = { kind: "Identifier", value, start, end };
         return identifierNode;
       }
 
       case TokenType.NUMBER: {
-        const numberNode: AST_NumericLiteral = { kind: "NumericLiteral", value: Number(this.eat().value) };
+        const { value, start, end } = this.eat();
+        const numberNode: AST_NumericLiteral = { kind: "NumericLiteral", value: Number(value), start, end };
         return numberNode;
       }
 
       case TokenType.STRING: {
-        const stringNode: AST_StringLiteral = { kind: "StringLiteral", value: this.eat().value };
+        const { value, start, end } = this.eat();
+        const stringNode: AST_StringLiteral = { kind: "StringLiteral", value, start, end };
         return stringNode;
       }
 
@@ -150,7 +169,7 @@ export class Parser {
 
     if (!token || token.type !== type)
       throw new Err(
-        err + `\nAt position: ${token.start}, token: '${token.value}', expected: '${type}'`,
+        err + `\nToken: '${token.value}', at position: '${token.start}', expected: '${type}'.`,
         "parser"
       );
 

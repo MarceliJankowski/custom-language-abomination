@@ -36,8 +36,6 @@ const KEYWORDS: { [key: string]: TokenType } = {
   const: TokenType.CONST,
 };
 
-type TokenPosition = [row: number, column: number];
-
 /**@desc represents `valid` language Token
 @param type TokenType
 @param value TokenValue (string)*/
@@ -45,8 +43,9 @@ export class Token {
   constructor(
     public type: TokenType,
     public value: string,
-    public start: TokenPosition,
-    public end: TokenPosition
+    public line: number,
+    public start: CharPosition,
+    public end: CharPosition
   ) {}
 }
 
@@ -60,16 +59,16 @@ export class Lexer {
 
   private tokens: Token[];
 
-  /**@desc tracks current character row*/
-  private row: number;
-  /**@desc tracks current character column*/
+  /**@desc tracks current-character line*/
+  private line: number;
+  /**@desc tracks current-character column*/
   private column: number;
 
   constructor(sourceCode: string) {
     this.src = sourceCode.split("");
     this.tokens = new Array<Token>();
 
-    this.row = this.isSrcNotEmpty() ? 1 : 0;
+    this.line = this.isSrcNotEmpty() ? 1 : 0;
     this.column = 0; // tokenize will increment column to 1 by default
   }
 
@@ -83,14 +82,12 @@ export class Lexer {
         // HANDLE SINGLE-CHARACTER TOKENS
 
         case "(": {
-          const position = this.getCurrentPosition();
-          this.addToken(TokenType.OPEN_PAREN, this.eat(), position, position);
+          this.addToken(TokenType.OPEN_PAREN, this.eat(), this.position);
           break;
         }
 
         case ")": {
-          const position = this.getCurrentPosition();
-          this.addToken(TokenType.CLOSE_PAREN, this.eat(), position, position);
+          this.addToken(TokenType.CLOSE_PAREN, this.eat(), this.position);
           break;
         }
 
@@ -100,8 +97,7 @@ export class Lexer {
         case "*":
         case "%":
         case "/": {
-          const position = this.getCurrentPosition();
-          this.addToken(TokenType.BINARY_OPERATOR, this.eat(), position, position);
+          this.addToken(TokenType.BINARY_OPERATOR, this.eat(), this.position);
           break;
         }
 
@@ -109,7 +105,7 @@ export class Lexer {
         default: {
           // INT
           if (this.isInt(char)) {
-            const startPosition: TokenPosition = this.getCurrentPosition();
+            const startPosition = this.position;
             let value = this.eat();
 
             // BUILD `intStr`
@@ -118,12 +114,12 @@ export class Lexer {
               this.column++;
             }
 
-            this.addToken(TokenType.NUMBER, value, startPosition, this.getCurrentPosition());
+            this.addToken(TokenType.NUMBER, value, startPosition, this.position);
           }
 
           // STRING
           else if (this.isStringSign(char)) {
-            const startPosition: TokenPosition = this.getCurrentPosition();
+            const startPosition = this.position;
             const strSign = this.eat(); // get string-sign which was used for creating this string literal
 
             let value = "";
@@ -185,7 +181,7 @@ export class Lexer {
 
                   default:
                     throw new Err(
-                      `Invalid escape character: '\\${char}' at position: ${this.getCurrentPosition()}`,
+                      `Invalid escape character: '\\${char}' at position: ${this.position}`,
                       "lexer"
                     );
                 }
@@ -204,17 +200,17 @@ export class Lexer {
             // check whether string was ended
             if (!isStrEnded) {
               throw new Err(
-                `String: '${value}' lacks ending: ${strSign} at position: ${this.getCurrentPosition()}`,
+                `String: '${value}' lacks ending: ${strSign} at position: ${this.position}`,
                 "lexer"
               );
             }
 
-            this.addToken(TokenType.STRING, value, startPosition, this.getCurrentPosition());
+            this.addToken(TokenType.STRING, value, startPosition, this.position);
           }
 
           // IDENTIFIER
           else if (this.isAlpha(char)) {
-            const startPosition: TokenPosition = this.getCurrentPosition();
+            const startPosition = this.position;
             let identifier = "";
 
             // BUILD identifier
@@ -223,13 +219,11 @@ export class Lexer {
               this.column++;
             }
 
-            const currentPosition = this.getCurrentPosition();
-
             // HANDLE RESERVED KEYWORDS
             const keywordType = KEYWORDS[identifier];
 
-            if (keywordType) this.addToken(keywordType, identifier, startPosition, currentPosition);
-            else this.addToken(TokenType.IDENTIFIER, identifier, startPosition, currentPosition);
+            if (keywordType) this.addToken(keywordType, identifier, startPosition, this.position);
+            else this.addToken(TokenType.IDENTIFIER, identifier, startPosition, this.position);
           }
 
           // COMMENT
@@ -241,7 +235,7 @@ export class Lexer {
           // WHITESPACE
           else if (this.isWhitespace(char)) {
             if (this.isNewLine(char)) {
-              this.row++; // if character is a new-line increment row counter
+              this.line++; // if character is a new-line increment line counter
               this.column = 0; // set column back to 0
             }
 
@@ -251,14 +245,14 @@ export class Lexer {
           // UNRECOGNIZED
           else
             throw new Err(
-              `Unrecognized character found in source: '${char}' at position: ${this.getCurrentPosition()}`,
+              `Unrecognized character found in source: '${char}' at position: ${this.position}`,
               "lexer"
             );
         }
       }
     }
 
-    this.addToken(TokenType.EOF, "EndOfFile", this.getCurrentPosition(), this.getCurrentPosition());
+    this.addToken(TokenType.EOF, "EndOfFile", this.position);
 
     return this.tokens;
   }
@@ -267,9 +261,10 @@ export class Lexer {
   //                  UTILITIES
   // -----------------------------------------------
 
-  /**@desc append Token to `tokens` array*/
-  private addToken(type: TokenType, value: string, start: TokenPosition, end: TokenPosition): void {
-    this.tokens.push(new Token(type, value, start, end));
+  /**@desc append Token to `tokens` array
+  @param end is optional, if not provided it defaults to `start`, easing single-character token creation*/
+  private addToken(type: TokenType, value: string, start: CharPosition, end = start): void {
+    this.tokens.push(new Token(type, value, this.line, start, end));
   }
 
   /**@return currently processed `src` character*/
@@ -290,8 +285,9 @@ export class Lexer {
     return this.src.length > 0;
   }
 
-  private getCurrentPosition(): TokenPosition {
-    return [this.row, this.column];
+  /**@desc position of currently processed character*/
+  private get position(): [line: number, column: number] {
+    return [this.line, this.column];
   }
 
   /**@desc determine whether `char` is an int*/

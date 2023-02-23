@@ -24,7 +24,7 @@ export class Interpreter {
 
       default:
         throw new Err(
-          `This AST node-kind has not yet been setup for interpretation.\nNode kind: '${astNode.kind}'`,
+          `This AST node-kind has not yet been setup for interpretation.\nNode kind: '${astNode.kind}', at position: '${astNode.start}'`,
           "internal"
         );
     }
@@ -43,72 +43,92 @@ export class Interpreter {
   }
 
   private evalBinaryExp(binop: AST_BinaryExp): Runtime_Value {
+    const binopStart = binop.left.start;
     const left = this.evaluate(binop.left);
     const right = this.evaluate(binop.right);
 
     // NUMBER
     if (left.type === "number" && right.type === "number") {
-      return this.evalNumericBinaryExp(left as Runtime_Number, binop.operator, right as Runtime_Number);
+      return this.evalNumericBinaryExp(
+        (left as Runtime_Number).value,
+        binop.operator,
+        (right as Runtime_Number).value,
+        binopStart
+      );
     }
 
     // STRING
     else if (/(number,string|string,string|string,number)/.test(left.type + "," + right.type)) {
-      return this.evalStringBinaryExp(left as Runtime_String, binop.operator, right as Runtime_Number);
+      return this.evalStringBinaryExp(
+        (left as Runtime_String).value.toString(),
+        binop.operator,
+        (right as Runtime_Number).value.toString(),
+        binopStart
+      );
 
       // HANDLE INVALID BINARY OPERATION
     } else
-      throw new Err(`Invalid binary-operation: ${left.type} ${binop.operator} ${right.type}`, "interpreter");
-  }
-
-  private evalStringBinaryExp(left: Runtime_String, operator: string, right: Runtime_String): Runtime_String;
-  private evalStringBinaryExp(left: Runtime_Number, operator: string, right: Runtime_String): Runtime_String;
-  private evalStringBinaryExp(left: Runtime_String, operator: string, right: Runtime_Number): Runtime_String;
-  private evalStringBinaryExp(left: any, operator: string, right: any): Runtime_String {
-    if (operator === "+") {
-      return MK.STRING(left.value + right.value);
-    }
-
-    // UNSUPPORTED OPERATOR
-    else {
       throw new Err(
-        `Invalid string binary-operation. Unsupported use of operator: '${operator}'`,
+        `Invalid binary-operation: '${left.type} ${binop.operator} ${right.type}', at position: ${binop.start}`,
         "interpreter"
       );
-    }
   }
 
   private evalNumericBinaryExp(
-    left: Runtime_Number,
+    lhs: number,
     operator: string,
-    right: Runtime_Number
+    rhs: number,
+    start: CharPosition
   ): Runtime_Number {
     switch (operator) {
       case "+":
-        return MK.NUMBER(left.value + right.value);
+        return MK.NUMBER(lhs + rhs);
 
       case "-":
-        return MK.NUMBER(left.value - right.value);
+        return MK.NUMBER(lhs - rhs);
 
       case "*":
-        return MK.NUMBER(left.value * right.value);
+        return MK.NUMBER(lhs * rhs);
 
       case "%":
-        return MK.NUMBER(left.value % right.value);
+        return MK.NUMBER(lhs % rhs);
 
       case "/": {
         // handle division by: '0'
-        if (right.value === 0)
-          throw new Err("Invalid division operation, division by: '0' is not permitted", "interpreter");
+        if (rhs === 0)
+          throw new Err(
+            `Invalid division operation.\nOperation: '${lhs} ${operator} ${rhs}' (division by '0' is forbidden), at position: '${start}'`,
+            "interpreter"
+          );
 
-        return MK.NUMBER(left.value / right.value);
+        return MK.NUMBER(lhs / rhs);
       }
 
       // UNRECOGNIZED OPERATOR
       default:
         throw new Err(
-          `This binary-operator has not yet been setup for interpretation.\nOperator: '${operator}'`,
+          `This binary-operator has not yet been setup for interpretation.\nOperator: '${operator}', at position: '${start}'`,
           "internal"
         );
+    }
+  }
+
+  private evalStringBinaryExp(
+    lhs: string,
+    operator: string,
+    rhs: string,
+    start: CharPosition
+  ): Runtime_String {
+    if (operator === "+") {
+      return MK.STRING(lhs + rhs);
+    }
+
+    // UNSUPPORTED OPERATOR
+    else {
+      throw new Err(
+        `Invalid string binary-operation. Unsupported use of operator: '${operator}', at position: '${start}'`,
+        "interpreter"
+      );
     }
   }
 }

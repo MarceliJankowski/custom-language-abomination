@@ -19,6 +19,8 @@ type AST_Node =
 /**@desc doesn't return any value at run-time*/
 interface AST_Statement {
   kind: AST_Node;
+  start: CharPosition;
+  end: CharPosition;
 }
 
 /**@desc it's `AST` root node, represents whole program and contains all statements*/
