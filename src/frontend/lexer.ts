@@ -45,7 +45,6 @@ export class Token {
   constructor(
     public type: TokenType,
     public value: string,
-    public line: number,
     public start: CharPosition,
     public end: CharPosition
   ) {}
@@ -276,7 +275,7 @@ export class Lexer {
   /**@desc append Token to `tokens` array
   @param end is optional, if not provided it defaults to `start`, easing single-character token creation*/
   private addToken(type: TokenType, value: string, start: CharPosition, end = start): void {
-    this.tokens.push(new Token(type, value, this.line, start, end));
+    this.tokens.push(new Token(type, value, start, end));
   }
 
   /**@return currently processed `src` character*/
