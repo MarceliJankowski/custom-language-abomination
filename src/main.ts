@@ -1,6 +1,7 @@
 // PACKAGES
 import fs from "fs";
 import path from "path";
+import stringify from "json-stringify-pretty-compact";
 import promptSync from "prompt-sync";
 const prompt = promptSync();
 
@@ -130,7 +131,7 @@ class InterpreterInterface {
         const output = this.evaluateSrc(input);
 
         // LOG OUTPUT
-        if (this.isVerbose) this.verboseOutput(output);
+        if (this.isVerbose) this.verboseOutput(input, output);
         else console.log(output.interpreter);
 
         // HANDLE EXCEPTION
@@ -153,10 +154,8 @@ class InterpreterInterface {
       const output = this.evaluateSrc(src);
 
       // LOG OUTPUT
-      if (this.isVerbose) {
-        this.outputLog("SRC:", src);
-        this.verboseOutput(output);
-      } else console.log(output.interpreter);
+      if (this.isVerbose) this.verboseOutput(src, output);
+      else console.log(output.interpreter);
 
       // HANDLE EXCEPTION
     } catch (err) {
@@ -191,7 +190,9 @@ class InterpreterInterface {
   // -----------------------------------------------
 
   /**@desc output verbose information*/
-  private verboseOutput(output: EvaluateSrcOutput): void {
+  private verboseOutput(src: string, output: EvaluateSrcOutput): void {
+    this.printBreakLine();
+    console.log("SRC:\n\n" + src);
     this.outputLog("LEXER OUTPUT:", output.lexer);
     this.outputLog("PARSER OUTPUT:", output.parser);
     this.outputLog("INTERPRETER OUTPUT:", output.interpreter);
@@ -204,7 +205,7 @@ class InterpreterInterface {
   private outputLog(header: string, output: unknown): void {
     this.printBreakLine();
     console.log(header + "\n");
-    console.log(JSON.stringify(output, null, 4));
+    console.log(stringify(output, { indent: 4, maxLength: 60 }));
   }
 
   /**@desc print break-line
