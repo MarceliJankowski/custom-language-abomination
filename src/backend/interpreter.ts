@@ -1,26 +1,32 @@
 // PROJECT MODULES
 import { Err } from "../utils";
 import * as MK from "./runtimeValueFactories";
+import { VariableEnv } from "./variableEnv";
 
 // -----------------------------------------------
 //                 INTERPRETER
 // -----------------------------------------------
 
 export class Interpreter {
+  constructor(private env: VariableEnv) {}
+
   /**@desc evaluate/interpret `astNode`*/
   public evaluate(astNode: AST_Statement): Runtime_Value {
     switch (astNode.kind) {
       case "Program":
         return this.evalProgram(astNode as AST_Program);
 
-      case "BinaryExp":
-        return this.evalBinaryExp(astNode as AST_BinaryExp);
-
       case "NumericLiteral":
         return MK.NUMBER((astNode as AST_NumericLiteral).value);
 
       case "StringLiteral":
         return MK.STRING((astNode as AST_StringLiteral).value);
+
+      case "Identifier":
+        return this.evalIdentifier(astNode as AST_Identifier);
+
+      case "BinaryExp":
+        return this.evalBinaryExp(astNode as AST_BinaryExp);
 
       default:
         throw new Err(
@@ -40,6 +46,10 @@ export class Interpreter {
     for (const statement of program.body) lastEvaluated = this.evaluate(statement);
 
     return lastEvaluated;
+  }
+
+  private evalIdentifier(identifier: AST_Identifier): Runtime_Value {
+    return this.env.lookupVar(identifier.value, identifier.start);
   }
 
   private evalBinaryExp(binop: AST_BinaryExp): Runtime_Value {

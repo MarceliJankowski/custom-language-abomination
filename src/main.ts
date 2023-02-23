@@ -9,7 +9,7 @@ const prompt = promptSync();
 import { ErrorCode } from "./constants";
 import { Err } from "./utils";
 import { Lexer, Parser } from "./frontend";
-import { Interpreter } from "./backend";
+import { Interpreter, createGlobalEnv } from "./backend";
 
 // -----------------------------------------------
 //                    TYPES
@@ -174,9 +174,11 @@ class InterpreterInterface {
   /**@desc interpret/evaluate `src` param
   @return object with outputs of each interpreter stage*/
   private evaluateSrc(src: string): EvaluateSrcOutput {
+    const env = createGlobalEnv(); // setup global environment
+
     const lexerOutput = new Lexer(src).tokenize();
     const AST = new Parser([...lexerOutput]).buildAST(); // passing shallow-copy of lexerOutput because parser modifies it and I need original for the verboseOutput
-    const interpreterOutput = new Interpreter().evaluate(AST);
+    const interpreterOutput = new Interpreter(env).evaluate(AST);
 
     return {
       lexer: lexerOutput,
