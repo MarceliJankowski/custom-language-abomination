@@ -30,6 +30,7 @@ interface EvaluateSrcOutput {
 class InterpreterInterface {
   private isVerbose = false;
   private filePath: string | undefined;
+  private globalEnv = createGlobalEnv(); // setup global variable environment
 
   /**@desc specifies which method of interacting with interpreter should be used*/
   private interactionMethod: undefined | "repl" | "file";
@@ -174,11 +175,9 @@ class InterpreterInterface {
   /**@desc interpret/evaluate `src` param
   @return object with outputs of each interpreter stage*/
   private evaluateSrc(src: string): EvaluateSrcOutput {
-    const env = createGlobalEnv(); // setup global environment
-
     const lexerOutput = new Lexer(src).tokenize();
     const AST = new Parser([...lexerOutput]).buildAST(); // passing shallow-copy of lexerOutput because parser modifies it and I need original for the verboseOutput
-    const interpreterOutput = new Interpreter(env).evaluate(AST);
+    const interpreterOutput = new Interpreter(this.globalEnv).evaluate(AST);
 
     return {
       lexer: lexerOutput,

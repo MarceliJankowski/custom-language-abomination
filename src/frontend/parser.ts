@@ -33,20 +33,85 @@ export class Parser {
   // -----------------------------------------------
   // From least to most important:
 
-  // additiveExp -  LEAST IMPORTANT / INVOKED FIRST / EVALUATED LAST
+  // varDeclaration - LEAST IMPORTANT / INVOKED FIRST / EVALUATED LAST
+  // additiveExp
   // multiplicativeExp
-  // primaryExp -  MOST IMPORTANT / INVOKED LAST / EVALUATED FIRST
+  // primaryExp - MOST IMPORTANT / INVOKED LAST / EVALUATED FIRST
 
   // -----------------------------------------------
   //                    PARSE
   // -----------------------------------------------
 
   private parseStatement(): AST_Statement {
-    return this.parseExpression();
+    switch (this.at().type) {
+      // VarDeclaration
+      case TokenType.VAR:
+      case TokenType.CONST:
+        return this.parseVarDeclaration();
+
+      default:
+        return this.parseExpression();
+    }
   }
 
   private parseExpression(): AST_Expression {
     return this.parseAdditiveExp();
+  }
+
+  private parseVarDeclaration(): AST_Expression {
+    const varDeclarationKeyword = this.eat();
+    const varDeclarationStart = varDeclarationKeyword.start;
+    const isConstant = varDeclarationKeyword.type === TokenType.CONST;
+
+    const identifier = this.eatAndExpect(
+      TokenType.IDENTIFIER,
+      `Invalid variable declaration. Missing identifier following: '${varDeclarationKeyword.value}'`
+    ).value;
+
+    // HANDLE UNINITIALIZED VARIABLE DECLARATION (like: 'var x')
+    if (this.at().type === TokenType.SEMICOLON) {
+      const uninitializedVarDeclarationEnd = this.eat().end;
+
+      if (isConstant)
+        throw new Err(
+          `Invalid variable declaration. Missing initializer/value-assignment in constant variable declaration, at position: ${varDeclarationStart}`,
+          "parser"
+        );
+
+      const varDeclaration: AST_VarDeclaration = {
+        kind: "VarDeclaration",
+        identifier,
+        constant: false,
+        start: varDeclarationStart,
+        end: uninitializedVarDeclarationEnd,
+      };
+
+      return varDeclaration;
+    }
+
+    // HANDLE INITIALIZED VARIABLE DECLARATION (like: 'var x = 10')
+
+    this.eatAndExpect(
+      TokenType.EQUAL,
+      `Invalid variable declaration. Identifier is not followed by '=' sign`
+    );
+
+    const varDeclarationValue = this.parseExpression();
+    let varDeclarationEnd = varDeclarationValue.end;
+
+    // handle optional semicolon
+    if (this.at().type === TokenType.SEMICOLON) varDeclarationEnd = this.eat().end;
+
+    const varDeclaration: AST_VarDeclaration = {
+      kind: "VarDeclaration",
+      identifier,
+      constant: isConstant,
+      value: varDeclarationValue,
+      start: varDeclarationStart,
+      end: varDeclarationEnd,
+    };
+
+    return varDeclaration;
   }
 
   /**@desc parses `addition` and `subtraction` operators*/

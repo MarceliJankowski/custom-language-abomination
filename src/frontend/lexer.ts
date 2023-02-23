@@ -19,20 +19,22 @@ export enum TokenType {
   IDENTIFIER = "IDENTIFIER",
 
   // KEYWORDS
-  LET = "LET",
+  VAR = "var",
   CONST = "CONST",
 
   // OPERATORS
-  OPEN_PAREN = "(",
-  CLOSE_PAREN = ")",
+  OPEN_PAREN = "OPEN_PAREN",
+  CLOSE_PAREN = "CLOSE_PAREN",
   BINARY_OPERATOR = "BINARY_OPERATOR",
+  SEMICOLON = "SEMICOLON",
+  EQUAL = "EQUAL",
 
   // OTHER
   EOF = "EOF",
 }
 
 const KEYWORDS: { [key: string]: TokenType } = {
-  let: TokenType.LET,
+  var: TokenType.VAR,
   const: TokenType.CONST,
 };
 
@@ -88,6 +90,16 @@ export class Lexer {
 
         case ")": {
           this.addToken(TokenType.CLOSE_PAREN, this.eat(), this.position);
+          break;
+        }
+
+        case "=": {
+          this.addToken(TokenType.EQUAL, this.eat(), this.position);
+          break;
+        }
+
+        case ";": {
+          this.addToken(TokenType.SEMICOLON, this.eat(), this.position);
           break;
         }
 

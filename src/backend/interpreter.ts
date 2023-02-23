@@ -25,6 +25,9 @@ export class Interpreter {
       case "Identifier":
         return this.evalIdentifier(astNode as AST_Identifier);
 
+      case "VarDeclaration":
+        return this.evalVarDeclaration(astNode as AST_VarDeclaration);
+
       case "BinaryExp":
         return this.evalBinaryExp(astNode as AST_BinaryExp);
 
@@ -50,6 +53,18 @@ export class Interpreter {
 
   private evalIdentifier(identifier: AST_Identifier): Runtime_Value {
     return this.env.lookupVar(identifier.value, identifier.start);
+  }
+
+  private evalVarDeclaration(varDeclaration: AST_VarDeclaration): Runtime_Value {
+    const value = varDeclaration.value ? this.evaluate(varDeclaration.value) : MK.UNDEFINED(); // set value for uninitialized variables to undefined
+
+    this.env.declareVar(varDeclaration.identifier, value, {
+      constant: varDeclaration.constant,
+      position: varDeclaration.start,
+    });
+
+    // treat variable declaration as statement, hence return undefined
+    return MK.UNDEFINED();
   }
 
   private evalBinaryExp(binop: AST_BinaryExp): Runtime_Value {
