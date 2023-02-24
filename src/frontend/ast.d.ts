@@ -9,6 +9,7 @@ type AST_Node =
   | "VarDeclaration"
 
   // EXPRESSIONS
+  | "AssignmentExp"
   | "BinaryExp"
 
   // LITERALS
@@ -47,6 +48,12 @@ interface AST_Expression extends AST_Statement {}
 //              EXTENDS EXPRESSION
 // -----------------------------------------------
 
+interface AssignmentExp extends AST_Expression {
+  kind: "AssignmentExp";
+  assigne: AST_Expression; // assigne is an expression because I want to support member-expressions (like: obj.a = 'value', where 'obj.a' is a member-expression)
+  value: AST_Expression;
+}
+
 interface AST_NumericLiteral extends AST_Expression {
   kind: "NumericLiteral";
   value: number;
@@ -57,16 +64,15 @@ interface AST_StringLiteral extends AST_Expression {
   value: string;
 }
 
+interface AST_Identifier extends AST_Expression {
+  kind: "Identifier";
+  value: string;
+}
+
 /**@desc consists of two `sides` (sides are expressions) seperated by `operator`*/
 interface AST_BinaryExp extends AST_Expression {
   kind: "BinaryExp";
   left: AST_Expression;
   right: AST_Expression;
   operator: string;
-}
-
-/**@desc represents user-defined identifier like function/variable name*/
-interface AST_Identifier extends AST_Expression {
-  kind: "Identifier";
-  value: string;
 }

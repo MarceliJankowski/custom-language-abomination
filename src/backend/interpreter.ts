@@ -28,6 +28,9 @@ export class Interpreter {
       case "VarDeclaration":
         return this.evalVarDeclaration(astNode as AST_VarDeclaration);
 
+      case "AssignmentExp":
+        return this.evalAssignmentExp(astNode as AssignmentExp);
+
       case "BinaryExp":
         return this.evalBinaryExp(astNode as AST_BinaryExp);
 
@@ -65,6 +68,22 @@ export class Interpreter {
 
     // treat variable declaration as statement, hence return undefined
     return MK.UNDEFINED();
+  }
+
+  private evalAssignmentExp(assignmentExp: AssignmentExp): Runtime_Value {
+    // make sure that assigne is an identifier
+    if (assignmentExp.assigne.kind !== "Identifier")
+      throw new Err(
+        `Invalid assignment expression. Invalid Assigne kind: '${assignmentExp.assigne.kind}', at position: ${assignmentExp.start}`,
+        "interpreter"
+      );
+
+    // handle assignment
+    const identifier = (assignmentExp.assigne as AST_Identifier).value;
+    const value = this.evaluate(assignmentExp.value);
+    this.env.assignVar(identifier, value, assignmentExp.start);
+
+    return value;
   }
 
   private evalBinaryExp(binop: AST_BinaryExp): Runtime_Value {

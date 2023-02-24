@@ -34,6 +34,7 @@ export class Parser {
   // From least to most important:
 
   // varDeclaration - LEAST IMPORTANT / INVOKED FIRST / EVALUATED LAST
+  // assignmentExp
   // additiveExp
   // multiplicativeExp
   // primaryExp - MOST IMPORTANT / INVOKED LAST / EVALUATED FIRST
@@ -55,7 +56,7 @@ export class Parser {
   }
 
   private parseExpression(): AST_Expression {
-    return this.parseAdditiveExp();
+    return this.parseAssignmentExp();
   }
 
   private parseVarDeclaration(): AST_Expression {
@@ -112,6 +113,33 @@ export class Parser {
     };
 
     return varDeclaration;
+  }
+
+  private parseAssignmentExp(): AST_Expression {
+    const left = this.parseAdditiveExp();
+    const assignmentStart = left.start;
+
+    if (this.at().type === TokenType.EQUAL) {
+      this.eat(); // advance past equal token
+
+      const value = this.parseAssignmentExp();
+      let assignmentEnd = value.end;
+
+      // handle optional semicolon
+      if (this.at().type === TokenType.SEMICOLON) assignmentEnd = this.eat().end;
+
+      const assignmentExp: AssignmentExp = {
+        kind: "AssignmentExp",
+        value,
+        assigne: left,
+        start: assignmentStart,
+        end: assignmentEnd,
+      };
+
+      return assignmentExp;
+    }
+
+    return left;
   }
 
   /**@desc parses `addition` and `subtraction` operators*/
