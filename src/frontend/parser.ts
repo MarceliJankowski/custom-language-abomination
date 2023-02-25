@@ -45,22 +45,37 @@ export class Parser {
   // -----------------------------------------------
 
   private parseStatement(): AST_Statement {
-    switch (this.at().type) {
-      // VarDeclaration
-      case TokenType.VAR:
-      case TokenType.CONST:
-        return this.parseVarDeclaration();
+    let parsedStatement: AST_Statement;
 
+    switch (this.at().type) {
+      // STATEMENTS
+      case TokenType.VAR:
+      case TokenType.CONST: {
+        parsedStatement = this.parseVarDeclaration();
+        break;
+      }
+
+      // EXPRESSIONS
       default:
         return this.parseExpression();
     }
+
+    // HANDLE OPTIONAL SEMICOLON
+    if (this.at().type === TokenType.SEMICOLON) this.eat();
+
+    return parsedStatement;
   }
 
   private parseExpression(): AST_Expression {
-    return this.parseAssignmentExp();
+    const parsedExpression = this.parseAssignmentExp();
+
+    // HANDLE OPTIONAL SEMICOLON
+    if (this.at().type === TokenType.SEMICOLON) this.eat();
+
+    return parsedExpression;
   }
 
-  private parseVarDeclaration(): AST_Expression {
+  private parseVarDeclaration(): AST_Statement {
     const varDeclarationKeyword = this.eat();
     const varDeclarationStart = varDeclarationKeyword.start;
     const isConstant = varDeclarationKeyword.type === TokenType.CONST;
@@ -99,10 +114,6 @@ export class Parser {
     );
 
     const varDeclarationValue = this.parseExpression();
-    let varDeclarationEnd = varDeclarationValue.end;
-
-    // handle optional semicolon
-    if (this.at().type === TokenType.SEMICOLON) varDeclarationEnd = this.eat().end;
 
     const varDeclaration: AST_VarDeclaration = {
       kind: "VarDeclaration",
@@ -110,7 +121,7 @@ export class Parser {
       constant: isConstant,
       value: varDeclarationValue,
       start: varDeclarationStart,
-      end: varDeclarationEnd,
+      end: varDeclarationValue.end,
     };
 
     return varDeclaration;
@@ -124,17 +135,13 @@ export class Parser {
       this.eat(); // advance past equal token
 
       const value = this.parseLogicalExp();
-      let assignmentEnd = value.end;
-
-      // handle optional semicolon
-      if (this.at().type === TokenType.SEMICOLON) assignmentEnd = this.eat().end;
 
       const assignmentExp: AssignmentExp = {
         kind: "AssignmentExp",
-        value,
         assigne: left,
+        value,
         start: assignmentStart,
-        end: assignmentEnd,
+        end: value.end,
       };
 
       return assignmentExp;
