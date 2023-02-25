@@ -3,6 +3,7 @@
 // -----------------------------------------------
 // preface everything with "Runtime" to clear any confusion / prevent name collisions
 
+// update DATA_TYPES constant in interpreter.ts every time I change Runtime_ValueType (flawed design I know)
 type Runtime_ValueType = "number" | "string" | "boolean" | "null" | "undefined";
 
 interface Runtime_Value {

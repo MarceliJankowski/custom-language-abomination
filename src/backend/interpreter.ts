@@ -4,6 +4,21 @@ import * as MK from "./runtimeValueFactories";
 import { VariableEnv } from "./variableEnv";
 
 // -----------------------------------------------
+//                    STUFF
+// -----------------------------------------------
+
+/**@desc list containing all `falsy` values*/
+const FALSY_VALUES = [MK.BOOL(false), MK.UNDEFINED(), MK.NULL(), MK.NUMBER(0)];
+
+/**@desc determine whether given `Runtime_Value` is falsy*/
+function isFalsy(value: unknown): boolean {
+  return FALSY_VALUES.some(({ value: falsyValue }) => falsyValue === value);
+}
+
+/**@desc determine whether given `Runtime_Value` is truthy*/
+const isTruthy = (value: unknown): boolean => !isFalsy(value);
+
+// -----------------------------------------------
 //                 INTERPRETER
 // -----------------------------------------------
 
@@ -94,85 +109,146 @@ export class Interpreter {
     // NUMBER
     if (left.type === "number" && right.type === "number") {
       return this.evalNumericBinaryExp(
-        (left as Runtime_Number).value,
+        left as Runtime_Number,
         binop.operator,
-        (right as Runtime_Number).value,
+        right as Runtime_Number,
         binopStart
       );
     }
 
-    // STRING
-    else if (/(number,string|string,string|string,number)/.test(left.type + "," + right.type)) {
+    // STRING / STRING && NUMBER COMBINATIONS
+    else if (/(string && number|string && string|number && string)/.test(left.type + " && " + right.type)) {
       return this.evalStringBinaryExp(
-        (left as Runtime_String).value.toString(),
+        left as Runtime_String,
         binop.operator,
-        (right as Runtime_Number).value.toString(),
+        right as Runtime_Number,
         binopStart
       );
+    }
 
-      // HANDLE INVALID BINARY OPERATION
-    } else
-      throw new Err(
-        `Invalid binary-operation: '${left.type} ${binop.operator} ${right.type}', at position: ${binop.start}`,
-        "interpreter"
-      );
+    // HANDLE OTHER DATA-TYPES
+    else return this.evalBinaryExpSharedOperators(left, binop.operator, right, binopStart);
   }
 
-  private evalNumericBinaryExp(
-    lhs: number,
+  /**@desc evaluate all shared (among all data-types) binary operators*/
+  private evalBinaryExpSharedOperators<T extends Runtime_Value, U extends Runtime_Value>(
+    left: T,
     operator: string,
-    rhs: number,
+    right: U,
     start: CharPosition
-  ): Runtime_Number {
+  ): T | U | Runtime_Boolean {
+    const lhsValue: unknown = (left as any).value;
+    const rhsValue: unknown = (right as any).value;
+
     switch (operator) {
-      case "+":
-        return MK.NUMBER(lhs + rhs);
+      case "==":
+        return MK.BOOL(lhsValue === rhsValue);
 
-      case "-":
-        return MK.NUMBER(lhs - rhs);
+      case "!=":
+        return MK.BOOL(lhsValue !== rhsValue);
 
-      case "*":
-        return MK.NUMBER(lhs * rhs);
+      // custom AND/OR logic
 
-      case "%":
-        return MK.NUMBER(lhs % rhs);
+      case "&&": {
+        // 'AND' operator logic:
+        // - at least one operand is "falsy" -> return first "falsy" operand
+        // - both operands are "truthy" -> return last "truthy" operand
 
-      case "/": {
-        // handle division by: '0'
-        if (rhs === 0)
-          throw new Err(
-            `Invalid division operation.\nOperation: '${lhs} ${operator} ${rhs}' (division by '0' is forbidden), at position: ${start}`,
-            "interpreter"
-          );
+        if (isFalsy(lhsValue)) return left;
+        if (isFalsy(rhsValue)) return right;
 
-        return MK.NUMBER(lhs / rhs);
+        // BOTH ARE 'truthy'
+        return right;
       }
 
-      // UNRECOGNIZED OPERATOR
+      case "||": {
+        // 'OR' operator logic:
+        // - at least one operand is "truthy" -> return first "truthy" operand
+        // - both operands are "falsy" -> return last "falsy" operand
+
+        if (isTruthy(lhsValue)) return left;
+        if (isTruthy(rhsValue)) return right;
+
+        // BOTH ARE 'falsy'
+        return right;
+      }
+
       default:
         throw new Err(
-          `This binary-operator has not yet been setup for interpretation.\nOperator: '${operator}', at position: ${start}`,
-          "internal"
+          `Invalid binary-operation. Unsupported use of operator: '${operator}', at position: ${start}`,
+          "interpreter"
         );
     }
   }
 
-  private evalStringBinaryExp(
-    lhs: string,
+  private evalNumericBinaryExp(
+    left: Runtime_Number,
     operator: string,
-    rhs: string,
+    right: Runtime_Number,
     start: CharPosition
-  ): Runtime_String {
-    if (operator === "+") {
-      return MK.STRING(lhs + rhs);
-    }
+  ): Runtime_Number | Runtime_Boolean {
+    const [lhsValue, rhsValue] = [left.value, right.value];
 
-    // UNSUPPORTED OPERATOR
-    else {
-      throw new Err(
-        `Invalid string binary-operation. Unsupported use of operator: '${operator}', at position: ${start}`,
-        "interpreter"
-      );
+    switch (operator) {
+      // HANDLE UNIQUE OPERATORS
+
+      case "+":
+        return MK.NUMBER(lhsValue + rhsValue);
+
+      case "-":
+        return MK.NUMBER(lhsValue - rhsValue);
+
+      case "*":
+        return MK.NUMBER(lhsValue * rhsValue);
+
+      case "%":
+        return MK.NUMBER(lhsValue % rhsValue);
+
+      case "/": {
+        // handle division by: '0'
+        if (rhsValue === 0)
+          throw new Err(
+            `Invalid division operation.\nOperation: '${lhsValue} ${operator} ${rhsValue}' (division by '0' is forbidden), at position: ${start}`,
+            "interpreter"
+          );
+
+        return MK.NUMBER(lhsValue / rhsValue);
+      }
+
+      case ">":
+        return MK.BOOL(lhsValue > rhsValue);
+
+      case "<":
+        return MK.BOOL(lhsValue < rhsValue);
+
+      case ">=":
+        return MK.BOOL(lhsValue >= rhsValue);
+
+      case "<=":
+        return MK.BOOL(lhsValue <= rhsValue);
+
+      // HANDLE SHARED OPERATORS
+      default:
+        return this.evalBinaryExpSharedOperators(left, operator, right, start) as Runtime_Number;
+    }
+  }
+
+  private evalStringBinaryExp(
+    left: Runtime_String,
+    operator: string,
+    right: Runtime_Number,
+    start: CharPosition
+  ): Runtime_String | Runtime_Boolean {
+    const [lhsValue, rhsValue] = [left.value, right.value];
+
+    switch (operator) {
+      // HANDLE UNIQUE OPERATORS
+      case "+":
+        return MK.STRING(lhsValue + rhsValue);
+
+      // HANDLE SHARED OPERATORS
+      default:
+        return this.evalBinaryExpSharedOperators(left, operator, right, start) as Runtime_String;
     }
   }
 }

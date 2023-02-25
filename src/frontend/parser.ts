@@ -1,5 +1,5 @@
 // PROJECT MODULES
-import { Token, TokenType } from "./lexer";
+import { Token, TokenType, isValidLogicalBinaryOperator } from "./lexer";
 import { Err } from "../utils";
 
 // -----------------------------------------------
@@ -35,6 +35,7 @@ export class Parser {
 
   // varDeclaration - LEAST IMPORTANT / INVOKED FIRST / EVALUATED LAST
   // assignmentExp
+  // logicalExp
   // additiveExp
   // multiplicativeExp
   // primaryExp - MOST IMPORTANT / INVOKED LAST / EVALUATED FIRST
@@ -116,13 +117,13 @@ export class Parser {
   }
 
   private parseAssignmentExp(): AST_Expression {
-    const left = this.parseAdditiveExp();
+    const left = this.parseLogicalExp();
     const assignmentStart = left.start;
 
     if (this.at().type === TokenType.EQUAL) {
       this.eat(); // advance past equal token
 
-      const value = this.parseAssignmentExp();
+      const value = this.parseLogicalExp();
       let assignmentEnd = value.end;
 
       // handle optional semicolon
@@ -137,6 +138,29 @@ export class Parser {
       };
 
       return assignmentExp;
+    }
+
+    return left;
+  }
+
+  /**@desc parses `relational/logical` operators*/
+  private parseLogicalExp(): AST_Expression {
+    let left = this.parseAdditiveExp();
+
+    while (isValidLogicalBinaryOperator(this.at().value)) {
+      const operator = this.eat().value;
+      const right = this.parseAdditiveExp();
+
+      const value: AST_BinaryExp = {
+        kind: "BinaryExp",
+        left,
+        operator,
+        right,
+        start: left.start,
+        end: right.end,
+      };
+
+      left = value;
     }
 
     return left;
@@ -166,7 +190,7 @@ export class Parser {
   }
 
   /**@desc parses `multiplication`, `division` and `modulo` operators*/
-  private parseMultiplicativeExp() {
+  private parseMultiplicativeExp(): AST_Expression {
     let left = this.parsePrimaryExp();
 
     while (/[*/%]/.test(this.at().value)) {
@@ -187,6 +211,7 @@ export class Parser {
 
     return left;
   }
+
   /**@desc parses literal values and grouping expressions*/
   private parsePrimaryExp(): AST_Expression {
     const tokenType = this.at().type;

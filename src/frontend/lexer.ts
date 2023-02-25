@@ -5,9 +5,19 @@ import { Err } from "../utils";
 //                    STUFF
 // -----------------------------------------------
 
+const VALID_LOGICAL_BINARY_OPERATORS = [">", ">=", "<", "<=", "==", "!=", "&&", "||"];
+
+/**@desc determine whether `operator` is a valid logical binary operator*/
+export function isValidLogicalBinaryOperator(operator: string): boolean {
+  return VALID_LOGICAL_BINARY_OPERATORS.some(validOperator => operator === validOperator);
+}
+
+/**@desc collection of `signs` which don't inherently adhere to a pre-defined industry standard (often have custom implementation / are not obvious) or could potentially change in the future
+For instance: comment-sign differs from language to language while arithmetic operators commonly follow a standard*/
 enum Sign {
   COMMENT = "#",
   ESCAPE = "\\",
+
   STRING_1 = '"',
   STRING_2 = "'",
 }
@@ -19,7 +29,7 @@ export enum TokenType {
   IDENTIFIER = "IDENTIFIER",
 
   // KEYWORDS
-  VAR = "var",
+  VAR = "VAR",
   CONST = "CONST",
 
   // OPERATORS
@@ -38,9 +48,7 @@ const KEYWORDS: { [key: string]: TokenType } = {
   const: TokenType.CONST,
 };
 
-/**@desc represents `valid` language Token
-@param type TokenType
-@param value TokenValue (string)*/
+/**@desc represents `valid` language Token*/
 export class Token {
   constructor(
     public type: TokenType,
@@ -89,11 +97,6 @@ export class Lexer {
 
         case ")": {
           this.addToken(TokenType.CLOSE_PAREN, this.eat(), this.position);
-          break;
-        }
-
-        case "=": {
-          this.addToken(TokenType.EQUAL, this.eat(), this.position);
           break;
         }
 
@@ -230,11 +233,40 @@ export class Lexer {
               this.column++;
             }
 
-            // HANDLE RESERVED KEYWORDS
+            // handle reserved keywords
             const keywordType = KEYWORDS[identifier];
 
             if (keywordType) this.addToken(keywordType, identifier, startPosition, this.position);
             else this.addToken(TokenType.IDENTIFIER, identifier, startPosition, this.position);
+          }
+
+          // BINARY OPERATORS
+          else if (this.isPartiallyLogicalOperator(char)) {
+            const startPosition = this.position;
+            let operator = this.eat();
+
+            // BUILD operator
+            // iterate for as long as current-char could be a part of a logical-operator / logical-operator could consist of currentChar
+            while (this.isSrcNotEmpty() && this.isPartiallyLogicalOperator(this.at())) {
+              operator += this.eat();
+              this.column++;
+            }
+
+            // HANDLE EQUAL TOKEN
+            if (operator === "=") {
+              this.addToken(TokenType.EQUAL, operator, startPosition);
+              break;
+            }
+
+            const isOperatorValid = isValidLogicalBinaryOperator(operator);
+
+            if (!isOperatorValid)
+              throw new Err(
+                `Invalid logical operator. Operator: '${operator}', at position: ${this.position}`,
+                "lexer"
+              );
+
+            this.addToken(TokenType.BINARY_OPERATOR, operator, startPosition, this.position);
           }
 
           // COMMENT
@@ -309,6 +341,11 @@ export class Lexer {
   /**@desc determine whether `char` is alphanumeric or is an underscore*/
   private isAlpha(char: string): boolean {
     return /\w/.test(char);
+  }
+
+  /**@desc determine whether `char` is a part of logical operator / whether logical operator could consist of `char`*/
+  private isPartiallyLogicalOperator(char: string): boolean {
+    return /[=><!&|]/.test(char);
   }
 
   /**@desc determine whether `char` is a whitespace /[ \n\t\r]/*/
