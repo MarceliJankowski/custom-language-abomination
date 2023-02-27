@@ -10,6 +10,8 @@ type AST_Node =
 
   // EXPRESSIONS
   | "AssignmentExp"
+  | "PrefixUnaryExp"
+  | "PostfixUnaryExp"
   | "BinaryExp"
 
   // LITERALS
@@ -75,4 +77,21 @@ interface AST_BinaryExp extends AST_Expression {
   left: AST_Expression;
   right: AST_Expression;
   operator: string;
+}
+
+/**@desc consists of `operand` (part manipulated/affected by the operator) and `operator` (character representing specific action)*/
+interface AST_UnaryExp extends AST_Expression {
+  kind: "PrefixUnaryExp" | "PostfixUnaryExp";
+  operator: string;
+  operand: AST_Expression;
+}
+
+/**@desc `operator` comes first and then `operand` (like that: ++var)*/
+interface AST_PrefixUnaryExp extends AST_UnaryExp {
+  kind: "PrefixUnaryExp";
+}
+
+/**@desc `operand` comes first and then `operator` (like that: var++)*/
+interface AST_PostfixUnaryExp extends AST_UnaryExp {
+  kind: "PostfixUnaryExp";
 }

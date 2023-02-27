@@ -8,6 +8,7 @@ type Runtime_ValueType = "number" | "string" | "boolean" | "null" | "undefined";
 
 interface Runtime_Value {
   type: Runtime_ValueType;
+  value: unknown;
 }
 
 interface Runtime_Number extends Runtime_Value {

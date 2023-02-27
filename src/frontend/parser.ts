@@ -1,5 +1,5 @@
 // PROJECT MODULES
-import { Token, TokenType, isValidLogicalBinaryOperator } from "./lexer";
+import { Token, TokenType, isLogicalBinaryOperator } from "./lexer";
 import { Err } from "../utils";
 
 // -----------------------------------------------
@@ -31,13 +31,15 @@ export class Parser {
   // -----------------------------------------------
   //             ORDER OF OPERATIONS
   // -----------------------------------------------
-  // From least to most important:
+  // helpful web page: https://en.cppreference.com/w/cpp/language/operator_precedence
 
   // varDeclaration - LEAST IMPORTANT / INVOKED FIRST / EVALUATED LAST
   // assignmentExp
   // logicalExp
   // additiveExp
   // multiplicativeExp
+  // prefixUnaryExp
+  // postfixUnaryExp
   // primaryExp - MOST IMPORTANT / INVOKED LAST / EVALUATED FIRST
 
   // -----------------------------------------------
@@ -150,11 +152,11 @@ export class Parser {
     return left;
   }
 
-  /**@desc parses `relational/logical` operators*/
+  /**@desc parses binary expression `relational/logical` operators*/
   private parseLogicalExp(): AST_Expression {
     let left = this.parseAdditiveExp();
 
-    while (isValidLogicalBinaryOperator(this.at().value)) {
+    while (isLogicalBinaryOperator(this.at().value)) {
       const operator = this.eat().value;
       const right = this.parseAdditiveExp();
 
@@ -198,11 +200,11 @@ export class Parser {
 
   /**@desc parses `multiplication`, `division` and `modulo` operators*/
   private parseMultiplicativeExp(): AST_Expression {
-    let left = this.parsePrimaryExp();
+    let left = this.parsePrefixUnaryExp();
 
     while (/[*/%]/.test(this.at().value)) {
       const operator = this.eat().value;
-      const right = this.parsePrimaryExp();
+      const right = this.parsePrefixUnaryExp();
 
       const value: AST_BinaryExp = {
         kind: "BinaryExp",
@@ -214,6 +216,47 @@ export class Parser {
       };
 
       left = value;
+    }
+
+    return left;
+  }
+
+  /**@desc parse `prefix` unary expressions (like: ++var)*/
+  private parsePrefixUnaryExp(): AST_Expression {
+    while (this.at().type === TokenType.UNARY_OPERATOR) {
+      const operator = this.eat();
+      const operand = this.parsePostfixUnaryExp();
+
+      const unaryExp: AST_PrefixUnaryExp = {
+        kind: "PrefixUnaryExp",
+        operand,
+        operator: operator.value,
+        start: operator.start,
+        end: operand.end,
+      };
+
+      return unaryExp;
+    }
+
+    return this.parsePostfixUnaryExp();
+  }
+
+  /**@desc parse `postfix` unary expressions (like: var++)*/
+  private parsePostfixUnaryExp(): AST_Expression {
+    const left = this.parsePrimaryExp();
+
+    while (this.at().type === TokenType.UNARY_OPERATOR) {
+      const operator = this.eat();
+
+      const unaryExp: AST_PostfixUnaryExp = {
+        kind: "PostfixUnaryExp",
+        operator: operator.value,
+        operand: left,
+        start: operator.start,
+        end: left.end,
+      };
+
+      return unaryExp;
     }
 
     return left;
@@ -240,12 +283,6 @@ export class Parser {
         const { value, start, end } = this.eat();
         const numberNode: AST_NumericLiteral = { kind: "NumericLiteral", value: Number(value), start, end };
         return numberNode;
-      }
-
-      case TokenType.STRING: {
-        const { value, start, end } = this.eat();
-        const stringNode: AST_StringLiteral = { kind: "StringLiteral", value, start, end };
-        return stringNode;
       }
 
       case TokenType.OPEN_PAREN: {

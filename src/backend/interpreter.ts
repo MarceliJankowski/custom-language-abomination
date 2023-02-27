@@ -4,25 +4,13 @@ import * as MK from "./runtimeValueFactories";
 import { VariableEnv } from "./variableEnv";
 
 // -----------------------------------------------
-//                    STUFF
-// -----------------------------------------------
-
-/**@desc list containing all `falsy` values*/
-const FALSY_VALUES = [MK.BOOL(false), MK.UNDEFINED(), MK.NULL(), MK.NUMBER(0)];
-
-/**@desc determine whether given `Runtime_Value` is falsy*/
-function isFalsy(value: unknown): boolean {
-  return FALSY_VALUES.some(({ value: falsyValue }) => falsyValue === value);
-}
-
-/**@desc determine whether given `Runtime_Value` is truthy*/
-const isTruthy = (value: unknown): boolean => !isFalsy(value);
-
-// -----------------------------------------------
 //                 INTERPRETER
 // -----------------------------------------------
 
 export class Interpreter {
+  /**@desc list containing all runtime `falsy` values*/
+  private readonly FALSY_VALUES = [MK.BOOL(false), MK.UNDEFINED(), MK.NULL(), MK.NUMBER(0)];
+
   constructor(private env: VariableEnv) {}
 
   /**@desc evaluate/interpret `astNode`*/
@@ -48,6 +36,12 @@ export class Interpreter {
 
       case "BinaryExp":
         return this.evalBinaryExp(astNode as AST_BinaryExp);
+
+      case "PrefixUnaryExp":
+        return this.evalPrefixUnaryExp(astNode as AST_PrefixUnaryExp);
+
+      case "PostfixUnaryExp":
+        return this.evalPostfixUnaryExp(astNode as AST_PostfixUnaryExp);
 
       default:
         throw new Err(
@@ -99,6 +93,97 @@ export class Interpreter {
     this.env.assignVar(identifier, value, assignmentExp.start);
 
     return value;
+  }
+
+  private evalPrefixUnaryExp({ operator, operand, start }: AST_PrefixUnaryExp): Runtime_Value {
+    switch (operator) {
+      case "++":
+      case "--": {
+        // @desc:
+        // - these unary operators can only be used with identifier refering to a runtime number
+        // - first update identifier's value and then return it
+
+        const errMessage = `Invalid prefix unary expression. Operator: '${operator}' can only be used with identifier of number type.\nInvalid operand: '${operand.kind}', at position: ${operand.start}`;
+
+        if (operand.kind !== "Identifier") throw new Err(errMessage, "interpreter");
+
+        const operandIdentifier = operand as AST_Identifier;
+        const operandVar = this.evalIdentifier(operandIdentifier) as Runtime_Number;
+
+        if (operandVar.type !== "number") throw new Err(errMessage, "interpreter");
+
+        if (operator === "++") {
+          // by not modyfing '.value' property directly, I'm running Environment check for constant variable assignments
+          this.env.assignVar(operandIdentifier.value, MK.NUMBER(operandVar.value + 1), operand.start);
+        }
+        // operator: '--'
+        else this.env.assignVar(operandIdentifier.value, MK.NUMBER(operandVar.value - 1), operand.start);
+
+        return this.evalIdentifier(operandIdentifier); // return updated identifier
+      }
+
+      case "!": {
+        // @desc: return opposite of runtime boolean value (runtime value is 'truthy', return "false" / runtime value is 'falsy', return "true")
+
+        const runtimeOperand = this.evaluate(operand);
+
+        const operandBooleanValue = this.getBooleanValue(runtimeOperand.value);
+        const operandBooleanRuntimeValue = MK.BOOL(!operandBooleanValue);
+
+        return operandBooleanRuntimeValue;
+      }
+
+      // if this clause is reached, operator is not yet implemented in interpreter (internal exception)
+      default:
+        throw new Err(
+          `This unary operator is not yet implemented in interpreter. Operator: '${operator}', at position ${start}`,
+          "internal"
+        );
+    }
+  }
+
+  private evalPostfixUnaryExp({ operand, operator, start }: AST_PostfixUnaryExp): Runtime_Value {
+    switch (operator) {
+      case "++":
+      case "--": {
+        // @desc:
+        // - these unary operators can only be used with identifier refering to a runtime number
+        // - first return identifier's value and then update it
+
+        const errMessage = `Invalid postfix unary expression. Operator: '${operator}' can only be used with identifier of number type.\nInvalid operand: '${operand.kind}', at position: ${operand.start}`;
+
+        if (operand.kind !== "Identifier") throw new Err(errMessage, "interpreter");
+
+        const operandIdentifier = operand as AST_Identifier;
+        const operandBeforeUpdate = this.evalIdentifier(operandIdentifier) as Runtime_Number;
+
+        if (operandBeforeUpdate.type !== "number") throw new Err(errMessage, "interpreter");
+
+        if (operator === "++")
+          // by not modyfing '.value' property directly, I'm running Environment check for constant variable assignments
+          this.env.assignVar(
+            operandIdentifier.value,
+            MK.NUMBER(operandBeforeUpdate.value + 1),
+            operand.start
+          );
+        // operator: '--'
+        else
+          this.env.assignVar(
+            operandIdentifier.value,
+            MK.NUMBER(operandBeforeUpdate.value - 1),
+            operand.start
+          );
+
+        return operandBeforeUpdate; // operandBeforeUpdate contains reference to the previous NUMBER hash map, which contains previous/not-modified value
+      }
+
+      // if this clause is reached, operator is not yet implemented in interpreter (internal exception)
+      default:
+        throw new Err(
+          `This unary operator is not yet implemented in interpreter. Operator: '${operator}', at position ${start}`,
+          "internal"
+        );
+    }
   }
 
   private evalBinaryExp(binop: AST_BinaryExp): Runtime_Value {
@@ -154,8 +239,8 @@ export class Interpreter {
         // - at least one operand is "falsy" -> return first "falsy" operand
         // - both operands are "truthy" -> return last "truthy" operand
 
-        if (isFalsy(lhsValue)) return left;
-        if (isFalsy(rhsValue)) return right;
+        if (this.isFalsy(lhsValue)) return left;
+        if (this.isFalsy(rhsValue)) return right;
 
         // BOTH ARE 'truthy'
         return right;
@@ -166,8 +251,8 @@ export class Interpreter {
         // - at least one operand is "truthy" -> return first "truthy" operand
         // - both operands are "falsy" -> return last "falsy" operand
 
-        if (isTruthy(lhsValue)) return left;
-        if (isTruthy(rhsValue)) return right;
+        if (this.isTruthy(lhsValue)) return left;
+        if (this.isTruthy(rhsValue)) return right;
 
         // BOTH ARE 'falsy'
         return right;
@@ -208,7 +293,7 @@ export class Interpreter {
         // handle division by: '0'
         if (rhsValue === 0)
           throw new Err(
-            `Invalid division operation.\nOperation: '${lhsValue} ${operator} ${rhsValue}' (division by '0' is forbidden), at position: ${start}`,
+            `Invalid division operation. Operation: '${lhsValue} ${operator} ${rhsValue}' (division by '0' is forbidden), at position: ${start}`,
             "interpreter"
           );
 
@@ -250,5 +335,24 @@ export class Interpreter {
       default:
         return this.evalBinaryExpSharedOperators(left, operator, right, start) as Runtime_String;
     }
+  }
+
+  // -----------------------------------------------
+  //                  UTILITIES
+  // -----------------------------------------------
+
+  /**@desc determine whether given `Runtime_Value`.value is 'falsy' or 'truthy' (returns corresponding boolean)*/
+  private getBooleanValue(value: unknown): boolean {
+    return this.isTruthy(value);
+  }
+
+  /**@desc determine whether given `Runtime_Value`.value is falsy*/
+  private isFalsy(value: unknown): boolean {
+    return this.FALSY_VALUES.some(({ value: falsyValue }) => falsyValue === value);
+  }
+
+  /**@desc determine whether given `Runtime_Value`.value is truthy*/
+  private isTruthy(value: unknown): boolean {
+    return !this.isFalsy(value);
   }
 }
