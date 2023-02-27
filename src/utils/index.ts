@@ -1,2 +1,3 @@
 export * from "./Err";
-export * from "./utils";
+export * from "./generalUtils";
+export * from "./operatorChecks";

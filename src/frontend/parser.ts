@@ -1,5 +1,7 @@
 // PROJECT MODULES
-import { Token, TokenType, isLogicalBinaryOperator } from "./lexer";
+import { Token, TokenType } from "./lexer";
+import { isRelationalOperator, isEqualityOperator } from "../utils";
+import { LOGICAL_OPERATOR_AND, LOGICAL_OPERATOR_OR } from "../constants";
 import { Err } from "../utils";
 
 // -----------------------------------------------
@@ -35,7 +37,10 @@ export class Parser {
 
   // varDeclaration - LEAST IMPORTANT / INVOKED FIRST / EVALUATED LAST
   // assignmentExp
-  // logicalExp
+  // logicalExp (OR)
+  // logicalExp (AND)
+  // equalityExp
+  // relationalExp
   // additiveExp
   // multiplicativeExp
   // prefixUnaryExp
@@ -130,13 +135,13 @@ export class Parser {
   }
 
   private parseAssignmentExp(): AST_Expression {
-    const left = this.parseLogicalExp();
+    const left = this.parseLogicalExpOR();
     const assignmentStart = left.start;
 
     if (this.at().type === TokenType.EQUAL) {
       this.eat(); // advance past equal token
 
-      const value = this.parseLogicalExp();
+      const value = this.parseLogicalExpOR();
 
       const assignmentExp: AssignmentExp = {
         kind: "AssignmentExp",
@@ -152,24 +157,61 @@ export class Parser {
     return left;
   }
 
-  /**@desc parses binary expression `relational/logical` operators*/
-  private parseLogicalExp(): AST_Expression {
+  /**@desc parses logical `OR` operator*/
+  private parseLogicalExpOR(): AST_Expression {
+    let left = this.parseLogicalExpAND();
+
+    while (this.at().value === LOGICAL_OPERATOR_OR) {
+      const operator = this.eat().value;
+      const right = this.parseLogicalExpAND();
+
+      const binaryExp = this.generateASTBinaryExpNode(left, operator, right);
+      left = binaryExp;
+    }
+
+    return left;
+  }
+
+  /**@desc parses logical `AND` operator*/
+  private parseLogicalExpAND(): AST_Expression {
+    let left = this.parseEqualityExp();
+
+    while (this.at().value === LOGICAL_OPERATOR_AND) {
+      const operator = this.eat().value;
+      const right = this.parseEqualityExp();
+
+      const binaryExp = this.generateASTBinaryExpNode(left, operator, right);
+      left = binaryExp;
+    }
+
+    return left;
+  }
+
+  /**@desc parses binary expression `equality` operators*/
+  private parseEqualityExp(): AST_Expression {
+    let left = this.parseRelationalExp();
+
+    while (isEqualityOperator(this.at().value)) {
+      const operator = this.eat().value;
+      const right = this.parseRelationalExp();
+
+      const binaryExp = this.generateASTBinaryExpNode(left, operator, right);
+      left = binaryExp;
+    }
+
+    return left;
+  }
+
+  /**@desc parses binary expression `relational` operators*/
+  private parseRelationalExp(): AST_Expression {
     let left = this.parseAdditiveExp();
 
-    while (isLogicalBinaryOperator(this.at().value)) {
+    while (isRelationalOperator(this.at().value)) {
       const operator = this.eat().value;
       const right = this.parseAdditiveExp();
 
-      const value: AST_BinaryExp = {
-        kind: "BinaryExp",
-        left,
-        operator,
-        right,
-        start: left.start,
-        end: right.end,
-      };
-
-      left = value;
+      const binaryExp = this.generateASTBinaryExpNode(left, operator, right);
+      left = binaryExp;
     }
 
     return left;
@@ -183,16 +225,8 @@ export class Parser {
       const operator = this.eat().value;
       const right = this.parseMultiplicativeExp();
 
-      const value: AST_BinaryExp = {
-        kind: "BinaryExp",
-        left,
-        operator,
-        right,
-        start: left.start,
-        end: right.end,
-      };
-
-      left = value;
+      const binaryExp = this.generateASTBinaryExpNode(left, operator, right);
+      left = binaryExp;
     }
 
     return left;
@@ -206,16 +240,8 @@ export class Parser {
       const operator = this.eat().value;
       const right = this.parsePrefixUnaryExp();
 
-      const value: AST_BinaryExp = {
-        kind: "BinaryExp",
-        left,
-        operator,
-        right,
-        start: left.start,
-        end: right.end,
-      };
-
-      left = value;
+      const binaryExp = this.generateASTBinaryExpNode(left, operator, right);
+      left = binaryExp;
     }
 
     return left;
@@ -309,6 +335,24 @@ export class Parser {
   // -----------------------------------------------
   //                  UTILITIES
   // -----------------------------------------------
+
+  /**@desc helper function for parsing binary-expressions. It generates and returns `AST Binary Expression` node*/
+  private generateASTBinaryExpNode(
+    left: AST_Expression,
+    operator: string,
+    right: AST_Expression
+  ): AST_BinaryExp {
+    const astBinaryExp: AST_BinaryExp = {
+      kind: "BinaryExp",
+      left,
+      operator,
+      right,
+      start: left.start,
+      end: right.end,
+    };
+
+    return astBinaryExp;
+  }
 
   /**@desc determine whether EOF (End Of File) token is reached*/
   private notEOF(): boolean {

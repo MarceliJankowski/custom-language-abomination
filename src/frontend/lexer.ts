@@ -1,22 +1,10 @@
 // PROJECT MODULES
 import { Err, getUniqueCharsFromStringArr } from "../utils";
+import { UNARY_OPERATORS, BINARY_OPERATORS } from "../constants";
 
 // -----------------------------------------------
 //                    STUFF
 // -----------------------------------------------
-
-const LOGICAL_BINARY_OPERATORS = [">", ">=", "<", "<=", "==", "!=", "&&", "||"];
-const UNARY_OPERATORS = ["!", "++", "--"];
-
-/**@desc determine whether `operator` is a valid logical binary-operator*/
-export function isLogicalBinaryOperator(operator: string): boolean {
-  return LOGICAL_BINARY_OPERATORS.some(validOperator => operator === validOperator);
-}
-
-/**@desc determine whether `operator` is a unary operator*/
-function isUnaryOperator(operator: string): boolean {
-  return UNARY_OPERATORS.some(validOperator => operator === validOperator);
-}
 
 /**@desc collection of `signs` which don't inherently adhere to a pre-defined industry standard (often have custom implementation / are not obvious) or could potentially change in the future
 For instance: comment-sign differs from language to language while arithmetic operators commonly follow a standard*/
@@ -109,14 +97,6 @@ export class Lexer {
 
         case ";": {
           this.addToken(TokenType.SEMICOLON, this.eat(), this.position);
-          break;
-        }
-
-        // BINARY OPERATORS (rest is inside of unary/logical operator handler)
-        case "*":
-        case "%":
-        case "/": {
-          this.addToken(TokenType.BINARY_OPERATOR, this.eat(), this.position);
           break;
         }
 
@@ -246,14 +226,14 @@ export class Lexer {
           }
 
           // UNARY/BINARY OPERATORS
-          else if (this.isPartiallyUnaryOperator(char) || this.isPartiallyLogicalOperator(char)) {
+          else if (this.isPartiallyUnaryOperator(char) || this.isPartiallyBinaryOperator(char)) {
             const startPosition = this.position;
             let operator = this.eat();
 
-            // iterate for as long as current-char could be a part of a logical-operator/unary-operator
+            // iterate for as long as current-char could be a part of a unary/binary operator
             while (
               this.isSrcNotEmpty() &&
-              (this.isPartiallyLogicalOperator(this.at()) || this.isPartiallyUnaryOperator(this.at()))
+              (this.isPartiallyUnaryOperator(this.at()) || this.isPartiallyBinaryOperator(this.at()))
             ) {
               // BUILD operator
               operator += this.eat();
@@ -261,7 +241,7 @@ export class Lexer {
             }
 
             switch (operator) {
-              // HANDLE SINGLE-CHARACTER TOKENS WHICH ARE ALSO A PART OF UNARY/LOGICAL OPERATORS
+              // HANDLE SINGLE-CHARACTER TOKENS WHICH ARE ALSO A PART OF: UNARY/BINARY OPERATORS
 
               // EQUAL
               case "=": {
@@ -269,22 +249,15 @@ export class Lexer {
                 break;
               }
 
-              // BINARY OPERATORS
-              case "+":
-              case "-": {
-                this.addToken(TokenType.BINARY_OPERATOR, operator, startPosition);
-                break;
-              }
-
-              // HANDLE UNARY/LOGICAL OPERATOR TOKENS
+              // HANDLE MULTI-CHARACTER UNARY/BINARY OPERATORS
               default: {
-                // logical operator
-                if (isLogicalBinaryOperator(operator)) {
+                // binary operator
+                if (this.isBinaryOperator(operator)) {
                   this.addToken(TokenType.BINARY_OPERATOR, operator, startPosition, this.position);
                 }
 
                 // unary operator
-                else if (isUnaryOperator(operator)) {
+                else if (this.isUnaryOperator(operator)) {
                   this.addToken(TokenType.UNARY_OPERATOR, operator, startPosition, this.position);
                 }
 
@@ -372,11 +345,14 @@ export class Lexer {
     return /\w/.test(char);
   }
 
-  /**@desc determine whether `char` is a part of logical operator / whether logical operator could consist of `char`*/
-  private isPartiallyLogicalOperator(char: string): boolean {
-    const logicalOperatorParts = getUniqueCharsFromStringArr(LOGICAL_BINARY_OPERATORS);
+  /**@desc determine whether `char` is a part of binary operator / whether binary operator could consist of `char`*/
+  private isPartiallyBinaryOperator(char: string): boolean {
+    const binaryOperatorParts = getUniqueCharsFromStringArr(BINARY_OPERATORS);
 
-    return new RegExp(`[${logicalOperatorParts}]`).test(char);
+    // '-' char in /[]/ regular expression creates range (like: /[a-z]/), so it needs to be escaped with "\\", to be treated as normal '-' character
+    const escapedBinaryOperatorParts = binaryOperatorParts.replace("-", "\\-");
+
+    return new RegExp(`[${escapedBinaryOperatorParts}]`).test(char);
   }
 
   /**@desc determine whether `char` is a part of unary operator / whether unary operator could consist of `char`*/
@@ -384,6 +360,16 @@ export class Lexer {
     const unaryOperatorParts = getUniqueCharsFromStringArr(UNARY_OPERATORS);
 
     return new RegExp(`[${unaryOperatorParts}]`).test(char);
+  }
+
+  /**@desc determine whether `operator` is a valid binary-operator*/
+  private isBinaryOperator(operator: string): boolean {
+    return BINARY_OPERATORS.some(validOperator => operator === validOperator);
+  }
+
+  /**@desc determine whether `operator` is valid a unary operator*/
+  private isUnaryOperator(operator: string): boolean {
+    return UNARY_OPERATORS.some(validOperator => operator === validOperator);
   }
 
   /**@desc determine whether `char` is a whitespace /[ \n\t\r]/*/
