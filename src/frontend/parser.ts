@@ -278,7 +278,7 @@ export class Parser {
         kind: "PostfixUnaryExp",
         operator: operator.value,
         operand: left,
-        start: operator.start,
+        start: left.start,
         end: left.end,
       };
 

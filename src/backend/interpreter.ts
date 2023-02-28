@@ -133,11 +133,10 @@ export class Interpreter {
         return operandBooleanRuntimeValue;
       }
 
-      // if this clause is reached, operator is not yet implemented in interpreter (internal exception)
       default:
         throw new Err(
-          `This unary operator is not yet implemented in interpreter. Operator: '${operator}', at position ${start}`,
-          "internal"
+          `Invalid prefix unary expression. Unknown operator: '${operator}', at position ${start}`,
+          "interpreter"
         );
     }
   }
@@ -177,11 +176,10 @@ export class Interpreter {
         return operandBeforeUpdate; // operandBeforeUpdate contains reference to the previous NUMBER hash map, which contains previous/not-modified value
       }
 
-      // if this clause is reached, operator is not yet implemented in interpreter (internal exception)
       default:
         throw new Err(
-          `This unary operator is not yet implemented in interpreter. Operator: '${operator}', at position ${start}`,
-          "internal"
+          `Invalid postfix unary expression. Unknown operator: '${operator}', at position ${start}`,
+          "interpreter"
         );
     }
   }
