@@ -30,6 +30,7 @@ export enum TokenType {
   UNARY_OPERATOR = "UNARY_OPERATOR",
   BINARY_OPERATOR = "BINARY_OPERATOR",
   ASSIGNMENT_OPERATOR = "ASSIGNMENT_OPERATOR",
+  TERNARY_OPERATOR = "TERNARY_OPERATOR",
 
   COLON = "COLON",
   SEMICOLON = "SEMICOLON",
@@ -109,6 +110,11 @@ export class Lexer {
 
         case ",": {
           this.addToken(TokenType.COMMA, this.eat(), this.position);
+          break;
+        }
+
+        case "?": {
+          this.addToken(TokenType.TERNARY_OPERATOR, this.eat(), this.position);
           break;
         }
 

@@ -13,6 +13,7 @@ type AST_Node =
   | "PrefixUnaryExp"
   | "PostfixUnaryExp"
   | "BinaryExp"
+  | "TernaryExp"
 
   // LITERALS
   | "NumericLiteral"
@@ -101,7 +102,14 @@ interface AST_PostfixUnaryExp extends AST_UnaryExp {
   kind: "PostfixUnaryExp";
 }
 
-/**@desc represents `object` properties*/
+interface AST_TernaryExp extends AST_Expression {
+  kind: "TernaryExp";
+  test: AST_Expression;
+  consequent: AST_Expression;
+  alternate: AST_Expression;
+}
+
+/**@desc represents `object` property*/
 interface AST_Property extends AST_Expression {
   kind: "Property";
   key: string;

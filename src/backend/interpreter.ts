@@ -46,6 +46,9 @@ export class Interpreter {
       case "PostfixUnaryExp":
         return this.evalPostfixUnaryExp(astNode as AST_PostfixUnaryExp);
 
+      case "TernaryExp":
+        return this.evalTernaryExp(astNode as AST_TernaryExp);
+
       default:
         throw new Err(
           `This AST node-kind has not yet been setup for interpretation.\nNode kind: '${astNode.kind}', at position: ${astNode.start}`,
@@ -318,6 +321,21 @@ export class Interpreter {
           "interpreter"
         );
     }
+  }
+
+  private evalTernaryExp(exp: AST_TernaryExp): Runtime_Value {
+    const runtimeTestValue = this.evaluate(exp.test).value;
+    const testBoolean = this.getBooleanValue(runtimeTestValue);
+
+    // TEST IS: 'truthy'
+    if (testBoolean) {
+      const runtimeConsequent = this.evaluate(exp.consequent);
+      return runtimeConsequent;
+    }
+
+    // TEST IS: 'falsy'
+    const runtimeAlternate = this.evaluate(exp.alternate);
+    return runtimeAlternate;
   }
 
   private evalBinaryExp(binop: AST_BinaryExp): Runtime_Value {

@@ -41,6 +41,7 @@ export class Parser {
 
   // varDeclaration - LEAST IMPORTANT / INVOKED FIRST / EVALUATED LAST
   // assignmentExp
+  // ternaryExp
   // objectExp
   // logicalExp (OR)
   // logicalExp (AND)
@@ -137,13 +138,13 @@ export class Parser {
   }
 
   private parseAssignmentExp(): AST_Expression {
-    const left = this.parseObjectExp();
+    const left = this.parseTernaryExp();
     const assignmentStart = left.start;
 
     if (this.at().type === TokenType.ASSIGNMENT_OPERATOR) {
       const operator = this.eat().value;
 
-      const value = this.parseObjectExp();
+      const value = this.parseTernaryExp();
 
       const assignmentExp: AssignmentExp = {
         kind: "AssignmentExp",
@@ -157,6 +158,32 @@ export class Parser {
     }
 
     return left;
+  }
+
+  private parseTernaryExp(): AST_Expression {
+    let test = this.parseObjectExp();
+
+    while (this.at().type === TokenType.TERNARY_OPERATOR) {
+      this.eat(); // advance past ternary-operator
+
+      const consequent = this.parseExpression();
+
+      this.eatAndExpect(TokenType.COLON, "Missing ':' following consequent in ternary expression");
+
+      const alternate = this.parseExpression();
+
+      const ternaryExp: AST_TernaryExp = {
+        kind: "TernaryExp",
+        test,
+        consequent,
+        alternate,
+        start: test.start,
+      };
+
+      test = ternaryExp;
+    }
+
+    return test;
   }
 
   private parseObjectExp(): AST_Expression {
