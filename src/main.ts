@@ -111,11 +111,23 @@ class InterpreterInterface {
         }
 
         case "r": {
+          if (this.interactionMethod === "file")
+            throw new Err(
+              "Invalid arguments. Flags: 'r' and 'f' are present, this is invalid because these flags exclude each other (please checkout manual for more information)",
+              "invalidArg"
+            );
+
           this.interactionMethod = "repl";
           break;
         }
 
         case "f": {
+          if (this.interactionMethod === "repl")
+            throw new Err(
+              "Invalid arguments. Flags: 'r' and 'f' are present, this is invalid because these flags exclude each other (please checkout manual for more information)",
+              "invalidArg"
+            );
+
           this.interactionMethod = "file";
           this.filePath = parsedArgs.shift();
           break;
