@@ -3,8 +3,7 @@
 // -----------------------------------------------
 // preface everything with "Runtime" to clear any confusion / prevent name collisions
 
-// update DATA_TYPES constant in interpreter.ts every time I change Runtime_ValueType (flawed design I know)
-type Runtime_ValueType = "number" | "string" | "boolean" | "null" | "undefined";
+type Runtime_ValueType = "number" | "string" | "object" | "boolean" | "null" | "undefined";
 
 interface Runtime_Value {
   type: Runtime_ValueType;
@@ -34,4 +33,9 @@ interface Runtime_Null extends Runtime_Value {
 interface Runtime_Undefined extends Runtime_Value {
   type: "undefined";
   value: undefined;
+}
+
+interface Runtime_Object extends Runtime_Value {
+  type: "object";
+  value: { [key: string]: Runtime_Value };
 }

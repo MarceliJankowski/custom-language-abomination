@@ -25,6 +25,9 @@ export class Interpreter {
       case "StringLiteral":
         return MK.STRING((astNode as AST_StringLiteral).value);
 
+      case "ObjectLiteral":
+        return this.evalObjectExp(astNode as AST_ObjectLiteral);
+
       case "Identifier":
         return this.evalIdentifier(astNode as AST_Identifier);
 
@@ -204,6 +207,18 @@ export class Interpreter {
     this.env.assignVar(identifierValue, computedAssignmentValue, assignmentExp.start);
 
     return computedAssignmentValue; // assignment is treated as expression, hence return the value
+  }
+
+  private evalObjectExp({ properties }: AST_ObjectLiteral): Runtime_Value {
+    const object: Runtime_Object = { type: "object", value: {} };
+
+    properties.forEach(({ key, value, start }) => {
+      const runtimeValue = value === undefined ? this.env.lookupVar(key, start) : this.evaluate(value);
+
+      object.value[key] = runtimeValue;
+    });
+
+    return object;
   }
 
   private evalPrefixUnaryExp({ operator, operand, start }: AST_PrefixUnaryExp): Runtime_Value {

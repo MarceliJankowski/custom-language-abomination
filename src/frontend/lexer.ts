@@ -27,12 +27,23 @@ export enum TokenType {
   CONST = "CONST",
 
   // OPERATORS
-  OPEN_PAREN = "OPEN_PAREN",
-  CLOSE_PAREN = "CLOSE_PAREN",
-  SEMICOLON = "SEMICOLON",
   UNARY_OPERATOR = "UNARY_OPERATOR",
   BINARY_OPERATOR = "BINARY_OPERATOR",
   ASSIGNMENT_OPERATOR = "ASSIGNMENT_OPERATOR",
+
+  COLON = "COLON",
+  SEMICOLON = "SEMICOLON",
+  COMMA = "COMMA",
+
+  OPEN_BRACKET = "OPEN_BRACKET",
+  CLOSE_BRACKET = "CLOSE_BRACKET",
+
+  // GROUPPING
+  OPEN_PAREN = "OPEN_PAREN",
+  CLOSE_PAREN = "CLOSE_PAREN",
+
+  OPEN_CURLY_BRACE = "OPEN_CURLY_BRACE",
+  CLOSE_CURLY_BRACE = "CLOSE_CURLY_BRACE",
 
   // OTHER
   EOF = "EOF",
@@ -85,6 +96,21 @@ export class Lexer {
       switch (char) {
         // HANDLE SINGLE-CHARACTER TOKENS
 
+        case ";": {
+          this.addToken(TokenType.SEMICOLON, this.eat(), this.position);
+          break;
+        }
+
+        case ":": {
+          this.addToken(TokenType.COLON, this.eat(), this.position);
+          break;
+        }
+
+        case ",": {
+          this.addToken(TokenType.COMMA, this.eat(), this.position);
+          break;
+        }
+
         case "(": {
           this.addToken(TokenType.OPEN_PAREN, this.eat(), this.position);
           break;
@@ -95,8 +121,23 @@ export class Lexer {
           break;
         }
 
-        case ";": {
-          this.addToken(TokenType.SEMICOLON, this.eat(), this.position);
+        case "{": {
+          this.addToken(TokenType.OPEN_CURLY_BRACE, this.eat(), this.position);
+          break;
+        }
+
+        case "}": {
+          this.addToken(TokenType.CLOSE_CURLY_BRACE, this.eat(), this.position);
+          break;
+        }
+
+        case "[": {
+          this.addToken(TokenType.OPEN_BRACKET, this.eat(), this.position);
+          break;
+        }
+
+        case "]": {
+          this.addToken(TokenType.CLOSE_BRACKET, this.eat(), this.position);
           break;
         }
 

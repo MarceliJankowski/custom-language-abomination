@@ -17,7 +17,9 @@ type AST_Node =
   // LITERALS
   | "NumericLiteral"
   | "StringLiteral"
-  | "Identifier";
+  | "Identifier"
+  | "Property"
+  | "ObjectLiteral";
 
 /**@desc doesn't return any value at run-time*/
 interface AST_Statement {
@@ -96,4 +98,17 @@ interface AST_PrefixUnaryExp extends AST_UnaryExp {
 /**@desc `operand` comes first and then `operator` (like that: var++)*/
 interface AST_PostfixUnaryExp extends AST_UnaryExp {
   kind: "PostfixUnaryExp";
+}
+
+/**@desc represents `object` properties*/
+interface AST_Property extends AST_Expression {
+  kind: "Property";
+  key: string;
+  value?: AST_Expression;
+}
+
+/**@desc represents object/hash-table data-structure*/
+interface AST_ObjectLiteral extends AST_Expression {
+  kind: "ObjectLiteral";
+  properties: AST_Property[];
 }

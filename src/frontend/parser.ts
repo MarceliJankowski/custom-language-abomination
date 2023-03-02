@@ -41,6 +41,7 @@ export class Parser {
 
   // varDeclaration - LEAST IMPORTANT / INVOKED FIRST / EVALUATED LAST
   // assignmentExp
+  // objectExp
   // logicalExp (OR)
   // logicalExp (AND)
   // equalityExp
@@ -140,13 +141,13 @@ export class Parser {
   }
 
   private parseAssignmentExp(): AST_Expression {
-    const left = this.parseLogicalExpOR();
+    const left = this.parseObjectExp();
     const assignmentStart = left.start;
 
     if (this.at().type === TokenType.ASSIGNMENT_OPERATOR) {
       const operator = this.eat().value;
 
-      const value = this.parseLogicalExpOR();
+      const value = this.parseObjectExp();
 
       const assignmentExp: AssignmentExp = {
         kind: "AssignmentExp",
@@ -161,6 +162,89 @@ export class Parser {
     }
 
     return left;
+  }
+
+  private parseObjectExp(): AST_Expression {
+    if (this.at().type !== TokenType.OPEN_CURLY_BRACE) return this.parseLogicalExpOR();
+
+    const properties = new Array<AST_Property>();
+
+    const objectStart = this.eat().start; // advance past OPEN_CURLY_BRACE
+
+    // iterate as long as we're inside the object
+    while (this.notEOF() && this.at().type !== TokenType.CLOSE_CURLY_BRACE) {
+      const key = this.eatAndExpect(TokenType.IDENTIFIER, "Missing key inside object-literal");
+
+      // HANDLE SHORTHANDS
+
+      // shorthand: { key, }
+      if (this.at().type === TokenType.COMMA) {
+        const uninitializedProperty: AST_Property = {
+          kind: "Property",
+          key: key.value,
+          value: undefined,
+          start: key.start,
+          end: key.end,
+        };
+
+        properties.push(uninitializedProperty);
+        this.eat(); // advance past comma
+        continue;
+      }
+
+      // shorthand: { key }
+      else if (this.at().type === TokenType.CLOSE_CURLY_BRACE) {
+        const uninitializedProperty: AST_Property = {
+          kind: "Property",
+          key: key.value,
+          value: undefined,
+          start: key.start,
+          end: key.end,
+        };
+
+        properties.push(uninitializedProperty);
+        continue;
+      }
+
+      // HANDLE DEFINED PROPERTY
+
+      this.eatAndExpect(TokenType.COLON, "Missing ':' following identifier in object-literal"); // advance past COLON
+
+      const value = this.parseExpression();
+
+      // if it's not object-literal end, expect a comma for another property
+      if (this.at().type !== TokenType.CLOSE_CURLY_BRACE)
+        this.eatAndExpect(
+          TokenType.COMMA,
+          "Object-literal missing: closing curly-brace ('}') or comma (','), following property-value"
+        );
+
+      const newProperty: AST_Property = {
+        kind: "Property",
+        key: key.value,
+        value,
+        start: key.start,
+        end: value.end,
+      };
+
+      properties.push(newProperty);
+    }
+
+    // HANDLE OBJECT
+
+    const objectEnd = this.eatAndExpect(
+      TokenType.CLOSE_CURLY_BRACE,
+      "Missing closing curly-brace ('}') inside object-literal"
+    ).end;
+
+    const objectLiteral: AST_ObjectLiteral = {
+      kind: "ObjectLiteral",
+      properties,
+      start: objectStart,
+      end: objectEnd,
+    };
+
+    return objectLiteral;
   }
 
   /**@desc parses logical `OR` operator*/
