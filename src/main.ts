@@ -18,9 +18,11 @@ import { Interpreter, createGlobalEnv } from "./backend";
 
 interface EvaluateSrcOutput {
   lexer: ReturnType<typeof Lexer.prototype.tokenize>;
-  parser: ReturnType<typeof Parser.prototype.buildAST>;
-  interpreter: ReturnType<typeof Interpreter.prototype.evaluate>;
+  parser?: ReturnType<typeof Parser.prototype.buildAST>;
+  interpreter?: ReturnType<typeof Interpreter.prototype.evaluate>;
 }
+
+type EvaluateUpToType = "l" | "lexer" | "p" | "parser" | "i" | "interpreter";
 
 // -----------------------------------------------
 //            INTERPRETER INTERFACE
@@ -28,8 +30,9 @@ interface EvaluateSrcOutput {
 
 /**@desc embodiment of the interpreter / interface for interacting with it*/
 class InterpreterInterface {
-  private isVerbose = false;
+  private verboseMode = false;
   private filePath: string | undefined;
+  private evaluateUpTo: EvaluateUpToType = "interpreter";
   private globalEnv = createGlobalEnv(); // setup global variable environment
 
   /**@desc specifies which method of interacting with interpreter should be used*/
@@ -37,8 +40,14 @@ class InterpreterInterface {
 
   /**@desc run interpreter!*/
   public run() {
-    this.processArgs();
+    // PROCESS ARGUMENTS
+    try {
+      this.processArgs();
+    } catch (err) {
+      this.handleErr(err);
+    }
 
+    // RUN INTERPRETER BASED ON 'interactionMethod'
     switch (this.interactionMethod) {
       // REPL
       case "repl": {
@@ -56,8 +65,8 @@ class InterpreterInterface {
       default: {
         this.handleErr(
           new Err(
-            `Internal interpreter error: invalid interactionMethod, value: ${this.interactionMethod}`,
-            "internal"
+            `InteractionMethod was not provided, please checkout manual for more information`,
+            "missingArg"
           )
         );
       }
@@ -97,7 +106,7 @@ class InterpreterInterface {
         }
 
         case "v": {
-          this.isVerbose = true;
+          this.verboseMode = true;
           break;
         }
 
@@ -112,8 +121,38 @@ class InterpreterInterface {
           break;
         }
 
+        case "e": {
+          const arg = parsedArgs.shift();
+
+          // CHECK 'arg' VALIDITY
+          if (arg === undefined) throw new Err("Missing argument following: '-e' flag", "invalidArg");
+          if (!this.isEvaluateUpToArgValid(arg))
+            throw new Err(
+              `Invalid '-e' flag argument: '${arg}', please checkout manual for more information`,
+              "invalidArg"
+            );
+
+          // automatically turn on verbose-mode
+          this.verboseMode = true;
+
+          let evaluateUpToValue: EvaluateUpToType = arg as EvaluateUpToType;
+
+          // PARSE SHORTCUTS
+
+          // lexer
+          if (arg === "l") evaluateUpToValue = "lexer";
+          // parser
+          else if (arg === "p") evaluateUpToValue = "parser";
+          // interpreter
+          else if (arg === "i") evaluateUpToValue = "interpreter";
+
+          // HANDLE evaluateUpTo
+          this.evaluateUpTo = evaluateUpToValue;
+          break;
+        }
+
         default:
-          this.handleErr(new Err(`Invalid argument: '${arg}'`, "invalidArg"));
+          throw new Err(`Invalid argument: '${arg}'`, "invalidArg");
       }
     }
   }
@@ -132,7 +171,7 @@ class InterpreterInterface {
         const output = this.evaluateSrc(input);
 
         // LOG OUTPUT
-        if (this.isVerbose) this.verboseOutput(input, output);
+        if (this.verboseMode) this.verboseOutput(input, output);
         else console.log(output.interpreter);
 
         // HANDLE EXCEPTION
@@ -147,15 +186,15 @@ class InterpreterInterface {
   /**@desc execute supplied file*/
   private execFile() {
     try {
-      if (!this.filePath) throw new Err("filepath hasn't been provided!", "missingArg");
+      if (!this.filePath) throw new Err("Filepath hasn't been provided!", "missingArg");
       if (!fs.existsSync(this.filePath))
-        throw new Err(`file: '${this.filePath}' was not found`, "invalidArg");
+        throw new Err(`File: '${this.filePath}' was not found`, "invalidArg");
 
       const src = fs.readFileSync(this.filePath, { encoding: "utf-8" }).trimEnd();
       const output = this.evaluateSrc(src);
 
       // LOG OUTPUT
-      if (this.isVerbose) this.verboseOutput(src, output);
+      if (this.verboseMode) this.verboseOutput(src, output);
       else console.log(output.interpreter);
 
       // HANDLE EXCEPTION
@@ -173,11 +212,20 @@ class InterpreterInterface {
   }
 
   /**@desc interpret/evaluate `src` param
-  @return object with outputs of each interpreter stage*/
+  @return object with outputs of each interpreter stage (impacted by `evaluateUpTo` option)*/
   private evaluateSrc(src: string): EvaluateSrcOutput {
     const lexerOutput = new Lexer(src).tokenize();
-    const AST = new Parser([...lexerOutput]).buildAST(); // passing shallow-copy of lexerOutput because parser modifies it and I need original for the verboseOutput
-    const interpreterOutput = new Interpreter(this.globalEnv).evaluate(AST);
+
+    let AST: AST_Program | undefined;
+    let interpreterOutput: Runtime_Value | undefined;
+
+    // HANDLE evaluateUpTo OPTION
+    if (this.evaluateUpTo === "parser" || this.evaluateUpTo === "interpreter") {
+      AST = new Parser([...lexerOutput]).buildAST(); // passing shallow-copy of lexerOutput because parser modifies it and I need original for the verboseOutput
+
+      if (this.evaluateUpTo === "interpreter")
+        interpreterOutput = new Interpreter(this.globalEnv).evaluate(AST);
+    }
 
     return {
       lexer: lexerOutput,
@@ -190,13 +238,27 @@ class InterpreterInterface {
   //                  UTILITIES
   // -----------------------------------------------
 
-  /**@desc output verbose information*/
+  /**@desc determine whether `arg` is valid evaluateUpTo value*/
+  private isEvaluateUpToArgValid(arg: unknown): boolean {
+    const validEvaluateUpToValues: EvaluateUpToType[] = ["l", "lexer", "p", "parser", "i", "interpreter"];
+    const isValid = validEvaluateUpToValues.some(validValue => validValue === arg);
+
+    return isValid;
+  }
+
+  /**@desc output verbose information (impacted by `evaluateUpTo` option)*/
   private verboseOutput(src: string, output: EvaluateSrcOutput): void {
     this.printBreakLine();
     console.log("SRC:\n\n" + src);
     this.outputLog("LEXER OUTPUT:", output.lexer);
-    this.outputLog("PARSER OUTPUT:", output.parser);
-    this.outputLog("INTERPRETER OUTPUT:", output.interpreter);
+
+    // HANDLE evaluateUpTo OPTION
+    if (this.evaluateUpTo === "parser" || this.evaluateUpTo === "interpreter") {
+      this.outputLog("PARSER OUTPUT:", output.parser);
+
+      if (this.evaluateUpTo === "interpreter") this.outputLog("INTERPRETER OUTPUT:", output.interpreter);
+    }
+
     this.printBreakLine();
   }
 

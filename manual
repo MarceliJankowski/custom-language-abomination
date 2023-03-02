@@ -10,6 +10,7 @@ DESCRIPTION
       Read README.md for project description
 
 USAGE
+      In order to interact with interpreter user MUST provide 'interactionMethod' (provided through: 'r' and 'f' flags)
       For usage tips please go through codeExamples, they provide an array of various interpreter features in form of valid code ready for interpretation (hands-on is always best!)
 
 OPTIONS
@@ -19,11 +20,15 @@ OPTIONS
       -v
           Turn on VERBOSE_MODE (increases output), mostly useful for debugging purposes
 
-      -r
-          Interact with interpreter through REPL
+      -e stage (possible values: ['l', 'lexer', 'p', 'parser', 'i', 'interpreter'])
+          Execute interpreter up to a given 'stage' (useful for examining interpreter stages)
+          Automatically turns on VERBOSE_MODE
 
-      -f filePath (when used with: 'npm start' is relative to the project's home directory)
-          Interpret/Evaluate file located at 'filePath'
+      -r
+          Interact with interpreter through REPL (set 'interactionMethod' to REPL)
+
+      -f filePath (when used with: 'npm start' it's relative to the project's home directory)
+          Interpret/Evaluate file located at 'filePath' (set 'interactionMethod' to file)
 
 EXIT CODES
       Exit code indicates whether interpreter succeeded in evaluation or failed for some reason
