@@ -61,7 +61,7 @@ export class Token {
     public type: TokenType,
     public value: string,
     public start: CharPosition,
-    public end: CharPosition
+    public end?: CharPosition // not needed in most tokens
   ) {}
 }
 
@@ -155,7 +155,7 @@ export class Lexer {
               this.column++;
             }
 
-            this.addToken(TokenType.NUMBER, value, startPosition, this.position);
+            this.addToken(TokenType.NUMBER, value, startPosition);
           }
 
           // STRING
@@ -263,8 +263,8 @@ export class Lexer {
             // handle reserved keywords
             const keywordType = KEYWORDS[identifier];
 
-            if (keywordType) this.addToken(keywordType, identifier, startPosition, this.position);
-            else this.addToken(TokenType.IDENTIFIER, identifier, startPosition, this.position);
+            if (keywordType) this.addToken(keywordType, identifier, startPosition);
+            else this.addToken(TokenType.IDENTIFIER, identifier, startPosition);
           }
 
           // UNARY/BINARY/ASSIGNMENT OPERATORS
@@ -297,17 +297,17 @@ export class Lexer {
               default: {
                 // binary operator
                 if (this.isBinaryOperator(operator)) {
-                  this.addToken(TokenType.BINARY_OPERATOR, operator, startPosition, this.position);
+                  this.addToken(TokenType.BINARY_OPERATOR, operator, startPosition);
                 }
 
                 // unary operator
                 else if (this.isUnaryOperator(operator)) {
-                  this.addToken(TokenType.UNARY_OPERATOR, operator, startPosition, this.position);
+                  this.addToken(TokenType.UNARY_OPERATOR, operator, startPosition);
                 }
 
                 // assignment operator
                 else if (this.isAssignmentOperator(operator)) {
-                  this.addToken(TokenType.ASSIGNMENT_OPERATOR, operator, startPosition, this.position);
+                  this.addToken(TokenType.ASSIGNMENT_OPERATOR, operator, startPosition);
                 }
 
                 // invalid operator
@@ -346,7 +346,7 @@ export class Lexer {
       }
     }
 
-    this.addToken(TokenType.EOF, "EndOfFile", this.position);
+    this.addToken(TokenType.EOF, "EndOfFile", this.position, this.position);
 
     return this.tokens;
   }
@@ -356,8 +356,8 @@ export class Lexer {
   // -----------------------------------------------
 
   /**@desc append Token to `tokens` array
-  @param end is optional, if not provided it defaults to `start`, easing single-character token creation*/
-  private addToken(type: TokenType, value: string, start: CharPosition, end = start): void {
+  @param end is optional, most tokens don't need it. It's only required/expected in `EOF` and `string` (for getting length) token*/
+  private addToken(type: TokenType, value: string, start: CharPosition, end?: CharPosition): void {
     this.tokens.push(new Token(type, value, start, end));
   }
 

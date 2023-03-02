@@ -262,13 +262,14 @@ class InterpreterInterface {
   private verboseOutput(src: string, output: EvaluateSrcOutput): void {
     this.printBreakLine();
     console.log("SRC:\n\n" + src);
-    this.outputLog("LEXER OUTPUT:", output.lexer);
+    this.outputLog("LEXER OUTPUT:", output.lexer, "lexer");
 
     // HANDLE evaluateUpTo OPTION
     if (this.evaluateUpTo === "parser" || this.evaluateUpTo === "interpreter") {
-      this.outputLog("PARSER OUTPUT:", output.parser);
+      this.outputLog("PARSER OUTPUT:", output.parser, "parser");
 
-      if (this.evaluateUpTo === "interpreter") this.outputLog("INTERPRETER OUTPUT:", output.interpreter);
+      if (this.evaluateUpTo === "interpreter")
+        this.outputLog("INTERPRETER OUTPUT:", output.interpreter, "interpreter");
     }
 
     this.printBreakLine();
@@ -276,11 +277,17 @@ class InterpreterInterface {
 
   /**@desc log `output` into std-output with break-lines included
   @param header header describing output / text preceding output
-  @param output actual output / comes after header*/
-  private outputLog(header: string, output: unknown): void {
+  @param output actual output / comes after header
+  @param outputSrc represents src of the output. Used for setting stringify `maxLength` option (allows for custom line-wrapping based on `src`)*/
+  private outputLog(header: string, output: unknown, outputSrc: "lexer" | "parser" | "interpreter"): void {
     this.printBreakLine();
     console.log(header + "\n");
-    console.log(stringify(output, { indent: 4, maxLength: 60 }));
+
+    let stringifyMaxLength = 60; // default value
+
+    if (outputSrc === "lexer") stringifyMaxLength = 45; // decrease length to prevent wrapping (lexer tokens are shorter, hence they get line-wrapped more easilly)
+
+    console.log(stringify(output, { indent: 4, maxLength: stringifyMaxLength }));
   }
 
   /**@desc print break-line

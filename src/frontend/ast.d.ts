@@ -25,7 +25,6 @@ type AST_Node =
 interface AST_Statement {
   kind: AST_Node;
   start: CharPosition;
-  end: CharPosition;
 }
 
 // -----------------------------------------------
@@ -36,6 +35,7 @@ interface AST_Statement {
 interface AST_Program extends AST_Statement {
   kind: "Program";
   body: AST_Statement[];
+  end: CharPosition;
 }
 
 interface AST_VarDeclaration extends AST_Statement {
@@ -68,6 +68,7 @@ interface AST_NumericLiteral extends AST_Expression {
 interface AST_StringLiteral extends AST_Expression {
   kind: "StringLiteral";
   value: string;
+  end: CharPosition;
 }
 
 interface AST_Identifier extends AST_Expression {

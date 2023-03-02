@@ -99,8 +99,6 @@ export class Parser {
 
     // HANDLE UNINITIALIZED VARIABLE DECLARATION (like: 'var x')
     if (this.at().type === TokenType.SEMICOLON) {
-      const uninitializedVarDeclarationEnd = this.eat().end;
-
       if (isConstant)
         throw new Err(
           `Invalid variable declaration. Missing initializer/value-assignment in constant variable declaration, at position: ${varDeclarationStart}`,
@@ -112,7 +110,6 @@ export class Parser {
         identifier,
         constant: false,
         start: varDeclarationStart,
-        end: uninitializedVarDeclarationEnd,
       };
 
       return varDeclaration;
@@ -134,7 +131,6 @@ export class Parser {
       constant: isConstant,
       value: varDeclarationValue,
       start: varDeclarationStart,
-      end: varDeclarationValue.end,
     };
 
     return varDeclaration;
@@ -155,7 +151,6 @@ export class Parser {
         operator,
         value,
         start: assignmentStart,
-        end: value.end,
       };
 
       return assignmentExp;
@@ -184,7 +179,6 @@ export class Parser {
           key: key.value,
           value: undefined,
           start: key.start,
-          end: key.end,
         };
 
         properties.push(uninitializedProperty);
@@ -199,7 +193,6 @@ export class Parser {
           key: key.value,
           value: undefined,
           start: key.start,
-          end: key.end,
         };
 
         properties.push(uninitializedProperty);
@@ -224,7 +217,6 @@ export class Parser {
         key: key.value,
         value,
         start: key.start,
-        end: value.end,
       };
 
       properties.push(newProperty);
@@ -232,16 +224,12 @@ export class Parser {
 
     // HANDLE OBJECT
 
-    const objectEnd = this.eatAndExpect(
-      TokenType.CLOSE_CURLY_BRACE,
-      "Missing closing curly-brace ('}') inside object-literal"
-    ).end;
+    this.eatAndExpect(TokenType.CLOSE_CURLY_BRACE, "Missing closing curly-brace ('}') inside object-literal");
 
     const objectLiteral: AST_ObjectLiteral = {
       kind: "ObjectLiteral",
       properties,
       start: objectStart,
-      end: objectEnd,
     };
 
     return objectLiteral;
@@ -349,7 +337,6 @@ export class Parser {
         operand,
         operator: operator.value,
         start: operator.start,
-        end: operand.end,
       };
 
       return unaryExp;
@@ -370,7 +357,6 @@ export class Parser {
         operator: operator.value,
         operand: left,
         start: left.start,
-        end: left.end,
       };
 
       return unaryExp;
@@ -386,19 +372,19 @@ export class Parser {
     switch (tokenType) {
       case TokenType.STRING: {
         const { value, start, end } = this.eat();
-        const stringNode: AST_StringLiteral = { kind: "StringLiteral", value, start, end };
+        const stringNode: AST_StringLiteral = { kind: "StringLiteral", value, start, end: end! };
         return stringNode;
       }
 
       case TokenType.IDENTIFIER: {
-        const { value, start, end } = this.eat();
-        const identifierNode: AST_Identifier = { kind: "Identifier", value, start, end };
+        const { value, start } = this.eat();
+        const identifierNode: AST_Identifier = { kind: "Identifier", value, start };
         return identifierNode;
       }
 
       case TokenType.NUMBER: {
-        const { value, start, end } = this.eat();
-        const numberNode: AST_NumericLiteral = { kind: "NumericLiteral", value: Number(value), start, end };
+        const { value, start } = this.eat();
+        const numberNode: AST_NumericLiteral = { kind: "NumericLiteral", value: Number(value), start };
         return numberNode;
       }
 
@@ -439,7 +425,6 @@ export class Parser {
       operator,
       right,
       start: left.start,
-      end: right.end,
     };
 
     return astBinaryExp;
