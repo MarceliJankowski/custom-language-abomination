@@ -184,7 +184,7 @@ class InterpreterInterface {
 
         // LOG OUTPUT
         if (this.verboseMode) this.verboseOutput(input, output);
-        else console.log(output.interpreter);
+        else console.log(output.interpreter!.value);
 
         // HANDLE EXCEPTION
       } catch (err) {
@@ -207,7 +207,7 @@ class InterpreterInterface {
 
       // LOG OUTPUT
       if (this.verboseMode) this.verboseOutput(src, output);
-      else console.log(output.interpreter);
+      else console.log(output.interpreter!.value);
 
       // HANDLE EXCEPTION
     } catch (err) {

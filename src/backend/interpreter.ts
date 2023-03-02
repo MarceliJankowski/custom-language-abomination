@@ -259,6 +259,16 @@ export class Interpreter {
         return operandBooleanRuntimeValue;
       }
 
+      case "typeof": {
+        // @desc return type of operand (type is returned as runtime-string)
+
+        const runtimeOperand = this.evaluate(operand);
+
+        const type = MK.STRING(runtimeOperand.type);
+
+        return type;
+      }
+
       default:
         throw new Err(
           `Invalid prefix unary expression. Unknown operator: '${operator}', at position ${start}`,

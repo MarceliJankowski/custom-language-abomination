@@ -342,7 +342,7 @@ export class Parser {
   private parsePrefixUnaryExp(): AST_Expression {
     while (this.at().type === TokenType.UNARY_OPERATOR) {
       const operator = this.eat();
-      const operand = this.parsePostfixUnaryExp();
+      const operand = operator.value === "typeof" ? this.parseExpression() : this.parsePostfixUnaryExp();
 
       const unaryExp: AST_PrefixUnaryExp = {
         kind: "PrefixUnaryExp",

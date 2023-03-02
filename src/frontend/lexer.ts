@@ -52,6 +52,7 @@ export enum TokenType {
 const KEYWORDS: { [key: string]: TokenType } = {
   var: TokenType.VAR,
   const: TokenType.CONST,
+  typeof: TokenType.UNARY_OPERATOR,
 };
 
 /**@desc represents `valid` language Token*/
