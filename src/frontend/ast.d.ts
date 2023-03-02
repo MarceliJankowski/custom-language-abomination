@@ -39,6 +39,7 @@ interface AST_Program extends AST_Statement {
 interface AST_VarDeclaration extends AST_Statement {
   kind: "VarDeclaration";
   identifier: string;
+  operator?: string;
   value?: AST_Expression;
   constant: boolean;
 }
@@ -53,6 +54,7 @@ interface AST_Expression extends AST_Statement {}
 interface AssignmentExp extends AST_Expression {
   kind: "AssignmentExp";
   assigne: AST_Expression; // assigne is an expression because I want to support member-expressions (like: obj.a = 'value', where 'obj.a' is a member-expression)
+  operator: string;
   value: AST_Expression;
 }
 

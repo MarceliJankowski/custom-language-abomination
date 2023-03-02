@@ -11,3 +11,13 @@ export function getUniqueCharsFromStringArr(arr: string[]): string {
 
   return uniqueCharsStr;
 }
+
+/**@desc escape `chars` from `inputStr` (escape with backslash), return modified `inputStr`
+@parm inputStr string containing `chars` to escape
+@param ...chars arguments that come after `inpuStr` are treated as characters to be escaped*/
+export function escapeStringChars(inputStr: string, ...chars: string[]) {
+  const regExp = new RegExp(`[${chars.join("")}]`, "g");
+  const outputStr = inputStr.replace(regExp, match => `\\${match}`);
+
+  return outputStr;
+}

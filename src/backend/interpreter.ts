@@ -68,9 +68,16 @@ export class Interpreter {
   }
 
   private evalVarDeclaration(varDeclaration: AST_VarDeclaration): Runtime_Value {
-    const value = varDeclaration.value ? this.evaluate(varDeclaration.value) : MK.UNDEFINED(); // set value for uninitialized variables to undefined
+    const runtimeValue = varDeclaration.value ? this.evaluate(varDeclaration.value) : MK.UNDEFINED(); // set value for uninitialized variables to undefined
 
-    this.env.declareVar(varDeclaration.identifier, value, {
+    // var declarations are only allowed with "=" assignment operator
+    if (varDeclaration.operator !== "=")
+      throw new Err(
+        `Invalid variable declaration. Invalid assignment operator: '${varDeclaration.operator}' (valid variable declaration assignment operator: '='), at position ${varDeclaration.start}`,
+        "interpreter"
+      );
+
+    this.env.declareVar(varDeclaration.identifier, runtimeValue, {
       constant: varDeclaration.constant,
       position: varDeclaration.start,
     });
@@ -80,19 +87,123 @@ export class Interpreter {
   }
 
   private evalAssignmentExp(assignmentExp: AssignmentExp): Runtime_Value {
+    const assignmentStart = assignmentExp.start;
+
     // make sure that assigne is an identifier
     if (assignmentExp.assigne.kind !== "Identifier")
       throw new Err(
-        `Invalid assignment expression. Invalid Assigne kind: '${assignmentExp.assigne.kind}', at position: ${assignmentExp.start}`,
+        `Invalid assignment expression. Invalid Assigne kind: '${assignmentExp.assigne.kind}', at position: ${assignmentStart}`,
         "interpreter"
       );
 
-    // handle assignment
-    const identifier = (assignmentExp.assigne as AST_Identifier).value;
-    const value = this.evaluate(assignmentExp.value);
-    this.env.assignVar(identifier, value, assignmentExp.start);
+    const operator = assignmentExp.operator;
+    const identifierValue = (assignmentExp.assigne as AST_Identifier).value;
 
-    return value;
+    const prevAssigneValue = this.evalIdentifier(assignmentExp.assigne as AST_Identifier);
+    const assignmentValue = this.evaluate(assignmentExp.value);
+    let computedAssignmentValue: Runtime_Value; // computed runtime-value for variable assignment
+
+    // COMPUTE RUNTIME-VALUE BASED ON OPERATOR
+    switch (assignmentExp.operator) {
+      case "=": {
+        computedAssignmentValue = assignmentValue;
+        break;
+      }
+
+      case "+=": {
+        // @desc valid data types:
+        // number/number | string/string | string/number combinations
+
+        const extractedBinaryOperator = operator[0];
+
+        // number/number
+        if (prevAssigneValue.type === "number" && assignmentValue.type === "number") {
+          computedAssignmentValue = this.evalNumericBinaryExp(
+            prevAssigneValue as Runtime_Number,
+            extractedBinaryOperator,
+            assignmentValue as Runtime_Number,
+            assignmentStart
+          );
+
+          break;
+        }
+
+        // string/string and string/number combinations
+        else if (this.isValidStringNumberCombination(prevAssigneValue.type, assignmentValue.type)) {
+          computedAssignmentValue = this.evalStringBinaryExp(
+            prevAssigneValue as Runtime_String,
+            extractedBinaryOperator,
+            assignmentValue as Runtime_Number,
+            assignmentStart
+          );
+
+          break;
+        }
+
+        // invalid data types
+        else {
+          throw new Err(
+            `Invalid assignment expression. Operator: '${operator}' incorrectly used with assigne of type: '${prevAssigneValue.type}', at position: ${assignmentStart}`,
+            "interpreter"
+          );
+        }
+      }
+
+      case "*=":
+      case "-=":
+      case "/=":
+      case "%=": {
+        // @desc valid data types: number/number
+
+        // number/number
+        if (prevAssigneValue.type === "number" && assignmentValue.type === "number") {
+          const extractedBinaryOperator = operator[0];
+
+          computedAssignmentValue = this.evalNumericBinaryExp(
+            prevAssigneValue as Runtime_Number,
+            extractedBinaryOperator,
+            assignmentValue as Runtime_Number,
+            assignmentStart
+          );
+
+          break;
+        }
+
+        // invalid data types
+        else {
+          throw new Err(
+            `Invalid assignment expression. Operator: '${operator}' incorrectly used with assigne of type: '${prevAssigneValue.type}', at position: ${assignmentStart}`,
+            "interpreter"
+          );
+        }
+      }
+
+      case "||=":
+      case "&&=": {
+        // @desc valid data types: any/any
+        const extractedLogicalOperator = operator.slice(0, 2);
+
+        computedAssignmentValue = this.evalBinaryExpSharedOperators(
+          prevAssigneValue,
+          extractedLogicalOperator,
+          assignmentValue,
+          assignmentStart
+        );
+
+        break;
+      }
+
+      default:
+        throw new Err(
+          `Invalid variable assignment. Invalid assignment operator: '${operator}', at position ${assignmentStart}`,
+          "interpreter"
+        );
+    }
+
+    // HANDLE ASSIGNMENT
+    this.env.assignVar(identifierValue, computedAssignmentValue, assignmentExp.start);
+
+    return computedAssignmentValue; // assignment is treated as expression, hence return the value
   }
 
   private evalPrefixUnaryExp({ operator, operand, start }: AST_PrefixUnaryExp): Runtime_Value {
@@ -200,7 +311,7 @@ export class Interpreter {
     }
 
     // STRING / STRING && NUMBER COMBINATIONS
-    else if (/(string && number|string && string|number && string)/.test(left.type + " && " + right.type)) {
+    else if (this.isValidStringNumberCombination(left.type, right.type)) {
       return this.evalStringBinaryExp(
         left as Runtime_String,
         binop.operator,
@@ -338,6 +449,15 @@ export class Interpreter {
   // -----------------------------------------------
   //                  UTILITIES
   // -----------------------------------------------
+
+  /**@desc determine whether `a` and `b` types form valid string/number combination
+  valid combinations: string/string | string/number | number/string*/
+  private isValidStringNumberCombination(a: string | number, b: string | number): boolean {
+    const validCombinationsRegExp = /(string string|number string|string number)/;
+    const preparedTypes = a + " " + b;
+
+    return validCombinationsRegExp.test(preparedTypes);
+  }
 
   /**@desc determine whether given `Runtime_Value`.value is 'falsy' or 'truthy' (returns corresponding boolean)*/
   private getBooleanValue(value: unknown): boolean {

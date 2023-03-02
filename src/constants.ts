@@ -18,14 +18,19 @@ export enum ErrorCode {
 export const RELATIONAL_OPERATORS = [">", ">=", "<", "<="];
 export const EQUALITY_OPERATORS = ["!=", "=="];
 
-export const LOGICAL_OPERATOR_OR = "||";
-export const LOGICAL_OPERATOR_AND = "&&";
-export const LOGICAL_OPERATORS = [LOGICAL_OPERATOR_OR, LOGICAL_OPERATOR_AND];
+export const LOGICAL_OPERATORS = ["||", "&&"];
 
-export const BINARY_OPERATORS = ["+", "-", "*", "/", "%"].concat([
+export const ADDITIVE_OPERATORS = ["+", "-"];
+export const MULTIPLICATIVE_OPERATORS = ["*", "/", "%"];
+
+export const BINARY_OPERATORS = [
+  ...ADDITIVE_OPERATORS,
+  ...MULTIPLICATIVE_OPERATORS,
   ...RELATIONAL_OPERATORS,
   ...EQUALITY_OPERATORS,
   ...LOGICAL_OPERATORS,
-]);
+];
 
 export const UNARY_OPERATORS = ["!", "++", "--"];
+
+export const ASSIGNMENT_OPERATORS = ["=", "+=", "-=", "*=", "/=", "%=", "||=", "&&="];

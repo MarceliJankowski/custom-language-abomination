@@ -1,7 +1,11 @@
 // PROJECT MODULES
 import { Token, TokenType } from "./lexer";
-import { isRelationalOperator, isEqualityOperator } from "../utils";
-import { LOGICAL_OPERATOR_AND, LOGICAL_OPERATOR_OR } from "../constants";
+import {
+  isRelationalOperator,
+  isEqualityOperator,
+  isAdditiveOperator,
+  isMultiplicativeOperator,
+} from "../utils";
 import { Err } from "../utils";
 
 // -----------------------------------------------
@@ -115,16 +119,17 @@ export class Parser {
 
     // HANDLE INITIALIZED VARIABLE DECLARATION (like: 'var x = 10')
 
-    this.eatAndExpect(
-      TokenType.EQUAL,
-      `Invalid variable declaration. Identifier is not followed by '=' sign`
-    );
+    const operator = this.eatAndExpect(
+      TokenType.ASSIGNMENT_OPERATOR,
+      `Invalid variable declaration. Identifier is not followed by assignment operator`
+    ).value;
 
     const varDeclarationValue = this.parseExpression();
 
     const varDeclaration: AST_VarDeclaration = {
       kind: "VarDeclaration",
       identifier,
+      operator,
       constant: isConstant,
       value: varDeclarationValue,
       start: varDeclarationStart,
@@ -138,14 +143,15 @@ export class Parser {
     const left = this.parseLogicalExpOR();
     const assignmentStart = left.start;
 
-    if (this.at().type === TokenType.EQUAL) {
-      this.eat(); // advance past equal token
+    if (this.at().type === TokenType.ASSIGNMENT_OPERATOR) {
+      const operator = this.eat().value;
 
       const value = this.parseLogicalExpOR();
 
       const assignmentExp: AssignmentExp = {
         kind: "AssignmentExp",
         assigne: left,
+        operator,
         value,
         start: assignmentStart,
         end: value.end,
@@ -161,7 +167,7 @@ export class Parser {
   private parseLogicalExpOR(): AST_Expression {
     let left = this.parseLogicalExpAND();
 
-    while (this.at().value === LOGICAL_OPERATOR_OR) {
+    while (this.at().value === "||") {
       const operator = this.eat().value;
       const right = this.parseLogicalExpAND();
 
@@ -176,7 +182,7 @@ export class Parser {
   private parseLogicalExpAND(): AST_Expression {
     let left = this.parseEqualityExp();
 
-    while (this.at().value === LOGICAL_OPERATOR_AND) {
+    while (this.at().value === "&&") {
       const operator = this.eat().value;
       const right = this.parseEqualityExp();
 
@@ -221,7 +227,8 @@ export class Parser {
   private parseAdditiveExp(): AST_Expression {
     let left = this.parseMultiplicativeExp();
 
-    while (/[-+]/.test(this.at().value)) {
+    // here's the problem
+    while (isAdditiveOperator(this.at().value)) {
       const operator = this.eat().value;
       const right = this.parseMultiplicativeExp();
 
@@ -236,7 +243,7 @@ export class Parser {
   private parseMultiplicativeExp(): AST_Expression {
     let left = this.parsePrefixUnaryExp();
 
-    while (/[*/%]/.test(this.at().value)) {
+    while (isMultiplicativeOperator(this.at().value)) {
       const operator = this.eat().value;
       const right = this.parsePrefixUnaryExp();
 

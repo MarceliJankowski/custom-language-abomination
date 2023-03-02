@@ -1,6 +1,6 @@
 // PROJECT MODULES
-import { Err, getUniqueCharsFromStringArr } from "../utils";
-import { UNARY_OPERATORS, BINARY_OPERATORS } from "../constants";
+import { Err, escapeStringChars, getUniqueCharsFromStringArr } from "../utils";
+import { UNARY_OPERATORS, BINARY_OPERATORS, ASSIGNMENT_OPERATORS } from "../constants";
 
 // -----------------------------------------------
 //                    STUFF
@@ -29,10 +29,10 @@ export enum TokenType {
   // OPERATORS
   OPEN_PAREN = "OPEN_PAREN",
   CLOSE_PAREN = "CLOSE_PAREN",
+  SEMICOLON = "SEMICOLON",
   UNARY_OPERATOR = "UNARY_OPERATOR",
   BINARY_OPERATOR = "BINARY_OPERATOR",
-  SEMICOLON = "SEMICOLON",
-  EQUAL = "EQUAL",
+  ASSIGNMENT_OPERATOR = "ASSIGNMENT_OPERATOR",
 
   // OTHER
   EOF = "EOF",
@@ -225,15 +225,21 @@ export class Lexer {
             else this.addToken(TokenType.IDENTIFIER, identifier, startPosition, this.position);
           }
 
-          // UNARY/BINARY OPERATORS
-          else if (this.isPartiallyUnaryOperator(char) || this.isPartiallyBinaryOperator(char)) {
+          // UNARY/BINARY/ASSIGNMENT OPERATORS
+          else if (
+            this.isPartiallyUnaryOperator(char) ||
+            this.isPartiallyBinaryOperator(char) ||
+            this.isPartiallyAssignmentOperator(char)
+          ) {
             const startPosition = this.position;
             let operator = this.eat();
 
-            // iterate for as long as current-char could be a part of a unary/binary operator
+            // iterate for as long as current-char could be a part of a unary/binary/assignment operator
             while (
               this.isSrcNotEmpty() &&
-              (this.isPartiallyUnaryOperator(this.at()) || this.isPartiallyBinaryOperator(this.at()))
+              (this.isPartiallyUnaryOperator(this.at()) ||
+                this.isPartiallyBinaryOperator(this.at()) ||
+                this.isPartiallyAssignmentOperator(this.at()))
             ) {
               // BUILD operator
               operator += this.eat();
@@ -241,15 +247,11 @@ export class Lexer {
             }
 
             switch (operator) {
-              // HANDLE SINGLE-CHARACTER TOKENS WHICH ARE ALSO A PART OF: UNARY/BINARY OPERATORS
+              // HANDLE SINGLE-CHARACTER TOKENS WHICH ARE ALSO A PART OF: UNARY/BINARY/ASSOCIATIVE OPERATORS
 
-              // EQUAL
-              case "=": {
-                this.addToken(TokenType.EQUAL, operator, startPosition);
-                break;
-              }
+              // none
 
-              // HANDLE MULTI-CHARACTER UNARY/BINARY OPERATORS
+              // HANDLE MULTI-CHARACTER UNARY/BINARY/ASSOCIATIVE OPERATORS
               default: {
                 // binary operator
                 if (this.isBinaryOperator(operator)) {
@@ -259,6 +261,11 @@ export class Lexer {
                 // unary operator
                 else if (this.isUnaryOperator(operator)) {
                   this.addToken(TokenType.UNARY_OPERATOR, operator, startPosition, this.position);
+                }
+
+                // assignment operator
+                else if (this.isAssignmentOperator(operator)) {
+                  this.addToken(TokenType.ASSIGNMENT_OPERATOR, operator, startPosition, this.position);
                 }
 
                 // invalid operator
@@ -349,8 +356,8 @@ export class Lexer {
   private isPartiallyBinaryOperator(char: string): boolean {
     const binaryOperatorParts = getUniqueCharsFromStringArr(BINARY_OPERATORS);
 
-    // '-' char in /[]/ regular expression creates range (like: /[a-z]/), so it needs to be escaped with "\\", to be treated as normal '-' character
-    const escapedBinaryOperatorParts = binaryOperatorParts.replace("-", "\\-");
+    // '-' char in /[]/ regular expression creates range (like: /[a-z]/), so it needs to be escaped  to be treated as normal '-' character
+    const escapedBinaryOperatorParts = escapeStringChars(binaryOperatorParts, "-");
 
     return new RegExp(`[${escapedBinaryOperatorParts}]`).test(char);
   }
@@ -362,6 +369,16 @@ export class Lexer {
     return new RegExp(`[${unaryOperatorParts}]`).test(char);
   }
 
+  /**@desc determine whether `char` is a part of assignment operator / whether assignment operator could consist of `char`*/
+  private isPartiallyAssignmentOperator(char: string): boolean {
+    const assignmentOperatorParts = getUniqueCharsFromStringArr(ASSIGNMENT_OPERATORS);
+
+    // '-' char in /[]/ regular expression creates range (like: /[a-z]/), so it needs to be escaped to be treated as normal '-' character
+    const escapedAssignmentOperatorParts = escapeStringChars(assignmentOperatorParts, "-");
+
+    return new RegExp(`[${escapedAssignmentOperatorParts}]`).test(char);
+  }
+
   /**@desc determine whether `operator` is a valid binary-operator*/
   private isBinaryOperator(operator: string): boolean {
     return BINARY_OPERATORS.some(validOperator => operator === validOperator);
@@ -370,6 +387,11 @@ export class Lexer {
   /**@desc determine whether `operator` is valid a unary operator*/
   private isUnaryOperator(operator: string): boolean {
     return UNARY_OPERATORS.some(validOperator => operator === validOperator);
+  }
+
+  /**@desc determine whether `operator` is valid a assignment operator*/
+  private isAssignmentOperator(operator: string): boolean {
+    return ASSIGNMENT_OPERATORS.some(validOperator => operator === validOperator);
   }
 
   /**@desc determine whether `char` is a whitespace /[ \n\t\r]/*/
