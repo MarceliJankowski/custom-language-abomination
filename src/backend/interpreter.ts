@@ -76,8 +76,8 @@ export class Interpreter {
   private evalVarDeclaration(varDeclaration: AST_VarDeclaration): Runtime_Value {
     const runtimeValue = varDeclaration.value ? this.evaluate(varDeclaration.value) : MK.UNDEFINED(); // set value for uninitialized variables to undefined
 
-    // var declarations are only allowed with "=" assignment operator
-    if (varDeclaration.operator !== "=")
+    // allow for uninitialized variable declarations, and "=" assignment operator
+    if (varDeclaration.operator !== undefined && varDeclaration.operator !== "=")
       throw new Err(
         `Invalid variable declaration. Invalid assignment operator: '${varDeclaration.operator}' (valid variable declaration assignment operator: '='), at position ${varDeclaration.start}`,
         "interpreter"
