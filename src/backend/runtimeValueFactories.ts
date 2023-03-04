@@ -2,17 +2,54 @@
 //           Runtime_Value FACTORIES
 // -----------------------------------------------
 
-export function NUMBER(value: number): Runtime_Number {
-  return { type: "number", value };
+// DATA-TYPES WITH PROTOTYPE
+
+// OBJECT
+
+const OBJECT_PROTOTYPE = {};
+
+export function OBJECT(properties: Runtime_Object["properties"] = {}): Runtime_Object {
+  return {
+    type: "object",
+    properties,
+    prototype: OBJECT_PROTOTYPE,
+
+    // lazy work-around main.ts logging
+    get value() {
+      return this.properties;
+    },
+  };
 }
+
+// NUMBER
+
+const NUMBER_PROTOTYPE = {};
+
+export function NUMBER(value: number): Runtime_Number {
+  return { type: "number", value, prototype: NUMBER_PROTOTYPE };
+}
+
+// STRING
+
+const STRING_PROTOTYPE = {};
 
 export function STRING(value: string): Runtime_String {
-  return { type: "string", value };
+  return {
+    type: "string",
+    value,
+    prototype: STRING_PROTOTYPE,
+  };
 }
 
+// BOOL
+
+const BOOL_PROTOTYPE = {};
+
 export function BOOL(value: boolean): Runtime_Boolean {
-  return { type: "boolean", value };
+  return { type: "boolean", value, prototype: BOOL_PROTOTYPE };
 }
+
+// DATA-TYPES WITHOUT PROTOTYPE
 
 export function UNDEFINED(): Runtime_Undefined {
   return { type: "undefined", value: undefined };

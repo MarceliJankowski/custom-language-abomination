@@ -8,5 +8,3 @@ const obj = {
       bar: true
     }
 };
-
-obj

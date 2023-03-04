@@ -10,20 +10,35 @@ interface Runtime_Value {
   value: unknown;
 }
 
-interface Runtime_Number extends Runtime_Value {
+// TYPES WITH PROTOTYPE (containing build-in properties / allowing member-expressions)
+
+/**@desc represents runtime type with access to `prototype-chain`*/
+interface Runtime_ProtoValue extends Runtime_Value {
+  prototype: { [key: string]: Runtime_Value };
+}
+
+interface Runtime_Number extends Runtime_ProtoValue {
   type: "number";
   value: number;
 }
 
-interface Runtime_String extends Runtime_Value {
+interface Runtime_String extends Runtime_ProtoValue {
   type: "string";
   value: string;
 }
 
-interface Runtime_Boolean extends Runtime_Value {
+interface Runtime_Object extends Runtime_ProtoValue {
+  type: "object";
+  properties: { [key: string]: Runtime_Value };
+  value: Runtime_Object["properties"];
+}
+
+interface Runtime_Boolean extends Runtime_ProtoValue {
   type: "boolean";
   value: boolean;
 }
+
+// TYPES WITHOUT PROTOTYPE (not containing any build-in properties / forbidding member-expressions)
 
 interface Runtime_Null extends Runtime_Value {
   type: "null";
@@ -33,9 +48,4 @@ interface Runtime_Null extends Runtime_Value {
 interface Runtime_Undefined extends Runtime_Value {
   type: "undefined";
   value: undefined;
-}
-
-interface Runtime_Object extends Runtime_Value {
-  type: "object";
-  value: { [key: string]: Runtime_Value };
 }

@@ -4,12 +4,30 @@ import * as MK from "./runtimeValueFactories";
 import { VariableEnv } from "./variableEnv";
 
 // -----------------------------------------------
+//                    TYPES
+// -----------------------------------------------
+
+interface EvaluatedMemberExpData {
+  object: Runtime_ProtoValue;
+  key: string;
+  value: Runtime_Value;
+}
+
+interface SharedUnaryExpOperatorsData {
+  valueBeforeUpdate: Runtime_Number;
+  valueAfterUpdate: Runtime_Number;
+}
+
+// -----------------------------------------------
 //                 INTERPRETER
 // -----------------------------------------------
 
 export class Interpreter {
   /**@desc list containing all runtime `falsy` values*/
   private readonly FALSY_VALUES = [MK.BOOL(false), MK.UNDEFINED(), MK.NULL(), MK.NUMBER(0)];
+
+  /**@desc list of all runtime data-types which have 'prototype', meaning that they have their own build-in `properties` and are valid `member-expression` objects*/
+  private readonly TYPES_WITH_PROTOTYPE: Runtime_ValueType[] = ["number", "string", "boolean", "object"];
 
   constructor(private env: VariableEnv) {}
 
@@ -31,11 +49,14 @@ export class Interpreter {
       case "Identifier":
         return this.evalIdentifier(astNode as AST_Identifier);
 
+      case "MemberExp":
+        return this.evalMemberExp(astNode as AST_MemberExp).value;
+
       case "VarDeclaration":
         return this.evalVarDeclaration(astNode as AST_VarDeclaration);
 
       case "AssignmentExp":
-        return this.evalAssignmentExp(astNode as AssignmentExp);
+        return this.evalAssignmentExp(astNode as AST_AssignmentExp);
 
       case "BinaryExp":
         return this.evalBinaryExp(astNode as AST_BinaryExp);
@@ -92,25 +113,53 @@ export class Interpreter {
     return MK.UNDEFINED();
   }
 
-  private evalAssignmentExp(assignmentExp: AssignmentExp): Runtime_Value {
+  private evalAssignmentExp(assignmentExp: AST_AssignmentExp): Runtime_Value {
+    // VARIABLE DECLARATIONS
     const assignmentStart = assignmentExp.start;
+    const operator = assignmentExp.operator;
+    const assigne = assignmentExp.assigne;
 
-    // make sure that assigne is an identifier
-    if (assignmentExp.assigne.kind !== "Identifier")
+    /**@desc stores runtime `assigne-value`
+    Example: identifierAssigne `'x'` with value: `'5'`; assigneValue equals: `runtime-number` with value: `'5'`*/
+    let assigneValue: Runtime_Value;
+    let computedAssignmentValue: Runtime_Value;
+    let memberExpObj: Runtime_Object | undefined;
+    let memberExpKey: string | undefined;
+
+    const assignmentValue = this.evaluate(assignmentExp.value);
+
+    // HANDLE ASSIGNE
+
+    // identifier
+    if (assigne.kind === "Identifier") {
+      assigneValue = this.evalIdentifier(assigne as AST_Identifier);
+    }
+
+    // object
+    else if (assigne.kind === "MemberExp") {
+      const { value, key, object } = this.evalMemberExp(assigne as AST_MemberExp);
+
+      // only allow property-assignment on runtime objects
+      if (object.type !== "object")
+        throw new Err(
+          `Invalid assignment-expression. Property assignment on type: '${object.type}' is forbidden, at position: ${assignmentStart}`,
+          "interpreter"
+        );
+
+      memberExpObj = object as Runtime_Object;
+      memberExpKey = key;
+      assigneValue = value;
+    }
+
+    // invalid kind
+    else
       throw new Err(
-        `Invalid assignment expression. Invalid Assigne kind: '${assignmentExp.assigne.kind}', at position: ${assignmentStart}`,
+        `Invalid assignment expression. Invalid Assigne kind: '${assigne.kind}', at position: ${assignmentStart}`,
         "interpreter"
       );
 
-    const operator = assignmentExp.operator;
-    const identifierValue = (assignmentExp.assigne as AST_Identifier).value;
-
-    const prevAssigneValue = this.evalIdentifier(assignmentExp.assigne as AST_Identifier);
-    const assignmentValue = this.evaluate(assignmentExp.value);
-    let computedAssignmentValue: Runtime_Value; // computed runtime-value for variable assignment
-
     // COMPUTE RUNTIME-VALUE BASED ON OPERATOR
-    switch (assignmentExp.operator) {
+    switch (operator) {
       case "=": {
         computedAssignmentValue = assignmentValue;
         break;
@@ -120,12 +169,12 @@ export class Interpreter {
         // @desc valid data types:
         // number/number | string/string | string/number combinations
 
-        const extractedBinaryOperator = operator[0];
+        const extractedBinaryOperator = operator[0]; // '+'
 
         // number/number
-        if (prevAssigneValue.type === "number" && assignmentValue.type === "number") {
+        if (assigneValue.type === "number" && assignmentValue.type === "number") {
           computedAssignmentValue = this.evalNumericBinaryExp(
-            prevAssigneValue as Runtime_Number,
+            assigneValue as Runtime_Number,
             extractedBinaryOperator,
             assignmentValue as Runtime_Number,
             assignmentStart
@@ -135,9 +184,9 @@ export class Interpreter {
         }
 
         // string/string and string/number combinations
-        else if (this.isValidStringNumberCombination(prevAssigneValue.type, assignmentValue.type)) {
+        else if (this.isValidStringNumberCombination(assigneValue.type, assignmentValue.type)) {
           computedAssignmentValue = this.evalStringBinaryExp(
-            prevAssigneValue as Runtime_String,
+            assigneValue as Runtime_String,
             extractedBinaryOperator,
             assignmentValue as Runtime_Number,
             assignmentStart
@@ -149,7 +198,7 @@ export class Interpreter {
         // invalid data types
         else {
           throw new Err(
-            `Invalid assignment expression. Operator: '${operator}' incorrectly used with assigne of type: '${prevAssigneValue.type}', at position: ${assignmentStart}`,
+            `Invalid assignment expression. Operator: '${operator}' incorrectly used with assigne of type: '${assigneValue.type}', at position: ${assignmentStart}`,
             "interpreter"
           );
         }
@@ -162,11 +211,11 @@ export class Interpreter {
         // @desc valid data types: number/number
 
         // number/number
-        if (prevAssigneValue.type === "number" && assignmentValue.type === "number") {
+        if (assigneValue.type === "number" && assignmentValue.type === "number") {
           const extractedBinaryOperator = operator[0];
 
           computedAssignmentValue = this.evalNumericBinaryExp(
-            prevAssigneValue as Runtime_Number,
+            assigneValue as Runtime_Number,
             extractedBinaryOperator,
             assignmentValue as Runtime_Number,
             assignmentStart
@@ -178,7 +227,7 @@ export class Interpreter {
         // invalid data types
         else {
           throw new Err(
-            `Invalid assignment expression. Operator: '${operator}' incorrectly used with assigne of type: '${prevAssigneValue.type}', at position: ${assignmentStart}`,
+            `Invalid assignment expression. Operator: '${operator}' incorrectly used with assigne of type: '${assigneValue.type}', at position: ${assignmentStart}`,
             "interpreter"
           );
         }
@@ -190,7 +239,7 @@ export class Interpreter {
         const extractedLogicalOperator = operator.slice(0, 2);
 
         computedAssignmentValue = this.evalBinaryExpSharedOperators(
-          prevAssigneValue,
+          assigneValue,
           extractedLogicalOperator,
           assignmentValue,
           assignmentStart
@@ -207,48 +256,106 @@ export class Interpreter {
     }
 
     // HANDLE ASSIGNMENT
-    this.env.assignVar(identifierValue, computedAssignmentValue, assignmentExp.start);
+
+    // IDENTIFIER
+    if (assigne.kind === "Identifier") {
+      this.env.assignVar((assigne as AST_Identifier).value, computedAssignmentValue, assignmentStart);
+    }
+    // OBJECT
+    else memberExpObj!.properties[memberExpKey!] = computedAssignmentValue;
 
     return computedAssignmentValue; // assignment is treated as expression, hence return the value
   }
 
   private evalObjectExp({ properties }: AST_ObjectLiteral): Runtime_Value {
-    const object: Runtime_Object = { type: "object", value: {} };
+    const object: Runtime_Object = MK.OBJECT();
 
     properties.forEach(({ key, value, start }) => {
       const runtimeValue = value === undefined ? this.env.lookupVar(key, start) : this.evaluate(value);
 
-      object.value[key] = runtimeValue;
+      object.properties[key] = runtimeValue;
     });
 
     return object;
   }
 
-  private evalPrefixUnaryExp({ operator, operand, start }: AST_PrefixUnaryExp): Runtime_Value {
+  private evalMemberExp(exp: AST_MemberExp): EvaluatedMemberExpData {
+    // make sure that 'exp.object' is a valid member-expression object
+    const runtimeExpObject = this.evaluate(exp.object);
+
+    if (!this.isValidMemberExpressionObject(runtimeExpObject.type))
+      throw new Err(
+        `Invalid member-expression. Invalid object: '${runtimeExpObject.value}' ('${runtimeExpObject.value}' doesn't support member-expressions), at position ${exp.object.start}`,
+        "interpreter"
+      );
+
+    // valid member-expression object
+    const runtimeObject = runtimeExpObject as Runtime_ProtoValue;
+
+    // HANDLE PROPERTY
+    let key: string;
+
+    // COMPUTED
+    if (exp.computed) {
+      // make sure that computed-property after evaluation is a string
+
+      const runtimeProperty = this.evaluate(exp.property);
+
+      if (runtimeProperty.type !== "string")
+        throw new Err(
+          `Invalid member-expression. Invalid computed property: '${runtimeProperty.value}', at position ${exp.property.start}`,
+          "interpreter"
+        );
+
+      key = (runtimeProperty as Runtime_String).value;
+    }
+
+    // NOT-COMPUTED
+    else {
+      // property type is already checked in parser to be an identifier, hence here it's redundant
+      key = (exp.property as AST_Identifier).value;
+    }
+
+    // HANDLE VALUE RETRIEVAL
+    let value: Runtime_Value | undefined;
+
+    if (runtimeObject.type === "object") {
+      // if member-expression object is an actual runtime object, first look into it's properties
+      value = (runtimeObject as Runtime_Object).properties[key];
+
+      // if property doesn't exist, then lookup it on it's prototype
+      if (value === undefined) value = runtimeObject.prototype[key];
+    }
+
+    // only objects can have user-defined properties. In case it's not an object simply lookup key in prototype
+    else value = runtimeObject.prototype[key];
+
+    // OUTPUT
+    const evaluatedMemberExpData: EvaluatedMemberExpData = {
+      object: runtimeObject,
+      key,
+      value: value ?? MK.UNDEFINED(), // return undefined data-type in case property doesn't exist, so that it's always Runtime_Value
+    };
+
+    return evaluatedMemberExpData;
+  }
+
+  private evalPrefixUnaryExp({ start, operator, operand }: AST_PrefixUnaryExp): Runtime_Value {
     switch (operator) {
       case "++":
       case "--": {
         // @desc:
-        // - these unary operators can only be used with identifier refering to a runtime number
-        // - first update identifier's value and then return it
+        // - these unary operators can only be used with number identifier/member-expression
+        // - first update value and then return it
 
-        const errMessage = `Invalid prefix unary expression. Operator: '${operator}' can only be used with identifier of number type.\nInvalid operand: '${operand.kind}', at position: ${operand.start}`;
+        const { valueAfterUpdate } = this.evalSharedUnaryExpIncrementAndDecrementCode(
+          "prefix",
+          start,
+          operator,
+          operand
+        );
 
-        if (operand.kind !== "Identifier") throw new Err(errMessage, "interpreter");
-
-        const operandIdentifier = operand as AST_Identifier;
-        const operandVar = this.evalIdentifier(operandIdentifier) as Runtime_Number;
-
-        if (operandVar.type !== "number") throw new Err(errMessage, "interpreter");
-
-        if (operator === "++") {
-          // by not modyfing '.value' property directly, I'm running Environment check for constant variable assignments
-          this.env.assignVar(operandIdentifier.value, MK.NUMBER(operandVar.value + 1), operand.start);
-        }
-        // operator: '--'
-        else this.env.assignVar(operandIdentifier.value, MK.NUMBER(operandVar.value - 1), operand.start);
-
-        return this.evalIdentifier(operandIdentifier); // return updated identifier
+        return valueAfterUpdate;
       }
 
       case "!": {
@@ -285,34 +392,17 @@ export class Interpreter {
       case "++":
       case "--": {
         // @desc:
-        // - these unary operators can only be used with identifier refering to a runtime number
-        // - first return identifier's value and then update it
+        // - these unary operators can only be used with number identifier/member-expression
+        // - first return value and then update it
 
-        const errMessage = `Invalid postfix unary expression. Operator: '${operator}' can only be used with identifier of number type.\nInvalid operand: '${operand.kind}', at position: ${operand.start}`;
+        const { valueBeforeUpdate } = this.evalSharedUnaryExpIncrementAndDecrementCode(
+          "postfix",
+          start,
+          operator,
+          operand
+        );
 
-        if (operand.kind !== "Identifier") throw new Err(errMessage, "interpreter");
-
-        const operandIdentifier = operand as AST_Identifier;
-        const operandBeforeUpdate = this.evalIdentifier(operandIdentifier) as Runtime_Number;
-
-        if (operandBeforeUpdate.type !== "number") throw new Err(errMessage, "interpreter");
-
-        if (operator === "++")
-          // by not modyfing '.value' property directly, I'm running Environment check for constant variable assignments
-          this.env.assignVar(
-            operandIdentifier.value,
-            MK.NUMBER(operandBeforeUpdate.value + 1),
-            operand.start
-          );
-        // operator: '--'
-        else
-          this.env.assignVar(
-            operandIdentifier.value,
-            MK.NUMBER(operandBeforeUpdate.value - 1),
-            operand.start
-          );
-
-        return operandBeforeUpdate; // operandBeforeUpdate contains reference to the previous NUMBER hash map, which contains previous/not-modified value
+        return valueBeforeUpdate;
       }
 
       default:
@@ -365,57 +455,6 @@ export class Interpreter {
 
     // HANDLE OTHER DATA-TYPES
     else return this.evalBinaryExpSharedOperators(left, binop.operator, right, binopStart);
-  }
-
-  /**@desc evaluate all shared (among all data-types) binary operators*/
-  private evalBinaryExpSharedOperators<T extends Runtime_Value, U extends Runtime_Value>(
-    left: T,
-    operator: string,
-    right: U,
-    start: CharPosition
-  ): T | U | Runtime_Boolean {
-    const lhsValue: unknown = (left as any).value;
-    const rhsValue: unknown = (right as any).value;
-
-    switch (operator) {
-      case "==":
-        return MK.BOOL(lhsValue === rhsValue);
-
-      case "!=":
-        return MK.BOOL(lhsValue !== rhsValue);
-
-      // custom AND/OR logic
-
-      case "&&": {
-        // 'AND' operator logic:
-        // - at least one operand is "falsy" -> return first "falsy" operand
-        // - both operands are "truthy" -> return last "truthy" operand
-
-        if (this.isFalsy(lhsValue)) return left;
-        if (this.isFalsy(rhsValue)) return right;
-
-        // BOTH ARE 'truthy'
-        return right;
-      }
-
-      case "||": {
-        // 'OR' operator logic:
-        // - at least one operand is "truthy" -> return first "truthy" operand
-        // - both operands are "falsy" -> return last "falsy" operand
-
-        if (this.isTruthy(lhsValue)) return left;
-        if (this.isTruthy(rhsValue)) return right;
-
-        // BOTH ARE 'falsy'
-        return right;
-      }
-
-      default:
-        throw new Err(
-          `Invalid binary-operation. Unsupported use of operator: '${operator}', at position: ${start}`,
-          "interpreter"
-        );
-    }
   }
 
   private evalNumericBinaryExp(
@@ -490,8 +529,143 @@ export class Interpreter {
   }
 
   // -----------------------------------------------
+  //            SHARED HELPER METHODS
+  // -----------------------------------------------
+
+  /**@desc evaluate all shared (among all data-types) binary operators*/
+  private evalBinaryExpSharedOperators<T extends Runtime_Value, U extends Runtime_Value>(
+    left: T,
+    operator: string,
+    right: U,
+    start: CharPosition
+  ): T | U | Runtime_Boolean {
+    const lhsValue: unknown = (left as any).value;
+    const rhsValue: unknown = (right as any).value;
+
+    switch (operator) {
+      case "==":
+        return MK.BOOL(lhsValue === rhsValue);
+
+      case "!=":
+        return MK.BOOL(lhsValue !== rhsValue);
+
+      // custom AND/OR logic
+
+      case "&&": {
+        // 'AND' operator logic:
+        // - at least one operand is "falsy" -> return first "falsy" operand
+        // - both operands are "truthy" -> return last "truthy" operand
+
+        if (this.isFalsy(lhsValue)) return left;
+        if (this.isFalsy(rhsValue)) return right;
+
+        // BOTH ARE 'truthy'
+        return right;
+      }
+
+      case "||": {
+        // 'OR' operator logic:
+        // - at least one operand is "truthy" -> return first "truthy" operand
+        // - both operands are "falsy" -> return last "falsy" operand
+
+        if (this.isTruthy(lhsValue)) return left;
+        if (this.isTruthy(rhsValue)) return right;
+
+        // BOTH ARE 'falsy'
+        return right;
+      }
+
+      default:
+        throw new Err(
+          `Invalid binary-operation. Unsupported use of operator: '${operator}', at position: ${start}`,
+          "interpreter"
+        );
+    }
+  }
+
+  /**@desc helper method for: `'evalPrefixUnaryExp()'` and `'evalPostfixUnaryExp'` methods*/
+  private evalSharedUnaryExpIncrementAndDecrementCode(
+    expType: "prefix" | "postfix",
+    expStart: CharPosition,
+    operator: string,
+    operand: AST_Expression
+  ): SharedUnaryExpOperatorsData {
+    const invalidOperandErrorMessage = `Invalid ${expType} unary expression. Operator: '${operator}' can only be used with number identifier/member-expression\nInvalid operand: '${operand.kind}', at position: ${expStart}`;
+
+    // VARIABLE DECLARATIONS
+    let evaluatedOperandValue: Runtime_Value;
+    let memberExpObj: Runtime_Object | undefined;
+    let memberExpKey: string | undefined;
+
+    // MAKE SURE THAT OPERAND IS VALID
+
+    // IDENTIFIER
+    if (operand.kind === "Identifier") {
+      evaluatedOperandValue = this.evalIdentifier(operand as AST_Identifier);
+    }
+
+    // MEMBER-EXPRESSION
+    else if (operand.kind === "MemberExp") {
+      const { object, key, value } = this.evalMemberExp(operand as AST_MemberExp);
+
+      // only allow property-modification on runtime objects
+      if (object.type !== "object")
+        throw new Err(
+          `Invalid unary-expression. Property modification on type: '${object.type}' is forbidden, at position: ${expStart}`,
+          "interpreter"
+        );
+
+      memberExpObj = object as Runtime_Object;
+      memberExpKey = key;
+      evaluatedOperandValue = value;
+    }
+
+    // INVALID OPERAND KIND
+    else throw new Err(invalidOperandErrorMessage, "interpreter");
+
+    // MAKE SURE THAT EVALUATED OPERAND IS A NUMBER
+    if (evaluatedOperandValue.type !== "number") throw new Err(invalidOperandErrorMessage, "interpreter");
+    const operandNumberValue = evaluatedOperandValue as Runtime_Number;
+
+    // HANDLE VALUE ASSIGNMENT
+    let newRuntimeOperandValue: Runtime_Number; // computed replacement runtime-value for operand
+
+    // not modyfing '.value' property directly, allows Environment to check whether 'identifier' is a constant variable, and prevent assignment in that case
+
+    // OPERATOR: '++'
+    if (operator === "++") {
+      newRuntimeOperandValue = MK.NUMBER(operandNumberValue.value + 1);
+    }
+
+    // OPERATOR: '--'
+    else newRuntimeOperandValue = MK.NUMBER(operandNumberValue.value - 1);
+
+    // HANDLE VALUE ASSIGNMENT
+
+    // IDENTIFIER
+    if (operand.kind === "Identifier") {
+      this.env.assignVar((operand as AST_Identifier).value, newRuntimeOperandValue, operand.start);
+    }
+
+    // OBJECT
+    else memberExpObj!.properties[memberExpKey!] = newRuntimeOperandValue;
+
+    const outputObj: SharedUnaryExpOperatorsData = {
+      valueBeforeUpdate: operandNumberValue, // evaluatedOperandValue contains reference to the previous runtime NUMBER with unmodified value
+      valueAfterUpdate: newRuntimeOperandValue,
+    };
+
+    return outputObj;
+  }
+
+  // -----------------------------------------------
   //                  UTILITIES
   // -----------------------------------------------
+
+  /**@desc determine whether `type` is a value member-expression `object`*/
+  private isValidMemberExpressionObject(type: Runtime_ValueType): boolean {
+    return this.TYPES_WITH_PROTOTYPE.some(validType => validType === type);
+  }
 
   /**@desc determine whether `a` and `b` types form valid string/number combination
   valid combinations: string/string | string/number | number/string*/

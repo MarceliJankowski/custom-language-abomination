@@ -51,6 +51,7 @@ export class Parser {
   // multiplicativeExp
   // prefixUnaryExp
   // postfixUnaryExp
+  // MemberExp
   // primaryExp - MOST IMPORTANT / INVOKED LAST / EVALUATED FIRST
 
   // -----------------------------------------------
@@ -146,7 +147,7 @@ export class Parser {
 
       const value = this.parseTernaryExp();
 
-      const assignmentExp: AssignmentExp = {
+      const assignmentExp: AST_AssignmentExp = {
         kind: "AssignmentExp",
         assigne: left,
         operator,
@@ -189,7 +190,7 @@ export class Parser {
   private parseObjectExp(): AST_Expression {
     if (this.at().type !== TokenType.OPEN_CURLY_BRACE) return this.parseLogicalExpOR();
 
-    const properties = new Array<AST_Property>();
+    const properties = new Array<AST_ObjectProperty>();
 
     const objectStart = this.eat().start; // advance past OPEN_CURLY_BRACE
 
@@ -201,8 +202,8 @@ export class Parser {
 
       // shorthand: { key, }
       if (this.at().type === TokenType.COMMA) {
-        const uninitializedProperty: AST_Property = {
-          kind: "Property",
+        const uninitializedProperty: AST_ObjectProperty = {
+          kind: "ObjectProperty",
           key: key.value,
           value: undefined,
           start: key.start,
@@ -215,8 +216,8 @@ export class Parser {
 
       // shorthand: { key }
       else if (this.at().type === TokenType.CLOSE_CURLY_BRACE) {
-        const uninitializedProperty: AST_Property = {
-          kind: "Property",
+        const uninitializedProperty: AST_ObjectProperty = {
+          kind: "ObjectProperty",
           key: key.value,
           value: undefined,
           start: key.start,
@@ -239,8 +240,8 @@ export class Parser {
           "Object-literal missing: closing curly-brace ('}') or comma (','), following property-value"
         );
 
-      const newProperty: AST_Property = {
-        kind: "Property",
+      const newProperty: AST_ObjectProperty = {
+        kind: "ObjectProperty",
         key: key.value,
         value,
         start: key.start,
@@ -374,7 +375,7 @@ export class Parser {
 
   /**@desc parse `postfix` unary expressions (like: var++)*/
   private parsePostfixUnaryExp(): AST_Expression {
-    const left = this.parsePrimaryExp();
+    const left = this.parseMemberExp();
 
     while (this.at().type === TokenType.UNARY_OPERATOR) {
       const operator = this.eat();
@@ -392,14 +393,66 @@ export class Parser {
     return left;
   }
 
+  private parseMemberExp(): AST_Expression {
+    let object = this.parsePrimaryExp();
+
+    // iterate as long as we're accessing new property
+    while (this.at().type === TokenType.DOT || this.at().type === TokenType.OPEN_BRACKET) {
+      const operator = this.eat(); // '.' or '[' for computed expressions
+
+      let property: AST_Expression;
+      let computed = false;
+
+      // NON-COMPUTED (obj.property)
+      if (operator.type === TokenType.DOT) {
+        property = this.parsePrimaryExp();
+
+        if (property.kind !== "Identifier")
+          throw new Err(
+            `Invalid member-expression. Property kind: '${property.kind}' is not an identifier (only identifiers can follow '.' operator), at position ${property.start}`,
+            "parser"
+          );
+      }
+
+      // COMPUTED (obj["key"])
+      else if (operator.type === TokenType.OPEN_BRACKET) {
+        computed = true;
+        property = this.parseExpression(); // not checking property kind as there are many expression that could evaluate to valid identifier
+        this.eatAndExpect(
+          TokenType.CLOSE_BRACKET,
+          "Missing closing bracket (']') inside computed member-expression"
+        );
+      }
+
+      // INVALID OPERATOR
+      else
+        throw new Err(
+          `Invalid member-expression. Invalid operator: '${operator.value}', at position ${operator.start}`,
+          "parser"
+        );
+
+      const memberExp: AST_MemberExp = {
+        kind: "MemberExp",
+        object,
+        property,
+        computed,
+        start: object.start,
+      };
+
+      object = memberExp;
+    }
+
+    return object;
+  }
+
   /**@desc parses literal values and grouping expressions*/
   private parsePrimaryExp(): AST_Expression {
     const tokenType = this.at().type;
 
     switch (tokenType) {
       case TokenType.STRING: {
-        const { value, start, end } = this.eat();
-        const stringNode: AST_StringLiteral = { kind: "StringLiteral", value, start, end: end! };
+        const { value, start } = this.eat();
+        const stringNode: AST_StringLiteral = { kind: "StringLiteral", value, start };
         return stringNode;
       }
 

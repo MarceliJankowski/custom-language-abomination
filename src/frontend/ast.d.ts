@@ -14,12 +14,13 @@ type AST_Node =
   | "PostfixUnaryExp"
   | "BinaryExp"
   | "TernaryExp"
+  | "MemberExp"
 
   // LITERALS
   | "NumericLiteral"
   | "StringLiteral"
   | "Identifier"
-  | "Property"
+  | "ObjectProperty"
   | "ObjectLiteral";
 
 /**@desc doesn't return any value at run-time*/
@@ -54,7 +55,7 @@ interface AST_Expression extends AST_Statement {}
 //              EXTENDS EXPRESSION
 // -----------------------------------------------
 
-interface AssignmentExp extends AST_Expression {
+interface AST_AssignmentExp extends AST_Expression {
   kind: "AssignmentExp";
   assigne: AST_Expression; // assigne is an expression because I want to support member-expressions (like: obj.a = 'value', where 'obj.a' is a member-expression)
   operator: string;
@@ -69,7 +70,6 @@ interface AST_NumericLiteral extends AST_Expression {
 interface AST_StringLiteral extends AST_Expression {
   kind: "StringLiteral";
   value: string;
-  end: CharPosition;
 }
 
 interface AST_Identifier extends AST_Expression {
@@ -110,8 +110,8 @@ interface AST_TernaryExp extends AST_Expression {
 }
 
 /**@desc represents `object` property*/
-interface AST_Property extends AST_Expression {
-  kind: "Property";
+interface AST_ObjectProperty extends AST_Expression {
+  kind: "ObjectProperty";
   key: string;
   value?: AST_Expression;
 }
@@ -119,5 +119,14 @@ interface AST_Property extends AST_Expression {
 /**@desc represents object/hash-table data-structure*/
 interface AST_ObjectLiteral extends AST_Expression {
   kind: "ObjectLiteral";
-  properties: AST_Property[];
+  properties: AST_ObjectProperty[];
+}
+
+/**@desc represents object/property relationship, used for accessing object properties (for instance: `obj.property`)
+@computed determines whether it's a computed member-expression (like: `obj["key"]`)*/
+interface AST_MemberExp extends AST_Expression {
+  kind: "MemberExp";
+  object: AST_Expression;
+  property: AST_Expression;
+  computed: boolean;
 }

@@ -35,6 +35,7 @@ export enum TokenType {
   COLON = "COLON",
   SEMICOLON = "SEMICOLON",
   COMMA = "COMMA",
+  DOT = "DOT",
 
   OPEN_BRACKET = "OPEN_BRACKET",
   CLOSE_BRACKET = "CLOSE_BRACKET",
@@ -62,7 +63,7 @@ export class Token {
     public type: TokenType,
     public value: string,
     public start: CharPosition,
-    public end?: CharPosition // not needed in most tokens
+    public end?: CharPosition // only needed in EOF token
   ) {}
 }
 
@@ -115,6 +116,11 @@ export class Lexer {
 
         case "?": {
           this.addToken(TokenType.TERNARY_OPERATOR, this.eat(), this.position);
+          break;
+        }
+
+        case ".": {
+          this.addToken(TokenType.DOT, this.eat(), this.position);
           break;
         }
 
@@ -252,7 +258,7 @@ export class Lexer {
               );
             }
 
-            this.addToken(TokenType.STRING, value, startPosition, this.position);
+            this.addToken(TokenType.STRING, value, startPosition);
           }
 
           // IDENTIFIER
@@ -362,7 +368,7 @@ export class Lexer {
   // -----------------------------------------------
 
   /**@desc append Token to `tokens` array
-  @param end is optional, most tokens don't need it. It's only required/expected in `EOF` and `string` (for getting length) token*/
+  @param end is optional, most tokens don't need it. It's only required/expected in `EOF` token*/
   private addToken(type: TokenType, value: string, start: CharPosition, end?: CharPosition): void {
     this.tokens.push(new Token(type, value, start, end));
   }
