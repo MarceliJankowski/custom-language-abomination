@@ -174,10 +174,15 @@ class InterpreterInterface {
     console.log("\nREPL");
 
     while (true) {
-      const input = prompt("> ");
-      const trimmedinput = input.trim();
+      let input = prompt("> ");
+      const trimmedInput = input.trim();
 
-      if (trimmedinput === "exit" || trimmedinput === "exit()") process.exit(1);
+      // REPL COMMANDS
+      if (trimmedInput === "exit") process.exit(0);
+      if (trimmedInput === "clear") {
+        console.clear();
+        continue;
+      }
 
       try {
         const output = this.evaluateSrc(input);
