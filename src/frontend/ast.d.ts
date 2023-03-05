@@ -21,7 +21,8 @@ type AST_Node =
   | "StringLiteral"
   | "Identifier"
   | "ObjectProperty"
-  | "ObjectLiteral";
+  | "ObjectLiteral"
+  | "ArrayLiteral";
 
 /**@desc doesn't return any value at run-time*/
 interface AST_Statement {
@@ -116,10 +117,14 @@ interface AST_ObjectProperty extends AST_Expression {
   value?: AST_Expression;
 }
 
-/**@desc represents object/hash-table data-structure*/
 interface AST_ObjectLiteral extends AST_Expression {
   kind: "ObjectLiteral";
   properties: AST_ObjectProperty[];
+}
+
+interface AST_ArrayLiteral extends AST_Expression {
+  kind: "ArrayLiteral";
+  elements: AST_Expression[];
 }
 
 /**@desc represents object/property relationship, used for accessing object properties (for instance: `obj.property`)

@@ -9,7 +9,7 @@ import { VariableEnv } from "./variableEnv";
 
 interface EvaluatedMemberExpData {
   object: Runtime_ProtoValue;
-  key: string;
+  property: string | number;
   value: Runtime_Value;
 }
 
@@ -27,7 +27,13 @@ export class Interpreter {
   private readonly FALSY_VALUES = [MK.BOOL(false), MK.UNDEFINED(), MK.NULL(), MK.NUMBER(0)];
 
   /**@desc list of all runtime data-types which have 'prototype', meaning that they have their own build-in `properties` and are valid `member-expression` objects*/
-  private readonly TYPES_WITH_PROTOTYPE: Runtime_ValueType[] = ["number", "string", "boolean", "object"];
+  private readonly TYPES_WITH_PROTOTYPE: Runtime_ValueType[] = [
+    "number",
+    "string",
+    "boolean",
+    "object",
+    "array",
+  ];
 
   constructor(private env: VariableEnv) {}
 
@@ -45,6 +51,9 @@ export class Interpreter {
 
       case "ObjectLiteral":
         return this.evalObjectExp(astNode as AST_ObjectLiteral);
+
+      case "ArrayLiteral":
+        return this.evalArrayExp(astNode as AST_ArrayLiteral);
 
       case "Identifier":
         return this.evalIdentifier(astNode as AST_Identifier);
@@ -123,8 +132,8 @@ export class Interpreter {
     Example: identifierAssigne `'x'` with value: `'5'`; assigneValue equals: `runtime-number` with value: `'5'`*/
     let assigneValue: Runtime_Value;
     let computedAssignmentValue: Runtime_Value;
-    let memberExpObj: Runtime_Object | undefined;
-    let memberExpKey: string | undefined;
+    let memberExpObj: Runtime_Object | Runtime_Array;
+    let memberExpProperty: string | number;
 
     const assignmentValue = this.evaluate(assignmentExp.value);
 
@@ -135,19 +144,18 @@ export class Interpreter {
       assigneValue = this.evalIdentifier(assigne as AST_Identifier);
     }
 
-    // object
+    // array/object
     else if (assigne.kind === "MemberExp") {
-      const { value, key, object } = this.evalMemberExp(assigne as AST_MemberExp);
+      const { value, property, object } = this.evalMemberExp(assigne as AST_MemberExp);
 
-      // only allow property-assignment on runtime objects
-      if (object.type !== "object")
+      if (object.type !== "object" && object.type !== "array")
         throw new Err(
           `Invalid assignment-expression. Property assignment on type: '${object.type}' is forbidden, at position: ${assignmentStart}`,
           "interpreter"
         );
 
-      memberExpObj = object as Runtime_Object;
-      memberExpKey = key;
+      memberExpObj = object as Runtime_Object | Runtime_Array;
+      memberExpProperty = property;
       assigneValue = value;
     }
 
@@ -255,14 +263,14 @@ export class Interpreter {
         );
     }
 
-    // HANDLE ASSIGNMENT
-
-    // IDENTIFIER
-    if (assigne.kind === "Identifier") {
-      this.env.assignVar((assigne as AST_Identifier).value, computedAssignmentValue, assignmentStart);
-    }
-    // OBJECT
-    else memberExpObj!.properties[memberExpKey!] = computedAssignmentValue;
+    // VALUE ASSIGNMENT
+    this.handleValueAssignment(
+      assignmentStart,
+      assigne,
+      computedAssignmentValue,
+      memberExpObj!,
+      memberExpProperty!
+    );
 
     return computedAssignmentValue; // assignment is treated as expression, hence return the value
   }
@@ -279,6 +287,18 @@ export class Interpreter {
     return object;
   }
 
+  private evalArrayExp(exp: AST_ArrayLiteral): Runtime_Value {
+    const array: Runtime_Array = MK.ARRAY();
+
+    exp.elements.forEach(value => {
+      const runtimeValue = this.evaluate(value);
+
+      array.elements.push(runtimeValue);
+    });
+
+    return array;
+  }
+
   private evalMemberExp(exp: AST_MemberExp): EvaluatedMemberExpData {
     // make sure that 'exp.object' is a valid member-expression object
     const runtimeExpObject = this.evaluate(exp.object);
@@ -293,47 +313,92 @@ export class Interpreter {
     const runtimeObject = runtimeExpObject as Runtime_ProtoValue;
 
     // HANDLE PROPERTY
-    let key: string;
+    let computedPropertyType: "key" | "index";
+    let computedPropertyValue: string | number;
 
     // COMPUTED
     if (exp.computed) {
-      // make sure that computed-property after evaluation is a string
+      // make sure that evaluated computed-property is valid (typewise)
+      const evaluatedComputedProperty = this.evaluate(exp.property);
 
-      const runtimeProperty = this.evaluate(exp.property);
+      switch (evaluatedComputedProperty.type) {
+        case "string":
+          computedPropertyType = "key";
+          computedPropertyValue = (evaluatedComputedProperty as Runtime_String).value;
+          break;
 
-      if (runtimeProperty.type !== "string")
-        throw new Err(
-          `Invalid member-expression. Invalid computed property: '${runtimeProperty.value}', at position ${exp.property.start}`,
-          "interpreter"
-        );
+        case "number":
+          computedPropertyType = "index";
+          computedPropertyValue = (evaluatedComputedProperty as Runtime_Number).value;
+          break;
 
-      key = (runtimeProperty as Runtime_String).value;
+        default:
+          throw new Err(
+            `Invalid member-expression. Invalid computed property: '${evaluatedComputedProperty.value}', at position ${exp.property.start}`,
+            "interpreter"
+          );
+      }
     }
-
     // NOT-COMPUTED
     else {
       // property type is already checked in parser to be an identifier, hence here it's redundant
-      key = (exp.property as AST_Identifier).value;
+      computedPropertyType = "key";
+      computedPropertyValue = (exp.property as AST_Identifier).value;
     }
 
     // HANDLE VALUE RETRIEVAL
     let value: Runtime_Value | undefined;
 
-    if (runtimeObject.type === "object") {
-      // if member-expression object is an actual runtime object, first look into it's properties
-      value = (runtimeObject as Runtime_Object).properties[key];
+    // KEY
+    if (computedPropertyType! === "key") {
+      const key = computedPropertyValue as "string";
 
-      // if property doesn't exist, then lookup it on it's prototype
-      if (value === undefined) value = runtimeObject.prototype[key];
+      switch (runtimeObject.type) {
+        case "object": {
+          // if member-expression object is an actual runtime object, first look into it's properties
+          value = (runtimeObject as Runtime_Object).properties[key];
+
+          // if property doesn't exist, look it up on object's prototype
+          if (value === undefined) value = runtimeObject.prototype[key];
+          break;
+        }
+
+        default:
+          value = runtimeObject.prototype[key];
+      }
     }
 
-    // only objects can have user-defined properties. In case it's not an object simply lookup key in prototype
-    else value = runtimeObject.prototype[key];
+    // INDEX
+    else if (computedPropertyType! === "index") {
+      const index = computedPropertyValue as number;
+
+      switch (runtimeObject.type) {
+        case "string": {
+          const strChar = (runtimeObject as Runtime_String).value[index];
+
+          if (strChar !== undefined) value = MK.STRING(strChar);
+
+          break;
+        }
+
+        case "array": {
+          value = (runtimeObject as Runtime_Array).elements[index];
+          break;
+        }
+
+        default:
+          throw new Err(
+            `Invalid computed member-expression. Attempted index retrieval on type: '${runtimeObject.type}', at position ${exp.start}`,
+            "interpreter"
+          );
+      }
+    }
 
     // OUTPUT
+
     const evaluatedMemberExpData: EvaluatedMemberExpData = {
       object: runtimeObject,
-      key,
+      property: computedPropertyValue,
       value: value ?? MK.UNDEFINED(), // return undefined data-type in case property doesn't exist, so that it's always Runtime_Value
     };
 
@@ -583,6 +648,44 @@ export class Interpreter {
     }
   }
 
+  /**@desc helper method for `'evalUnaryExp()'` methods and `'evalAssignmentExp()'` method, handles value assignment*/
+  private handleValueAssignment(
+    start: CharPosition,
+    assigne: AST_Expression,
+    newRuntimeValue: Runtime_Value,
+    memberExpObj?: Runtime_Object | Runtime_Array,
+    memberExpProperty?: string | number
+  ) {
+    // identifier
+    if (assigne.kind === "Identifier") {
+      this.env.assignVar((assigne as AST_Identifier).value, newRuntimeValue, assigne.start);
+    }
+
+    // object
+    else if (memberExpObj?.type === "object") {
+      memberExpObj.properties[memberExpProperty!] = newRuntimeValue;
+    }
+
+    // array
+    else if (memberExpObj?.type === "array") {
+      // make sure that memberExpProperty is an index (forbid users from defining/modifying properties on arrays)
+      if (typeof memberExpProperty !== "number")
+        throw new Err(
+          `Invalid member-expression value assignment. Defining properties on arrays is forbidden. At position ${start}`,
+          "interpreter"
+        );
+
+      memberExpObj.elements[memberExpProperty as number] = newRuntimeValue;
+    }
+
+    // invalid
+    else
+      throw new Err(
+        `Internal interpreter exception. Invalid assignment assigne passed to: 'handleValueAssignment()' method. Assigne: '${assigne}', at position ${assigne.start}`,
+        "internal"
+      );
+  }
+
   /**@desc helper method for: `'evalPrefixUnaryExp()'` and `'evalPostfixUnaryExp'` methods*/
   private evalSharedUnaryExpIncrementAndDecrementCode(
     expType: "prefix" | "postfix",
@@ -594,8 +697,8 @@ export class Interpreter {
 
     // VARIABLE DECLARATIONS
     let evaluatedOperandValue: Runtime_Value;
-    let memberExpObj: Runtime_Object | undefined;
-    let memberExpKey: string | undefined;
+    let memberExpObj: Runtime_Object | Runtime_Array;
+    let memberExpProperty: string | number;
 
     // MAKE SURE THAT OPERAND IS VALID
 
@@ -606,17 +709,16 @@ export class Interpreter {
 
     // MEMBER-EXPRESSION
     else if (operand.kind === "MemberExp") {
-      const { object, key, value } = this.evalMemberExp(operand as AST_MemberExp);
+      const { object, property, value } = this.evalMemberExp(operand as AST_MemberExp);
 
-      // only allow property-modification on runtime objects
-      if (object.type !== "object")
+      if (object.type !== "object" && object.type !== "array")
         throw new Err(
           `Invalid unary-expression. Property modification on type: '${object.type}' is forbidden, at position: ${expStart}`,
           "interpreter"
         );
 
       memberExpObj = object as Runtime_Object;
-      memberExpKey = key;
+      memberExpProperty = property;
       evaluatedOperandValue = value;
     }
 
@@ -640,18 +742,12 @@ export class Interpreter {
     // OPERATOR: '--'
     else newRuntimeOperandValue = MK.NUMBER(operandNumberValue.value - 1);
 
-    // HANDLE VALUE ASSIGNMENT
+    // VALUE ASSIGNMENT
+    this.handleValueAssignment(expStart, operand, newRuntimeOperandValue, memberExpObj!, memberExpProperty!);
 
-    // IDENTIFIER
-    if (operand.kind === "Identifier") {
-      this.env.assignVar((operand as AST_Identifier).value, newRuntimeOperandValue, operand.start);
-    }
-
-    // OBJECT
-    else memberExpObj!.properties[memberExpKey!] = newRuntimeOperandValue;
-
+    // OUTPUT
     const outputObj: SharedUnaryExpOperatorsData = {
-      valueBeforeUpdate: operandNumberValue, // evaluatedOperandValue contains reference to the previous runtime NUMBER with unmodified value
+      valueBeforeUpdate: operandNumberValue, // operandNumberValue contains reference to the previous runtime NUMBER with unmodified value
       valueAfterUpdate: newRuntimeOperandValue,
     };
 

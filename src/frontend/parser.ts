@@ -39,10 +39,11 @@ export class Parser {
   // -----------------------------------------------
   // helpful web page: https://en.cppreference.com/w/cpp/language/operator_precedence
 
-  // varDeclaration - LEAST IMPORTANT / INVOKED FIRST / EVALUATED LAST
+  // varDeclaration - LEAST IMPORTANT / INVOKED FIRST
   // assignmentExp
   // ternaryExp
   // objectExp
+  // arrayExp
   // logicalExp (OR)
   // logicalExp (AND)
   // equalityExp
@@ -52,7 +53,7 @@ export class Parser {
   // prefixUnaryExp
   // postfixUnaryExp
   // MemberExp
-  // primaryExp - MOST IMPORTANT / INVOKED LAST / EVALUATED FIRST
+  // primaryExp - MOST IMPORTANT / INVOKED LAST
 
   // -----------------------------------------------
   //                    PARSE
@@ -188,11 +189,10 @@ export class Parser {
   }
 
   private parseObjectExp(): AST_Expression {
-    if (this.at().type !== TokenType.OPEN_CURLY_BRACE) return this.parseLogicalExpOR();
-
-    const properties = new Array<AST_ObjectProperty>();
+    if (this.at().type !== TokenType.OPEN_CURLY_BRACE) return this.parseArrayExp();
 
     const objectStart = this.eat().start; // advance past OPEN_CURLY_BRACE
+    const properties = new Array<AST_ObjectProperty>();
 
     // iterate as long as we're inside the object
     while (this.notEOF() && this.at().type !== TokenType.CLOSE_CURLY_BRACE) {
@@ -261,6 +261,34 @@ export class Parser {
     };
 
     return objectLiteral;
+  }
+
+  private parseArrayExp(): AST_Expression {
+    if (this.at().type !== TokenType.OPEN_BRACKET) return this.parseLogicalExpOR();
+
+    const elements = new Array<AST_Expression>();
+    const arrayStart = this.eat().start; // advance past OPEN_BRACKET
+
+    while (this.notEOF() && this.at().type !== TokenType.CLOSE_BRACKET) {
+      const element = this.parseExpression();
+
+      if (this.at().type === TokenType.COMMA) this.eat(); // advance past comma
+
+      elements.push(element);
+    }
+
+    this.eatAndExpect(
+      TokenType.CLOSE_BRACKET,
+      "Missing closing bracket (']') following element in array-literal"
+    );
+
+    const arrayLiteral: AST_ArrayLiteral = {
+      kind: "ArrayLiteral",
+      elements,
+      start: arrayStart,
+    };
+
+    return arrayLiteral;
   }
 
   /**@desc parses logical `OR` operator*/

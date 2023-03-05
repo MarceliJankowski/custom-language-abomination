@@ -4,6 +4,23 @@
 
 // DATA-TYPES WITH PROTOTYPE
 
+// ARRAY
+
+const ARRAY_PROTOTYPE = {};
+
+export function ARRAY(elements: Runtime_Array["elements"] = []): Runtime_Array {
+  return {
+    type: "array",
+    elements,
+    prototype: ARRAY_PROTOTYPE,
+
+    // lazy work-around main.ts logging
+    get value() {
+      return this.elements;
+    },
+  };
+}
+
 // OBJECT
 
 const OBJECT_PROTOTYPE = {};

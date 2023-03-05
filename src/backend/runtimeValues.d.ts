@@ -3,7 +3,7 @@
 // -----------------------------------------------
 // preface everything with "Runtime" to clear any confusion / prevent name collisions
 
-type Runtime_ValueType = "number" | "string" | "object" | "boolean" | "null" | "undefined";
+type Runtime_ValueType = "number" | "string" | "boolean" | "object" | "array" | "null" | "undefined";
 
 interface Runtime_Value {
   type: Runtime_ValueType;
@@ -31,6 +31,12 @@ interface Runtime_Object extends Runtime_ProtoValue {
   type: "object";
   properties: { [key: string]: Runtime_Value };
   value: Runtime_Object["properties"];
+}
+
+interface Runtime_Array extends Runtime_ProtoValue {
+  type: "array";
+  elements: Runtime_Value[];
+  value: Runtime_Array["elements"];
 }
 
 interface Runtime_Boolean extends Runtime_ProtoValue {
