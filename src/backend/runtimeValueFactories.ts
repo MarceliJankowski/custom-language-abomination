@@ -31,7 +31,7 @@ export function OBJECT(properties: Runtime_Object["properties"] = {}): Runtime_O
     properties,
     prototype: OBJECT_PROTOTYPE,
 
-    // lazy work-around main.ts logging
+    // lazy work-around main.ts logggin
     get value() {
       return this.properties;
     },

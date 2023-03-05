@@ -1,3 +1,6 @@
+// PROJECT MODULES
+import { MK } from "./backend";
+
 // -----------------------------------------------
 //                  ERROR CODE
 // -----------------------------------------------
@@ -34,3 +37,29 @@ export const BINARY_OPERATORS = [
 export const UNARY_OPERATORS = ["!", "++", "--"];
 
 export const ASSIGNMENT_OPERATORS = ["=", "+=", "-=", "*=", "/=", "%=", "||=", "&&="];
+
+// -----------------------------------------------
+//        VALID MEMBER-EXPRESSION NODES
+// -----------------------------------------------
+
+export const VALID_MEMBER_EXP_AST_NODES: AST_Node[] = [
+  "Identifier", // includes booleans
+  "ArrayLiteral",
+  "ObjectLiteral",
+  "StringLiteral",
+  "NumericLiteral",
+];
+
+export const VALID_MEMBER_EXP_RUNTIME_TYPES: Runtime_ValueType[] = [
+  "number",
+  "string",
+  "boolean",
+  "object",
+  "array",
+];
+
+// -----------------------------------------------
+//                FALSY VALUSES
+// -----------------------------------------------
+
+export const RUNTIME_FALSY_VALUES = [MK.BOOL(false), MK.UNDEFINED(), MK.NULL(), MK.NUMBER(0)];

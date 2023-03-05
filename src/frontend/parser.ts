@@ -7,24 +7,26 @@ import {
   isMultiplicativeOperator,
 } from "../utils";
 import { Err } from "../utils";
+import { VALID_MEMBER_EXP_AST_NODES } from "../constants";
 
 // -----------------------------------------------
 //                    PARSER
 // -----------------------------------------------
 
 export class Parser {
+  private programBody: AST_Program["body"] = [];
+
   constructor(private tokens: Token[]) {}
 
   public buildAST(): AST_Program {
-    const programBody: Pick<AST_Program, "body">["body"] = [];
     const programStart = this.tokens[0].start; // define programStart before 'tokens' array get's eaten by parser
 
     // BUILD AST
-    while (this.notEOF()) programBody.push(this.parseStatement());
+    while (this.notEOF()) this.programBody.push(this.parseStatement());
 
     const program: AST_Program = {
       kind: "Program",
-      body: programBody,
+      body: this.programBody,
 
       // handle empty-program case with 'nullish coalescing' operator
       start: programStart ?? [0, 0],
@@ -277,7 +279,13 @@ export class Parser {
   }
 
   private parseArrayExp(): AST_Expression {
-    if (this.at().type !== TokenType.OPEN_BRACKET) return this.parseLogicalExpOR();
+    if (
+      this.at().type !== TokenType.OPEN_BRACKET ||
+      // if previous node is a valid memberExpObject and current token: '[' is following that node, don't treat it as another array, but a computed member-expression (down the line)
+      (this.isPrevNodeValidMemberExpObj() && this.isCurrentTokenFollowingPrevNode())
+    ) {
+      return this.parseLogicalExpOR();
+    }
 
     const elements = new Array<AST_Expression>();
     const arrayStart = this.eat().start; // advance past OPEN_BRACKET
@@ -438,10 +446,19 @@ export class Parser {
   }
 
   private parseMemberExp(): AST_Expression {
-    let object = this.parsePrimaryExp();
+    const isCurrentTokenAccessingProperty = () =>
+      this.at().type === TokenType.DOT || this.at().type === TokenType.OPEN_BRACKET;
 
-    // iterate as long as we're accessing new property
-    while (this.at().type === TokenType.DOT || this.at().type === TokenType.OPEN_BRACKET) {
+    let object: AST_Expression;
+
+    // enable: '[1,2,3][0]', '{}.type' and so on
+    if (this.isPrevNodeValidMemberExpObj() && this.isCurrentTokenFollowingPrevNode()) {
+      object = this.programBody.pop()!; // use prevNode in as memberExpObj, and pop it to prevent duplication
+    } else object = this.parsePrimaryExp();
+
+    do {
+      if (!isCurrentTokenAccessingProperty()) break;
+
       const operator = this.eat(); // '.' or '[' for computed expressions
 
       let property: AST_Expression;
@@ -485,7 +502,7 @@ export class Parser {
       };
 
       object = memberExp;
-    }
+    } while (this.isCurrentTokenFollowingPrevNode());
 
     return object;
   }
@@ -537,6 +554,33 @@ export class Parser {
   // -----------------------------------------------
   //                  UTILITIES
   // -----------------------------------------------
+
+  /**@desc determine whehter previous `node` is a valid memberExp object*/
+  private isPrevNodeValidMemberExpObj(): boolean {
+    const previousNodeKind = String(this.previousNode()?.kind);
+
+    return VALID_MEMBER_EXP_AST_NODES.some(validType => validType === previousNodeKind);
+  }
+
+  /**@desc determine whether current `token` is on the same line as previous `node`*/
+  private isCurrentTokenFollowingPrevNode() {
+    const previousNode = this.previousNode();
+
+    // if there are no previously parsed tokens (AST nodes), current token couldn't be following them (linewise)
+    if (previousNode === undefined) return false;
+
+    const previousNodeLine = previousNode.end[0];
+    const currentTokenLine = this.at().start[0];
+
+    const areOnTheSameLine = previousNodeLine === currentTokenLine;
+
+    return areOnTheSameLine;
+  }
+
+  /**@desc returns previously parsed token / latest AST node / last `programBody` node*/
+  private previousNode(): AST_Statement | undefined {
+    return this.programBody.at(-1);
+  }
 
   /**@desc helper function for parsing binary-expressions. It generates and returns `AST Binary Expression` node*/
   private generateASTBinaryExpNode(

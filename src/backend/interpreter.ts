@@ -2,6 +2,7 @@
 import { Err } from "../utils";
 import * as MK from "./runtimeValueFactories";
 import { VariableEnv } from "./variableEnv";
+import { RUNTIME_FALSY_VALUES, VALID_MEMBER_EXP_RUNTIME_TYPES } from "../constants";
 
 // -----------------------------------------------
 //                    TYPES
@@ -23,18 +24,6 @@ interface SharedUnaryExpOperatorsData {
 // -----------------------------------------------
 
 export class Interpreter {
-  /**@desc list containing all runtime `falsy` values*/
-  private readonly FALSY_VALUES = [MK.BOOL(false), MK.UNDEFINED(), MK.NULL(), MK.NUMBER(0)];
-
-  /**@desc list of all runtime data-types which have 'prototype', meaning that they have their own build-in `properties` and are valid `member-expression` objects*/
-  private readonly TYPES_WITH_PROTOTYPE: Runtime_ValueType[] = [
-    "number",
-    "string",
-    "boolean",
-    "object",
-    "array",
-  ];
-
   constructor(private env: VariableEnv) {}
 
   /**@desc evaluate/interpret `astNode`*/
@@ -717,7 +706,7 @@ export class Interpreter {
           "interpreter"
         );
 
-      memberExpObj = object as Runtime_Object;
+      memberExpObj = object as Runtime_Object | Runtime_Array;
       memberExpProperty = property;
       evaluatedOperandValue = value;
     }
@@ -760,7 +749,7 @@ export class Interpreter {
 
   /**@desc determine whether `type` is a value member-expression `object`*/
   private isValidMemberExpressionObject(type: Runtime_ValueType): boolean {
-    return this.TYPES_WITH_PROTOTYPE.some(validType => validType === type);
+    return VALID_MEMBER_EXP_RUNTIME_TYPES.some(validType => validType === type);
   }
 
   /**@desc determine whether `a` and `b` types form valid string/number combination
@@ -779,7 +768,7 @@ export class Interpreter {
 
   /**@desc determine whether given `Runtime_Value`.value is falsy*/
   private isFalsy(value: unknown): boolean {
-    return this.FALSY_VALUES.some(({ value: falsyValue }) => falsyValue === value);
+    return RUNTIME_FALSY_VALUES.some(({ value: falsyValue }) => falsyValue === value);
   }
 
   /**@desc determine whether given `Runtime_Value`.value is truthy*/
