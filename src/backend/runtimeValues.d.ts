@@ -29,12 +29,12 @@ interface Runtime_String extends Runtime_ProtoValue {
 
 interface Runtime_Object extends Runtime_ProtoValue {
   type: "object";
-  properties: { [key: string]: Runtime_Value };
+  value: { [key: string]: Runtime_Value };
 }
 
 interface Runtime_Array extends Runtime_ProtoValue {
   type: "array";
-  elements: Runtime_Value[];
+  value: Runtime_Value[];
 }
 
 interface Runtime_Boolean extends Runtime_ProtoValue {

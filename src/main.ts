@@ -277,14 +277,14 @@ class InterpreterInterface {
       switch (runtimeValue.type) {
         case "array": {
           const arr = runtimeValue as Runtime_Array;
-          return arr.elements.map(val => extractValue(val));
+          return arr.value.map(val => extractValue(val));
         }
 
         case "object": {
           const object = runtimeValue as Runtime_Object;
           const outputObj: { [key: string]: unknown } = {};
 
-          for (const [key, value] of Object.entries(object.properties)) {
+          for (const [key, value] of Object.entries(object.value)) {
             outputObj[key] = extractValue(value);
           }
 

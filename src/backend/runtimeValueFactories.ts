@@ -8,12 +8,11 @@
 
 const ARRAY_PROTOTYPE = {};
 
-export function ARRAY(elements: Runtime_Array["elements"] = []): Runtime_Array {
+export function ARRAY(elements: Runtime_Array["value"] = []): Runtime_Array {
   return {
     type: "array",
-    elements,
+    value: elements,
     prototype: ARRAY_PROTOTYPE,
-    value: undefined, // lazy work-around Runtime_Value
   };
 }
 
@@ -21,12 +20,11 @@ export function ARRAY(elements: Runtime_Array["elements"] = []): Runtime_Array {
 
 const OBJECT_PROTOTYPE = {};
 
-export function OBJECT(properties: Runtime_Object["properties"] = {}): Runtime_Object {
+export function OBJECT(properties: Runtime_Object["value"] = {}): Runtime_Object {
   return {
     type: "object",
-    properties,
+    value: properties,
     prototype: OBJECT_PROTOTYPE,
-    value: undefined, // lazy work-around Runtime_Value
   };
 }
 

@@ -270,7 +270,7 @@ export class Interpreter {
     properties.forEach(({ key, value, start }) => {
       const runtimeValue = value === undefined ? this.env.lookupVar(key, start) : this.evaluate(value);
 
-      object.properties[key] = runtimeValue;
+      object.value[key] = runtimeValue;
     });
 
     return object;
@@ -282,7 +282,7 @@ export class Interpreter {
     exp.elements.forEach(value => {
       const runtimeValue = this.evaluate(value);
 
-      array.elements.push(runtimeValue);
+      array.value.push(runtimeValue);
     });
 
     return array;
@@ -345,7 +345,7 @@ export class Interpreter {
       switch (runtimeObject.type) {
         case "object": {
           // if member-expression object is an actual runtime object, first look into it's properties
-          value = (runtimeObject as Runtime_Object).properties[key];
+          value = (runtimeObject as Runtime_Object).value[key];
 
           // if property doesn't exist, look it up on object's prototype
           if (value === undefined) value = runtimeObject.prototype[key];
@@ -371,7 +371,7 @@ export class Interpreter {
         }
 
         case "array": {
-          value = (runtimeObject as Runtime_Array).elements[index];
+          value = (runtimeObject as Runtime_Array).value[index];
           break;
         }
 
@@ -652,7 +652,7 @@ export class Interpreter {
 
     // object
     else if (memberExpObj?.type === "object") {
-      memberExpObj.properties[memberExpProperty!] = newRuntimeValue;
+      memberExpObj.value[memberExpProperty!] = newRuntimeValue;
     }
 
     // array
@@ -664,7 +664,7 @@ export class Interpreter {
           "interpreter"
         );
 
-      memberExpObj.elements[memberExpProperty as number] = newRuntimeValue;
+      memberExpObj.value[memberExpProperty as number] = newRuntimeValue;
     }
 
     // invalid
