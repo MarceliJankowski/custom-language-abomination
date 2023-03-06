@@ -189,7 +189,7 @@ class InterpreterInterface {
 
         // LOG OUTPUT
         if (this.verboseMode) this.verboseOutput(input, output);
-        else console.log(output.interpreter!.value);
+        else this.log(output.interpreter!);
 
         // HANDLE EXCEPTION
       } catch (err) {
@@ -212,7 +212,7 @@ class InterpreterInterface {
 
       // LOG OUTPUT
       if (this.verboseMode) this.verboseOutput(src, output);
-      else console.log(output.interpreter!.value);
+      else this.log(output.interpreter!);
 
       // HANDLE EXCEPTION
     } catch (err) {
@@ -261,6 +261,37 @@ class InterpreterInterface {
     const isValid = validEvaluateUpToValues.some(validValue => validValue === arg);
 
     return isValid;
+  }
+
+  /**@desc log input in a `non-verbose` way*/
+  private log(input: Runtime_Value) {
+    /**@desc recursively extract `value` property from `runtimeValue`*/
+    function extractValue(runtimeValue: Runtime_Value): unknown {
+      switch (runtimeValue.type) {
+        case "array": {
+          const arr = runtimeValue as Runtime_Array;
+          return arr.elements.map(val => extractValue(val));
+        }
+
+        case "object": {
+          const object = runtimeValue as Runtime_Object;
+          const outputObj: { [key: string]: unknown } = {};
+
+          for (const [key, value] of Object.entries(object.properties)) {
+            outputObj[key] = extractValue(value);
+          }
+
+          return outputObj;
+        }
+
+        default:
+          return runtimeValue.value;
+      }
+    }
+
+    const output = extractValue(input);
+
+    console.log(output);
   }
 
   /**@desc output verbose information (impacted by `evaluateUpTo` option)*/

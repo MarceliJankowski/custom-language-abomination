@@ -13,11 +13,7 @@ export function ARRAY(elements: Runtime_Array["elements"] = []): Runtime_Array {
     type: "array",
     elements,
     prototype: ARRAY_PROTOTYPE,
-
-    // lazy work-around main.ts logging
-    get value() {
-      return this.elements;
-    },
+    value: undefined, // lazy work-around Runtime_Value
   };
 }
 
@@ -30,11 +26,7 @@ export function OBJECT(properties: Runtime_Object["properties"] = {}): Runtime_O
     type: "object",
     properties,
     prototype: OBJECT_PROTOTYPE,
-
-    // lazy work-around main.ts logggin
-    get value() {
-      return this.properties;
-    },
+    value: undefined, // lazy work-around Runtime_Value
   };
 }
 
