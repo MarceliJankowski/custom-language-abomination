@@ -175,6 +175,13 @@ class InterpreterInterface {
 
     while (true) {
       let input = prompt("> ");
+
+      // handling SIGINT (Ctr-C) signal
+      if (input === null) {
+        console.log("Exiting REPL");
+        process.exit(0);
+      }
+
       const trimmedInput = input.trim();
 
       // REPL COMMANDS
