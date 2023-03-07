@@ -50,6 +50,9 @@ export class Interpreter {
       case "MemberExp":
         return this.evalMemberExp(astNode as AST_MemberExp).value;
 
+      case "CallExp":
+        return this.evalCallExp(astNode as AST_CallExp);
+
       case "VarDeclaration":
         return this.evalVarDeclaration(astNode as AST_VarDeclaration);
 
@@ -392,6 +395,22 @@ export class Interpreter {
     };
 
     return evaluatedMemberExpData;
+  }
+
+  private evalCallExp(callExp: AST_CallExp) {
+    const runtimeArgs = callExp.arguments.map(arg => this.evaluate(arg));
+    const runtimeCallee = this.evaluate(callExp.callee);
+
+    if (runtimeCallee.type !== "nativeFunc")
+      throw new Err(
+        `Invalid call-expression. Invalid callee type: '${runtimeCallee.type}', at position ${callExp.start}`,
+        "interpreter"
+      );
+
+    const nativeFunc = runtimeCallee as Runtime_NativeFunc;
+    const output = nativeFunc.value(runtimeArgs);
+
+    return output;
   }
 
   private evalPrefixUnaryExp({ start, operator, operand }: AST_PrefixUnaryExp): Runtime_Value {

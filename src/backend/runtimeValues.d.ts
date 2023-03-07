@@ -3,7 +3,15 @@
 // -----------------------------------------------
 // preface everything with "Runtime" to clear any confusion / prevent name collisions
 
-type Runtime_ValueType = "number" | "string" | "boolean" | "object" | "array" | "null" | "undefined";
+type Runtime_ValueType =
+  | "number"
+  | "string"
+  | "boolean"
+  | "object"
+  | "array"
+  | "nativeFunc"
+  | "null"
+  | "undefined";
 
 interface Runtime_Value {
   type: Runtime_ValueType;
@@ -40,6 +48,13 @@ interface Runtime_Array extends Runtime_ProtoValue {
 interface Runtime_Boolean extends Runtime_ProtoValue {
   type: "boolean";
   value: boolean;
+}
+
+type Runtime_NativeFuncImplementation = (args: Runtime_Value[]) => Runtime_Value;
+
+interface Runtime_NativeFunc extends Runtime_ProtoValue {
+  type: "nativeFunc";
+  value: Runtime_NativeFuncImplementation;
 }
 
 // TYPES WITHOUT PROTOTYPE (not containing any build-in properties / forbidding member-expressions)
