@@ -7,7 +7,7 @@ const prompt = promptSync();
 
 // PROJECT MODULES
 import { ErrorCode } from "./constants";
-import { Err } from "./utils";
+import { Err, parseForLogging } from "./utils";
 import { Lexer, Parser } from "./frontend";
 import { Interpreter, createGlobalEnv, Runtime } from "./backend";
 
@@ -260,32 +260,8 @@ class InterpreterInterface {
   }
 
   /**@desc log input in a `non-verbose` way*/
-  private log(input: Runtime.Value) {
-    /**@desc recursively extract `value` property from `runtimeValue`*/
-    function extractValue(runtimeValue: Runtime.Value): unknown {
-      switch (runtimeValue.type) {
-        case "array": {
-          const arr = runtimeValue as Runtime.Array;
-          return arr.value.map(val => extractValue(val));
-        }
-
-        case "object": {
-          const object = runtimeValue as Runtime.Object;
-          const outputObj: { [key: string]: unknown } = {};
-
-          for (const [key, value] of Object.entries(object.value)) {
-            outputObj[key] = extractValue(value);
-          }
-
-          return outputObj;
-        }
-
-        default:
-          return runtimeValue.value;
-      }
-    }
-
-    const output = extractValue(input);
+  private log(input: Runtime.Value): void {
+    const output = parseForLogging(input);
 
     console.log(output);
   }

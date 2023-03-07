@@ -400,13 +400,13 @@ export class Interpreter {
     const runtimeArgs = callExp.arguments.map(arg => this.evaluate(arg, env));
     const runtimeCallee = this.evaluate(callExp.callee, env);
 
-    if (runtimeCallee.type !== "nativeFunc")
+    if (runtimeCallee.type !== "nativeFunction")
       throw new Err(
         `Invalid call-expression. Invalid callee type: '${runtimeCallee.type}', at position ${callExp.start}`,
         "interpreter"
       );
 
-    const nativeFunc = runtimeCallee as Runtime.NativeFunc;
+    const nativeFunc = runtimeCallee as Runtime.NativeFunction;
     const output = nativeFunc.value(runtimeArgs, env);
 
     return output;

@@ -1,6 +1,7 @@
 // PROJECT MODULES
 import { Err } from "../utils";
 import { MK, Runtime } from "./";
+import * as NATIVE_FUNCTION from "./nativeFunctions";
 
 // -----------------------------------------------
 //                    TYPES
@@ -95,13 +96,16 @@ export class VariableEnv {
 export function createGlobalEnv() {
   const env = new VariableEnv();
 
-  const globalVarOptions: DeclareVarOptions = { constant: true, position: [0, 0] };
+  const options: DeclareVarOptions = { constant: true, position: [0, 0] };
 
   // GLOBAL VARIABLES
-  env.declareVar("true", MK.BOOL(true), globalVarOptions);
-  env.declareVar("false", MK.BOOL(false), globalVarOptions);
-  env.declareVar("null", MK.NULL(), globalVarOptions);
-  env.declareVar("undefined", MK.UNDEFINED(), globalVarOptions);
+  env.declareVar("true", MK.BOOL(true), options);
+  env.declareVar("false", MK.BOOL(false), options);
+  env.declareVar("null", MK.NULL(), options);
+  env.declareVar("undefined", MK.UNDEFINED(), options);
+
+  // NATIVE FUNCTIONS
+  env.declareVar("log", NATIVE_FUNCTION.log, options);
 
   return env;
 }

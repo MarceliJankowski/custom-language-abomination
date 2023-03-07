@@ -11,7 +11,7 @@ export type ValueType =
   | "boolean"
   | "object"
   | "array"
-  | "nativeFunc"
+  | "nativeFunction"
   | "null"
   | "undefined";
 
@@ -52,11 +52,11 @@ export interface Boolean extends ProtoValue {
   value: boolean;
 }
 
-export type NativeFuncImplementation = (args: Value[], env: VariableEnv) => Value;
+export type NativeFunctionImplementation = (args: Value[], env: VariableEnv) => Value;
 
-export interface NativeFunc extends ProtoValue {
-  type: "nativeFunc";
-  value: NativeFuncImplementation;
+export interface NativeFunction extends ProtoValue {
+  type: "nativeFunction";
+  value: NativeFunctionImplementation;
 }
 
 // TYPES WITHOUT PROTOTYPE (not containing any build-in properties / forbidding member-expressions)

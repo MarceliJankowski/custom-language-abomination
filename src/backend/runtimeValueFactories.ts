@@ -11,9 +11,9 @@ import { Runtime } from "./";
 
 const NATIVE_FUNC_PROTOTYPE = {};
 
-export function NATIVE_FUNC(value: Runtime.NativeFuncImplementation): Runtime.NativeFunc {
+export function NATIVE_FUNCTION(value: Runtime.NativeFunctionImplementation): Runtime.NativeFunction {
   return {
-    type: "nativeFunc",
+    type: "nativeFunction",
     value,
     prototype: NATIVE_FUNC_PROTOTYPE,
   };
