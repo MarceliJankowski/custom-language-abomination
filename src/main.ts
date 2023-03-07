@@ -40,36 +40,34 @@ class InterpreterInterface {
 
   /**@desc run interpreter!*/
   public run() {
-    // PROCESS ARGUMENTS
     try {
+      // PROCESS ARGUMENTS
       this.processArgs();
-    } catch (err) {
-      this.handleErr(err);
-    }
 
-    // RUN INTERPRETER BASED ON 'interactionMethod'
-    switch (this.interactionMethod) {
-      // REPL
-      case "repl": {
-        this.repl();
-        break;
-      }
+      // RUN INTERPRETER BASED ON 'interactionMethod'
+      switch (this.interactionMethod) {
+        // REPL
+        case "repl": {
+          this.repl();
+          break;
+        }
 
-      // FILE EXECUTION
-      case "file": {
-        this.execFile();
-        break;
-      }
+        // FILE EXECUTION
+        case "file": {
+          this.execFile();
+          break;
+        }
 
-      // INVALID interactionMethod
-      default: {
-        this.handleErr(
-          new Err(
+        // INVALID interactionMethod
+        default: {
+          throw new Err(
             `InteractionMethod was not provided, please checkout manual for more information`,
             "missingArg"
-          )
-        );
+          );
+        }
       }
+    } catch (err) {
+      this.handleErr(err);
     }
   }
 
@@ -198,33 +196,24 @@ class InterpreterInterface {
         if (this.verboseMode) this.verboseOutput(input, output);
         else this.log(output.interpreter!);
 
-        // HANDLE EXCEPTION
+        // HANDLE EXCEPTION (directly inside while loop to prevent breaking-out of it)
       } catch (err) {
-        // custom err handling, because I don't want to exit process within REPL
-        if (err instanceof Err) console.error(err.message);
-        else console.error(err);
+        this.handleErr(err);
       }
     }
   }
 
   /**@desc execute supplied file*/
   private execFile() {
-    try {
-      if (!this.filePath) throw new Err("Filepath hasn't been provided!", "missingArg");
-      if (!fs.existsSync(this.filePath))
-        throw new Err(`File: '${this.filePath}' was not found`, "invalidArg");
+    if (!this.filePath) throw new Err("Filepath hasn't been provided!", "missingArg");
+    if (!fs.existsSync(this.filePath)) throw new Err(`File: '${this.filePath}' was not found`, "invalidArg");
 
-      const src = fs.readFileSync(this.filePath, { encoding: "utf-8" }).trimEnd();
-      const output = this.evaluateSrc(src);
+    const src = fs.readFileSync(this.filePath, { encoding: "utf-8" }).trimEnd();
+    const output = this.evaluateSrc(src);
 
-      // LOG OUTPUT
-      if (this.verboseMode) this.verboseOutput(src, output);
-      else this.log(output.interpreter!);
-
-      // HANDLE EXCEPTION
-    } catch (err) {
-      this.handleErr(err);
-    }
+    // LOG OUTPUT
+    if (this.verboseMode) this.verboseOutput(src, output);
+    else this.log(output.interpreter!);
   }
 
   /**@desc print interpreter manual*/
@@ -340,15 +329,21 @@ class InterpreterInterface {
     console.log("\n" + breakChar.repeat(length));
   }
 
-  /**@desc handle exceptions*/
-  private handleErr(err: unknown): never {
+  /**@desc handle exceptions (doesn't terminate process in REPL)*/
+  private handleErr(err: unknown): void | never {
+    let exitCode: number;
+    let errorOutput: unknown;
+
     if (err instanceof Err) {
-      console.error(err.message);
-      process.exit(err.exitCode);
+      errorOutput = this.verboseMode ? err.verboseMessage : err.message;
+      exitCode = err.exitCode;
     } else {
-      console.error(err);
-      process.exit(ErrorCode.INTERNAL);
+      errorOutput = err;
+      exitCode = ErrorCode.INTERNAL;
     }
+
+    console.error(errorOutput);
+    if (this.interactionMethod !== "repl") process.exit(exitCode);
   }
 }
 
