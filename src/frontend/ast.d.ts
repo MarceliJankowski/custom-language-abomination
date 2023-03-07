@@ -15,6 +15,7 @@ type AST_Node =
   | "BinaryExp"
   | "TernaryExp"
   | "MemberExp"
+  | "CallExp"
 
   // LITERALS
   | "NumericLiteral"
@@ -134,4 +135,10 @@ interface AST_MemberExp extends AST_Expression {
   object: AST_Expression;
   property: AST_Expression;
   computed: boolean;
+}
+
+interface AST_CallExp extends AST_Expression {
+  kind: "CallExp";
+  arguments: AST_Expression[];
+  callee: AST_Expression;
 }

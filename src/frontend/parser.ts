@@ -54,6 +54,7 @@ export class Parser {
   // multiplicativeExp
   // prefixUnaryExp
   // postfixUnaryExp
+  // CallExp
   // MemberExp
   // primaryExp - MOST IMPORTANT / INVOKED LAST
 
@@ -426,7 +427,7 @@ export class Parser {
 
   /**@desc parse `postfix` unary expressions (like: var++)*/
   private parsePostfixUnaryExp(): AST_Expression {
-    const left = this.parseMemberExp();
+    const left = this.parseCallExp();
 
     while (this.at().type === TokenType.UNARY_OPERATOR) {
       const operator = this.eat();
@@ -443,6 +444,54 @@ export class Parser {
     }
 
     return left;
+  }
+
+  private parseCallExp(): AST_Expression {
+    const callee = this.parseMemberExp();
+    if (this.at().type !== TokenType.OPEN_PAREN) return callee;
+
+    // HANDLE ARGUMENT LIST
+
+    this.eat(); // advance past OPEN_PAREN
+
+    const args: AST_Expression[] = [];
+
+    // handle case when there are arguments
+    if (this.at().type !== TokenType.CLOSE_PAREN) {
+      const handleArgument = () => {
+        const arg = this.parseAssignmentExp();
+        args.push(arg);
+      };
+
+      // handle first argument
+      handleArgument();
+
+      // handle next arguments
+      while (this.at().type === TokenType.COMMA) {
+        this.eat(); // advance past comma
+        handleArgument();
+      }
+    }
+
+    const argumentListEnd = this.eatAndExpect(
+      TokenType.CLOSE_PAREN,
+      "Invalid call-expression. Missing closing parentheses (')') inside argument list"
+    ).end;
+
+    // BUILD CALL-EXP
+
+    let callExp: AST_CallExp = {
+      kind: "CallExp",
+      callee,
+      arguments: args,
+      start: callee.start,
+      end: argumentListEnd,
+    };
+
+    // handle another call-expression immediately following current callExp (example: 'func()()')
+    if (this.at().type === TokenType.OPEN_PAREN) callExp = this.parseCallExp() as AST_CallExp;
+
+    return callExp;
   }
 
   private parseMemberExp(): AST_Expression {
