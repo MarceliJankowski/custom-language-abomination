@@ -1,5 +1,5 @@
 // PROJECT MODULES
-import { parseForLogging } from "../utils";
+import { Err, parseForLogging } from "../utils";
 import * as MK from "./runtimeValueFactories";
 
 // -----------------------------------------------
@@ -24,4 +24,16 @@ export const clear = MK.NATIVE_FUNCTION(() => {
   console.clear();
 
   return MK.UNDEFINED();
+});
+
+export const exit = MK.NATIVE_FUNCTION(([firstArg]) => {
+  if (firstArg && firstArg.type !== "number")
+    throw new Err(
+      `Invalid errCode argument type: '${firstArg.type}' passed to 'exit' native function`,
+      "interpreter"
+    );
+
+  const exitCode = (firstArg?.value as number) ?? 0;
+
+  process.exit(exitCode);
 });
