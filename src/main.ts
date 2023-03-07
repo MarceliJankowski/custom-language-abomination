@@ -184,10 +184,6 @@ class InterpreterInterface {
 
       // REPL COMMANDS
       if (trimmedInput === "exit") process.exit(0);
-      if (trimmedInput === "clear") {
-        console.clear();
-        continue;
-      }
 
       try {
         const output = this.evaluateSrc(input);

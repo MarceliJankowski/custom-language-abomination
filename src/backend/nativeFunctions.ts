@@ -19,3 +19,9 @@ export const logVerbose = MK.NATIVE_FUNCTION(args => {
 
   return MK.UNDEFINED();
 });
+
+export const clear = MK.NATIVE_FUNCTION(() => {
+  console.clear();
+
+  return MK.UNDEFINED();
+});
