@@ -452,7 +452,11 @@ export class Parser {
     let object: AST_Expression;
 
     // enable: '[1,2,3][0]', '{}.type' and so on
-    if (this.isPrevNodeValidMemberExpObj() && this.isCurrentTokenFollowingPrevNode()) {
+    if (
+      this.isPrevNodeValidMemberExpObj() &&
+      this.isCurrentTokenFollowingPrevNode() &&
+      isCurrentTokenAccessingProperty()
+    ) {
       object = this.programBody.pop()!; // use prevNode in as memberExpObj, and pop it to prevent duplication
     } else object = this.parsePrimaryExp();
 
