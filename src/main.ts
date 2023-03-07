@@ -213,7 +213,6 @@ class InterpreterInterface {
 
     // LOG OUTPUT
     if (this.verboseMode) this.verboseOutput(src, output);
-    else this.log(output.interpreter!);
   }
 
   /**@desc print interpreter manual*/
