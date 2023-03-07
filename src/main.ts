@@ -9,7 +9,7 @@ const prompt = promptSync();
 import { ErrorCode } from "./constants";
 import { Err } from "./utils";
 import { Lexer, Parser } from "./frontend";
-import { Interpreter, createGlobalEnv } from "./backend";
+import { Interpreter, createGlobalEnv, Runtime } from "./backend";
 
 // -----------------------------------------------
 //                    TYPES
@@ -230,14 +230,14 @@ class InterpreterInterface {
     const lexerOutput = new Lexer(src).tokenize();
 
     let AST: AST_Program | undefined;
-    let interpreterOutput: Runtime_Value | undefined;
+    let interpreterOutput: Runtime.Value | undefined;
 
     // HANDLE evaluateUpTo OPTION
     if (this.evaluateUpTo === "parser" || this.evaluateUpTo === "interpreter") {
       AST = new Parser([...lexerOutput]).buildAST(); // passing shallow-copy of lexerOutput because parser modifies it and I need original for the verboseOutput
 
       if (this.evaluateUpTo === "interpreter")
-        interpreterOutput = new Interpreter(this.globalEnv).evaluate(AST);
+        interpreterOutput = new Interpreter().evaluate(AST, this.globalEnv);
     }
 
     return {
@@ -260,17 +260,17 @@ class InterpreterInterface {
   }
 
   /**@desc log input in a `non-verbose` way*/
-  private log(input: Runtime_Value) {
+  private log(input: Runtime.Value) {
     /**@desc recursively extract `value` property from `runtimeValue`*/
-    function extractValue(runtimeValue: Runtime_Value): unknown {
+    function extractValue(runtimeValue: Runtime.Value): unknown {
       switch (runtimeValue.type) {
         case "array": {
-          const arr = runtimeValue as Runtime_Array;
+          const arr = runtimeValue as Runtime.Array;
           return arr.value.map(val => extractValue(val));
         }
 
         case "object": {
-          const object = runtimeValue as Runtime_Object;
+          const object = runtimeValue as Runtime.Object;
           const outputObj: { [key: string]: unknown } = {};
 
           for (const [key, value] of Object.entries(object.value)) {

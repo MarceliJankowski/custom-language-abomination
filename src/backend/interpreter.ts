@@ -1,22 +1,22 @@
 // PROJECT MODULES
 import { Err } from "../utils";
-import * as MK from "./runtimeValueFactories";
 import { VariableEnv } from "./variableEnv";
 import { RUNTIME_FALSY_VALUES, VALID_MEMBER_EXP_RUNTIME_TYPES } from "../constants";
+import { MK, Runtime } from "./";
 
 // -----------------------------------------------
 //                    TYPES
 // -----------------------------------------------
 
 interface EvaluatedMemberExpData {
-  object: Runtime_ProtoValue;
+  object: Runtime.ProtoValue;
   property: string | number;
-  value: Runtime_Value;
+  value: Runtime.Value;
 }
 
 interface SharedUnaryExpOperatorsData {
-  valueBeforeUpdate: Runtime_Number;
-  valueAfterUpdate: Runtime_Number;
+  valueBeforeUpdate: Runtime.Number;
+  valueAfterUpdate: Runtime.Number;
 }
 
 // -----------------------------------------------
@@ -24,13 +24,11 @@ interface SharedUnaryExpOperatorsData {
 // -----------------------------------------------
 
 export class Interpreter {
-  constructor(private env: VariableEnv) {}
-
   /**@desc evaluate/interpret `astNode`*/
-  public evaluate(astNode: AST_Statement): Runtime_Value {
+  public evaluate(astNode: AST_Statement, env: VariableEnv): Runtime.Value {
     switch (astNode.kind) {
       case "Program":
-        return this.evalProgram(astNode as AST_Program);
+        return this.evalProgram(astNode as AST_Program, env);
 
       case "NumericLiteral":
         return MK.NUMBER((astNode as AST_NumericLiteral).value);
@@ -39,37 +37,37 @@ export class Interpreter {
         return MK.STRING((astNode as AST_StringLiteral).value);
 
       case "ObjectLiteral":
-        return this.evalObjectExp(astNode as AST_ObjectLiteral);
+        return this.evalObjectExp(astNode as AST_ObjectLiteral, env);
 
       case "ArrayLiteral":
-        return this.evalArrayExp(astNode as AST_ArrayLiteral);
+        return this.evalArrayExp(astNode as AST_ArrayLiteral, env);
 
       case "Identifier":
-        return this.evalIdentifier(astNode as AST_Identifier);
+        return this.evalIdentifier(astNode as AST_Identifier, env);
 
       case "MemberExp":
-        return this.evalMemberExp(astNode as AST_MemberExp).value;
+        return this.evalMemberExp(astNode as AST_MemberExp, env).value;
 
       case "CallExp":
-        return this.evalCallExp(astNode as AST_CallExp);
+        return this.evalCallExp(astNode as AST_CallExp, env);
 
       case "VarDeclaration":
-        return this.evalVarDeclaration(astNode as AST_VarDeclaration);
+        return this.evalVarDeclaration(astNode as AST_VarDeclaration, env);
 
       case "AssignmentExp":
-        return this.evalAssignmentExp(astNode as AST_AssignmentExp);
+        return this.evalAssignmentExp(astNode as AST_AssignmentExp, env);
 
       case "BinaryExp":
-        return this.evalBinaryExp(astNode as AST_BinaryExp);
+        return this.evalBinaryExp(astNode as AST_BinaryExp, env);
 
       case "PrefixUnaryExp":
-        return this.evalPrefixUnaryExp(astNode as AST_PrefixUnaryExp);
+        return this.evalPrefixUnaryExp(astNode as AST_PrefixUnaryExp, env);
 
       case "PostfixUnaryExp":
-        return this.evalPostfixUnaryExp(astNode as AST_PostfixUnaryExp);
+        return this.evalPostfixUnaryExp(astNode as AST_PostfixUnaryExp, env);
 
       case "TernaryExp":
-        return this.evalTernaryExp(astNode as AST_TernaryExp);
+        return this.evalTernaryExp(astNode as AST_TernaryExp, env);
 
       default:
         throw new Err(
@@ -83,20 +81,20 @@ export class Interpreter {
   //                     EVAL
   // -----------------------------------------------
 
-  private evalProgram(program: AST_Program): Runtime_Value {
-    let lastEvaluated: Runtime_Value = MK.NULL();
+  private evalProgram(program: AST_Program, env: VariableEnv): Runtime.Value {
+    let lastEvaluated: Runtime.Value = MK.NULL();
 
-    for (const statement of program.body) lastEvaluated = this.evaluate(statement);
+    for (const statement of program.body) lastEvaluated = this.evaluate(statement, env);
 
     return lastEvaluated;
   }
 
-  private evalIdentifier(identifier: AST_Identifier): Runtime_Value {
-    return this.env.lookupVar(identifier.value, identifier.start);
+  private evalIdentifier(identifier: AST_Identifier, env: VariableEnv): Runtime.Value {
+    return env.lookupVar(identifier.value, identifier.start);
   }
 
-  private evalVarDeclaration(varDeclaration: AST_VarDeclaration): Runtime_Value {
-    const runtimeValue = varDeclaration.value ? this.evaluate(varDeclaration.value) : MK.UNDEFINED(); // set value for uninitialized variables to undefined
+  private evalVarDeclaration(varDeclaration: AST_VarDeclaration, env: VariableEnv): Runtime.Value {
+    const runtimeValue = varDeclaration.value ? this.evaluate(varDeclaration.value, env) : MK.UNDEFINED(); // set value for uninitialized variables to undefined
 
     // allow for uninitialized variable declarations, and "=" assignment operator
     if (varDeclaration.operator !== undefined && varDeclaration.operator !== "=")
@@ -105,7 +103,7 @@ export class Interpreter {
         "interpreter"
       );
 
-    this.env.declareVar(varDeclaration.identifier, runtimeValue, {
+    env.declareVar(varDeclaration.identifier, runtimeValue, {
       constant: varDeclaration.constant,
       position: varDeclaration.start,
     });
@@ -114,7 +112,7 @@ export class Interpreter {
     return MK.UNDEFINED();
   }
 
-  private evalAssignmentExp(assignmentExp: AST_AssignmentExp): Runtime_Value {
+  private evalAssignmentExp(assignmentExp: AST_AssignmentExp, env: VariableEnv): Runtime.Value {
     // VARIABLE DECLARATIONS
     const assignmentStart = assignmentExp.start;
     const operator = assignmentExp.operator;
@@ -122,23 +120,23 @@ export class Interpreter {
 
     /**@desc stores runtime `assigne-value`
     Example: identifierAssigne `'x'` with value: `'5'`; assigneValue equals: `runtime-number` with value: `'5'`*/
-    let assigneValue: Runtime_Value;
-    let computedAssignmentValue: Runtime_Value;
-    let memberExpObj: Runtime_Object | Runtime_Array;
+    let assigneValue: Runtime.Value;
+    let computedAssignmentValue: Runtime.Value;
+    let memberExpObj: Runtime.Object | Runtime.Array;
     let memberExpProperty: string | number;
 
-    const assignmentValue = this.evaluate(assignmentExp.value);
+    const assignmentValue = this.evaluate(assignmentExp.value, env);
 
     // HANDLE ASSIGNE
 
     // identifier
     if (assigne.kind === "Identifier") {
-      assigneValue = this.evalIdentifier(assigne as AST_Identifier);
+      assigneValue = this.evalIdentifier(assigne as AST_Identifier, env);
     }
 
     // array/object
     else if (assigne.kind === "MemberExp") {
-      const { value, property, object } = this.evalMemberExp(assigne as AST_MemberExp);
+      const { value, property, object } = this.evalMemberExp(assigne as AST_MemberExp, env);
 
       if (object.type !== "object" && object.type !== "array")
         throw new Err(
@@ -146,7 +144,7 @@ export class Interpreter {
           "interpreter"
         );
 
-      memberExpObj = object as Runtime_Object | Runtime_Array;
+      memberExpObj = object as Runtime.Object | Runtime.Array;
       memberExpProperty = property;
       assigneValue = value;
     }
@@ -174,9 +172,9 @@ export class Interpreter {
         // number/number
         if (assigneValue.type === "number" && assignmentValue.type === "number") {
           computedAssignmentValue = this.evalNumericBinaryExp(
-            assigneValue as Runtime_Number,
+            assigneValue as Runtime.Number,
             extractedBinaryOperator,
-            assignmentValue as Runtime_Number,
+            assignmentValue as Runtime.Number,
             assignmentStart
           );
 
@@ -186,9 +184,9 @@ export class Interpreter {
         // string/string and string/number combinations
         else if (this.isValidStringNumberCombination(assigneValue.type, assignmentValue.type)) {
           computedAssignmentValue = this.evalStringBinaryExp(
-            assigneValue as Runtime_String,
+            assigneValue as Runtime.String,
             extractedBinaryOperator,
-            assignmentValue as Runtime_Number,
+            assignmentValue as Runtime.Number,
             assignmentStart
           );
 
@@ -215,9 +213,9 @@ export class Interpreter {
           const extractedBinaryOperator = operator[0];
 
           computedAssignmentValue = this.evalNumericBinaryExp(
-            assigneValue as Runtime_Number,
+            assigneValue as Runtime.Number,
             extractedBinaryOperator,
-            assignmentValue as Runtime_Number,
+            assignmentValue as Runtime.Number,
             assignmentStart
           );
 
@@ -257,6 +255,7 @@ export class Interpreter {
 
     // VALUE ASSIGNMENT
     this.handleValueAssignment(
+      env,
       assignmentStart,
       assigne,
       computedAssignmentValue,
@@ -267,11 +266,11 @@ export class Interpreter {
     return computedAssignmentValue; // assignment is treated as expression, hence return the value
   }
 
-  private evalObjectExp({ properties }: AST_ObjectLiteral): Runtime_Value {
-    const object: Runtime_Object = MK.OBJECT();
+  private evalObjectExp({ properties }: AST_ObjectLiteral, env: VariableEnv): Runtime.Value {
+    const object: Runtime.Object = MK.OBJECT();
 
     properties.forEach(({ key, value, start }) => {
-      const runtimeValue = value === undefined ? this.env.lookupVar(key, start) : this.evaluate(value);
+      const runtimeValue = value === undefined ? env.lookupVar(key, start) : this.evaluate(value, env);
 
       object.value[key] = runtimeValue;
     });
@@ -279,11 +278,11 @@ export class Interpreter {
     return object;
   }
 
-  private evalArrayExp(exp: AST_ArrayLiteral): Runtime_Value {
-    const array: Runtime_Array = MK.ARRAY();
+  private evalArrayExp(exp: AST_ArrayLiteral, env: VariableEnv): Runtime.Value {
+    const array: Runtime.Array = MK.ARRAY();
 
     exp.elements.forEach(value => {
-      const runtimeValue = this.evaluate(value);
+      const runtimeValue = this.evaluate(value, env);
 
       array.value.push(runtimeValue);
     });
@@ -291,9 +290,9 @@ export class Interpreter {
     return array;
   }
 
-  private evalMemberExp(exp: AST_MemberExp): EvaluatedMemberExpData {
+  private evalMemberExp(exp: AST_MemberExp, env: VariableEnv): EvaluatedMemberExpData {
     // make sure that 'exp.object' is a valid member-expression object
-    const runtimeExpObject = this.evaluate(exp.object);
+    const runtimeExpObject = this.evaluate(exp.object, env);
 
     if (!this.isValidMemberExpressionObject(runtimeExpObject.type))
       throw new Err(
@@ -302,7 +301,7 @@ export class Interpreter {
       );
 
     // valid member-expression object
-    const runtimeObject = runtimeExpObject as Runtime_ProtoValue;
+    const runtimeObject = runtimeExpObject as Runtime.ProtoValue;
 
     // HANDLE PROPERTY
     let computedPropertyType: "key" | "index";
@@ -311,17 +310,17 @@ export class Interpreter {
     // COMPUTED
     if (exp.computed) {
       // make sure that evaluated computed-property is valid (typewise)
-      const evaluatedComputedProperty = this.evaluate(exp.property);
+      const evaluatedComputedProperty = this.evaluate(exp.property, env);
 
       switch (evaluatedComputedProperty.type) {
         case "string":
           computedPropertyType = "key";
-          computedPropertyValue = (evaluatedComputedProperty as Runtime_String).value;
+          computedPropertyValue = (evaluatedComputedProperty as Runtime.String).value;
           break;
 
         case "number":
           computedPropertyType = "index";
-          computedPropertyValue = (evaluatedComputedProperty as Runtime_Number).value;
+          computedPropertyValue = (evaluatedComputedProperty as Runtime.Number).value;
           break;
 
         default:
@@ -339,7 +338,7 @@ export class Interpreter {
     }
 
     // HANDLE VALUE RETRIEVAL
-    let value: Runtime_Value | undefined;
+    let value: Runtime.Value | undefined;
 
     // KEY
     if (computedPropertyType! === "key") {
@@ -348,7 +347,7 @@ export class Interpreter {
       switch (runtimeObject.type) {
         case "object": {
           // if member-expression object is an actual runtime object, first look into it's properties
-          value = (runtimeObject as Runtime_Object).value[key];
+          value = (runtimeObject as Runtime.Object).value[key];
 
           // if property doesn't exist, look it up on object's prototype
           if (value === undefined) value = runtimeObject.prototype[key];
@@ -366,7 +365,7 @@ export class Interpreter {
 
       switch (runtimeObject.type) {
         case "string": {
-          const strChar = (runtimeObject as Runtime_String).value[index];
+          const strChar = (runtimeObject as Runtime.String).value[index];
 
           if (strChar !== undefined) value = MK.STRING(strChar);
 
@@ -374,7 +373,7 @@ export class Interpreter {
         }
 
         case "array": {
-          value = (runtimeObject as Runtime_Array).value[index];
+          value = (runtimeObject as Runtime.Array).value[index];
           break;
         }
 
@@ -391,15 +390,15 @@ export class Interpreter {
     const evaluatedMemberExpData: EvaluatedMemberExpData = {
       object: runtimeObject,
       property: computedPropertyValue,
-      value: value ?? MK.UNDEFINED(), // return undefined data-type in case property doesn't exist, so that it's always Runtime_Value
+      value: value ?? MK.UNDEFINED(), // return undefined data-type in case property doesn't exist, so that it's always Runtime.Value
     };
 
     return evaluatedMemberExpData;
   }
 
-  private evalCallExp(callExp: AST_CallExp) {
-    const runtimeArgs = callExp.arguments.map(arg => this.evaluate(arg));
-    const runtimeCallee = this.evaluate(callExp.callee);
+  private evalCallExp(callExp: AST_CallExp, env: VariableEnv) {
+    const runtimeArgs = callExp.arguments.map(arg => this.evaluate(arg, env));
+    const runtimeCallee = this.evaluate(callExp.callee, env);
 
     if (runtimeCallee.type !== "nativeFunc")
       throw new Err(
@@ -407,13 +406,16 @@ export class Interpreter {
         "interpreter"
       );
 
-    const nativeFunc = runtimeCallee as Runtime_NativeFunc;
-    const output = nativeFunc.value(runtimeArgs);
+    const nativeFunc = runtimeCallee as Runtime.NativeFunc;
+    const output = nativeFunc.value(runtimeArgs, env);
 
     return output;
   }
 
-  private evalPrefixUnaryExp({ start, operator, operand }: AST_PrefixUnaryExp): Runtime_Value {
+  private evalPrefixUnaryExp(
+    { start, operator, operand }: AST_PrefixUnaryExp,
+    env: VariableEnv
+  ): Runtime.Value {
     switch (operator) {
       case "++":
       case "--": {
@@ -425,7 +427,8 @@ export class Interpreter {
           "prefix",
           start,
           operator,
-          operand
+          operand,
+          env
         );
 
         return valueAfterUpdate;
@@ -434,7 +437,7 @@ export class Interpreter {
       case "!": {
         // @desc: return opposite of runtime boolean value (runtime value is 'truthy', return "false" / runtime value is 'falsy', return "true")
 
-        const runtimeOperand = this.evaluate(operand);
+        const runtimeOperand = this.evaluate(operand, env);
 
         const operandBooleanValue = this.getBooleanValue(runtimeOperand.value);
         const operandBooleanRuntimeValue = MK.BOOL(!operandBooleanValue);
@@ -445,7 +448,7 @@ export class Interpreter {
       case "typeof": {
         // @desc return type of operand (type is returned as runtime-string)
 
-        const runtimeOperand = this.evaluate(operand);
+        const runtimeOperand = this.evaluate(operand, env);
 
         const type = MK.STRING(runtimeOperand.type);
 
@@ -460,7 +463,10 @@ export class Interpreter {
     }
   }
 
-  private evalPostfixUnaryExp({ operand, operator, start }: AST_PostfixUnaryExp): Runtime_Value {
+  private evalPostfixUnaryExp(
+    { operand, operator, start }: AST_PostfixUnaryExp,
+    env: VariableEnv
+  ): Runtime.Value {
     switch (operator) {
       case "++":
       case "--": {
@@ -472,7 +478,8 @@ export class Interpreter {
           "postfix",
           start,
           operator,
-          operand
+          operand,
+          env
         );
 
         return valueBeforeUpdate;
@@ -486,32 +493,32 @@ export class Interpreter {
     }
   }
 
-  private evalTernaryExp(exp: AST_TernaryExp): Runtime_Value {
-    const runtimeTestValue = this.evaluate(exp.test).value;
+  private evalTernaryExp(exp: AST_TernaryExp, env: VariableEnv): Runtime.Value {
+    const runtimeTestValue = this.evaluate(exp.test, env).value;
     const testBoolean = this.getBooleanValue(runtimeTestValue);
 
     // TEST IS: 'truthy'
     if (testBoolean) {
-      const runtimeConsequent = this.evaluate(exp.consequent);
+      const runtimeConsequent = this.evaluate(exp.consequent, env);
       return runtimeConsequent;
     }
 
     // TEST IS: 'falsy'
-    const runtimeAlternate = this.evaluate(exp.alternate);
+    const runtimeAlternate = this.evaluate(exp.alternate, env);
     return runtimeAlternate;
   }
 
-  private evalBinaryExp(binop: AST_BinaryExp): Runtime_Value {
+  private evalBinaryExp(binop: AST_BinaryExp, env: VariableEnv): Runtime.Value {
     const binopStart = binop.left.start;
-    const left = this.evaluate(binop.left);
-    const right = this.evaluate(binop.right);
+    const left = this.evaluate(binop.left, env);
+    const right = this.evaluate(binop.right, env);
 
     // NUMBER
     if (left.type === "number" && right.type === "number") {
       return this.evalNumericBinaryExp(
-        left as Runtime_Number,
+        left as Runtime.Number,
         binop.operator,
-        right as Runtime_Number,
+        right as Runtime.Number,
         binopStart
       );
     }
@@ -519,9 +526,9 @@ export class Interpreter {
     // STRING / STRING && NUMBER COMBINATIONS
     else if (this.isValidStringNumberCombination(left.type, right.type)) {
       return this.evalStringBinaryExp(
-        left as Runtime_String,
+        left as Runtime.String,
         binop.operator,
-        right as Runtime_Number,
+        right as Runtime.Number,
         binopStart
       );
     }
@@ -531,11 +538,11 @@ export class Interpreter {
   }
 
   private evalNumericBinaryExp(
-    left: Runtime_Number,
+    left: Runtime.Number,
     operator: string,
-    right: Runtime_Number,
+    right: Runtime.Number,
     start: CharPosition
-  ): Runtime_Number | Runtime_Boolean {
+  ): Runtime.Number | Runtime.Boolean {
     const [lhsValue, rhsValue] = [left.value, right.value];
 
     switch (operator) {
@@ -578,16 +585,16 @@ export class Interpreter {
 
       // HANDLE SHARED OPERATORS
       default:
-        return this.evalBinaryExpSharedOperators(left, operator, right, start) as Runtime_Number;
+        return this.evalBinaryExpSharedOperators(left, operator, right, start) as Runtime.Number;
     }
   }
 
   private evalStringBinaryExp(
-    left: Runtime_String,
+    left: Runtime.String,
     operator: string,
-    right: Runtime_Number,
+    right: Runtime.Number,
     start: CharPosition
-  ): Runtime_String | Runtime_Boolean {
+  ): Runtime.String | Runtime.Boolean {
     const [lhsValue, rhsValue] = [left.value, right.value];
 
     switch (operator) {
@@ -597,7 +604,7 @@ export class Interpreter {
 
       // HANDLE SHARED OPERATORS
       default:
-        return this.evalBinaryExpSharedOperators(left, operator, right, start) as Runtime_String;
+        return this.evalBinaryExpSharedOperators(left, operator, right, start) as Runtime.String;
     }
   }
 
@@ -606,12 +613,12 @@ export class Interpreter {
   // -----------------------------------------------
 
   /**@desc evaluate all shared (among all data-types) binary operators*/
-  private evalBinaryExpSharedOperators<T extends Runtime_Value, U extends Runtime_Value>(
+  private evalBinaryExpSharedOperators<T extends Runtime.Value, U extends Runtime.Value>(
     left: T,
     operator: string,
     right: U,
     start: CharPosition
-  ): T | U | Runtime_Boolean {
+  ): T | U | Runtime.Boolean {
     const lhsValue: unknown = (left as any).value;
     const rhsValue: unknown = (right as any).value;
 
@@ -658,15 +665,16 @@ export class Interpreter {
 
   /**@desc helper method for `'evalUnaryExp()'` methods and `'evalAssignmentExp()'` method, handles value assignment*/
   private handleValueAssignment(
+    env: VariableEnv,
     start: CharPosition,
     assigne: AST_Expression,
-    newRuntimeValue: Runtime_Value,
-    memberExpObj?: Runtime_Object | Runtime_Array,
+    newRuntimeValue: Runtime.Value,
+    memberExpObj?: Runtime.Object | Runtime.Array,
     memberExpProperty?: string | number
   ) {
     // identifier
     if (assigne.kind === "Identifier") {
-      this.env.assignVar((assigne as AST_Identifier).value, newRuntimeValue, assigne.start);
+      env.assignVar((assigne as AST_Identifier).value, newRuntimeValue, assigne.start);
     }
 
     // object
@@ -699,25 +707,26 @@ export class Interpreter {
     expType: "prefix" | "postfix",
     expStart: CharPosition,
     operator: string,
-    operand: AST_Expression
+    operand: AST_Expression,
+    env: VariableEnv
   ): SharedUnaryExpOperatorsData {
     const invalidOperandErrorMessage = `Invalid ${expType} unary expression. Operator: '${operator}' can only be used with number identifier/member-expression\nInvalid operand: '${operand.kind}', at position: ${expStart}`;
 
     // VARIABLE DECLARATIONS
-    let evaluatedOperandValue: Runtime_Value;
-    let memberExpObj: Runtime_Object | Runtime_Array;
+    let evaluatedOperandValue: Runtime.Value;
+    let memberExpObj: Runtime.Object | Runtime.Array;
     let memberExpProperty: string | number;
 
     // MAKE SURE THAT OPERAND IS VALID
 
     // IDENTIFIER
     if (operand.kind === "Identifier") {
-      evaluatedOperandValue = this.evalIdentifier(operand as AST_Identifier);
+      evaluatedOperandValue = this.evalIdentifier(operand as AST_Identifier, env);
     }
 
     // MEMBER-EXPRESSION
     else if (operand.kind === "MemberExp") {
-      const { object, property, value } = this.evalMemberExp(operand as AST_MemberExp);
+      const { object, property, value } = this.evalMemberExp(operand as AST_MemberExp, env);
 
       if (object.type !== "object" && object.type !== "array")
         throw new Err(
@@ -725,7 +734,7 @@ export class Interpreter {
           "interpreter"
         );
 
-      memberExpObj = object as Runtime_Object | Runtime_Array;
+      memberExpObj = object as Runtime.Object | Runtime.Array;
       memberExpProperty = property;
       evaluatedOperandValue = value;
     }
@@ -735,10 +744,10 @@ export class Interpreter {
 
     // MAKE SURE THAT EVALUATED OPERAND IS A NUMBER
     if (evaluatedOperandValue.type !== "number") throw new Err(invalidOperandErrorMessage, "interpreter");
-    const operandNumberValue = evaluatedOperandValue as Runtime_Number;
+    const operandNumberValue = evaluatedOperandValue as Runtime.Number;
 
     // HANDLE VALUE ASSIGNMENT
-    let newRuntimeOperandValue: Runtime_Number; // computed replacement runtime-value for operand
+    let newRuntimeOperandValue: Runtime.Number; // computed replacement runtime-value for operand
 
     // not modyfing '.value' property directly, allows Environment to check whether 'identifier' is a constant variable, and prevent assignment in that case
 
@@ -751,7 +760,14 @@ export class Interpreter {
     else newRuntimeOperandValue = MK.NUMBER(operandNumberValue.value - 1);
 
     // VALUE ASSIGNMENT
-    this.handleValueAssignment(expStart, operand, newRuntimeOperandValue, memberExpObj!, memberExpProperty!);
+    this.handleValueAssignment(
+      env,
+      expStart,
+      operand,
+      newRuntimeOperandValue,
+      memberExpObj!,
+      memberExpProperty!
+    );
 
     // OUTPUT
     const outputObj: SharedUnaryExpOperatorsData = {
@@ -767,7 +783,7 @@ export class Interpreter {
   // -----------------------------------------------
 
   /**@desc determine whether `type` is a value member-expression `object`*/
-  private isValidMemberExpressionObject(type: Runtime_ValueType): boolean {
+  private isValidMemberExpressionObject(type: Runtime.ValueType): boolean {
     return VALID_MEMBER_EXP_RUNTIME_TYPES.some(validType => validType === type);
   }
 
@@ -780,17 +796,17 @@ export class Interpreter {
     return validCombinationsRegExp.test(preparedTypes);
   }
 
-  /**@desc determine whether given `Runtime_Value`.value is 'falsy' or 'truthy' (returns corresponding boolean)*/
+  /**@desc determine whether given `Runtime.Value`.value is 'falsy' or 'truthy' (returns corresponding boolean)*/
   private getBooleanValue(value: unknown): boolean {
     return this.isTruthy(value);
   }
 
-  /**@desc determine whether given `Runtime_Value`.value is falsy*/
+  /**@desc determine whether given `Runtime.Value`.value is falsy*/
   private isFalsy(value: unknown): boolean {
     return RUNTIME_FALSY_VALUES.some(({ value: falsyValue }) => falsyValue === value);
   }
 
-  /**@desc determine whether given `Runtime_Value`.value is truthy*/
+  /**@desc determine whether given `Runtime.Value`.value is truthy*/
   private isTruthy(value: unknown): boolean {
     return !this.isFalsy(value);
   }

@@ -1,6 +1,6 @@
 // PROJECT MODULES
 import { Err } from "../utils";
-import * as MK from "./runtimeValueFactories";
+import { MK, Runtime } from "./";
 
 // -----------------------------------------------
 //                    TYPES
@@ -13,7 +13,7 @@ interface DeclareVarOptions {
 
 /**@desc collection of variable properties*/
 interface VarDescriptor {
-  value: Runtime_Value;
+  value: Runtime.Value;
   constant: boolean;
 }
 
@@ -34,7 +34,7 @@ export class VariableEnv {
   //              EXTERNAL INTERFACE
   // -----------------------------------------------
 
-  public declareVar(varName: string, value: Runtime_Value, options: DeclareVarOptions): void {
+  public declareVar(varName: string, value: Runtime.Value, options: DeclareVarOptions): void {
     if (this.variables.has(varName))
       throw new Err(
         `Cannot declare variable: '${varName}', as it's already defined. At position: ${options.position}`,
@@ -46,7 +46,7 @@ export class VariableEnv {
   }
 
   /**@desc assign value to already defined variable, and return the value*/
-  public assignVar(varName: string, value: Runtime_Value, position: CharPosition): Runtime_Value {
+  public assignVar(varName: string, value: Runtime.Value, position: CharPosition): Runtime.Value {
     const variable = this.resolve(varName, position);
 
     if (variable.constant)
@@ -62,7 +62,7 @@ export class VariableEnv {
   }
 
   /**@desc lookup `varName` variable and return it's value*/
-  public lookupVar(varName: string, position: CharPosition): Runtime_Value {
+  public lookupVar(varName: string, position: CharPosition): Runtime.Value {
     const variable = this.resolve(varName, position);
     return variable.value;
   }
@@ -95,9 +95,9 @@ export class VariableEnv {
 export function createGlobalEnv() {
   const env = new VariableEnv();
 
-  // GLOBAL VARIABLES
   const globalVarOptions: DeclareVarOptions = { constant: true, position: [0, 0] };
 
+  // GLOBAL VARIABLES
   env.declareVar("true", MK.BOOL(true), globalVarOptions);
   env.declareVar("false", MK.BOOL(false), globalVarOptions);
   env.declareVar("null", MK.NULL(), globalVarOptions);

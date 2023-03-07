@@ -1,5 +1,5 @@
 // PROJECT MODULES
-import { MK } from "./backend";
+import { MK, Runtime } from "./backend";
 
 // -----------------------------------------------
 //                  ERROR CODE
@@ -50,7 +50,7 @@ export const VALID_MEMBER_EXP_AST_NODES: AST_Node[] = [
   "NumericLiteral",
 ];
 
-export const VALID_MEMBER_EXP_RUNTIME_TYPES: Runtime_ValueType[] = [
+export const VALID_MEMBER_EXP_RUNTIME_TYPES: Runtime.ValueType[] = [
   "number",
   "string",
   "boolean",

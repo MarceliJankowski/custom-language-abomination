@@ -1,14 +1,29 @@
+// PROJECT MODULES
+import { Runtime } from "./";
+
 // -----------------------------------------------
-//           Runtime_Value FACTORIES
+//           Runtime.Value FACTORIES
 // -----------------------------------------------
 
 // DATA-TYPES WITH PROTOTYPE
+
+// NATIVE FUNC
+
+const NATIVE_FUNC_PROTOTYPE = {};
+
+export function NATIVE_FUNC(value: Runtime.NativeFuncImplementation): Runtime.NativeFunc {
+  return {
+    type: "nativeFunc",
+    value,
+    prototype: NATIVE_FUNC_PROTOTYPE,
+  };
+}
 
 // ARRAY
 
 const ARRAY_PROTOTYPE = {};
 
-export function ARRAY(elements: Runtime_Array["value"] = []): Runtime_Array {
+export function ARRAY(elements: Runtime.Array["value"] = []): Runtime.Array {
   return {
     type: "array",
     value: elements,
@@ -20,7 +35,7 @@ export function ARRAY(elements: Runtime_Array["value"] = []): Runtime_Array {
 
 const OBJECT_PROTOTYPE = {};
 
-export function OBJECT(properties: Runtime_Object["value"] = {}): Runtime_Object {
+export function OBJECT(properties: Runtime.Object["value"] = {}): Runtime.Object {
   return {
     type: "object",
     value: properties,
@@ -32,7 +47,7 @@ export function OBJECT(properties: Runtime_Object["value"] = {}): Runtime_Object
 
 const NUMBER_PROTOTYPE = {};
 
-export function NUMBER(value: number): Runtime_Number {
+export function NUMBER(value: number): Runtime.Number {
   return { type: "number", value, prototype: NUMBER_PROTOTYPE };
 }
 
@@ -40,7 +55,7 @@ export function NUMBER(value: number): Runtime_Number {
 
 const STRING_PROTOTYPE = {};
 
-export function STRING(value: string): Runtime_String {
+export function STRING(value: string): Runtime.String {
   return {
     type: "string",
     value,
@@ -52,16 +67,16 @@ export function STRING(value: string): Runtime_String {
 
 const BOOL_PROTOTYPE = {};
 
-export function BOOL(value: boolean): Runtime_Boolean {
+export function BOOL(value: boolean): Runtime.Boolean {
   return { type: "boolean", value, prototype: BOOL_PROTOTYPE };
 }
 
 // DATA-TYPES WITHOUT PROTOTYPE
 
-export function UNDEFINED(): Runtime_Undefined {
+export function UNDEFINED(): Runtime.Undefined {
   return { type: "undefined", value: undefined };
 }
 
-export function NULL(): Runtime_Null {
+export function NULL(): Runtime.Null {
   return { type: "null", value: null };
 }
