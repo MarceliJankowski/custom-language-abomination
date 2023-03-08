@@ -110,6 +110,7 @@ export function createGlobalEnv() {
   env.declareVar("clear", NATIVE_FUNCTION.clear, options);
   env.declareVar("exit", NATIVE_FUNCTION.exit, options);
   env.declareVar("prompt", NATIVE_FUNCTION.prompt, options);
+  env.declareVar("Bool", NATIVE_FUNCTION.bool, options);
 
   return env;
 }

@@ -3,7 +3,7 @@ import promptSyncPackage from "prompt-sync";
 const promptSync = promptSyncPackage();
 
 // PROJECT MODULES
-import { Err, parseForLogging } from "../utils";
+import { Err, parseForLogging, getBooleanValue } from "../utils";
 import * as MK from "./runtimeValueFactories";
 
 // -----------------------------------------------
@@ -69,6 +69,17 @@ export const prompt = MK.NATIVE_FUNCTION(([firstArg]) => {
 
   const output = MK.STRING(userInput);
   return output;
+});
+
+/**@desc determine whether given `value` is 'falsy' or 'truthy' (returns corresponding boolean)
+@param value in case it isn't provided it defaults to 'false'*/
+export const bool = MK.NATIVE_FUNCTION(([firstArg]) => {
+  if (firstArg === undefined) return MK.BOOL(false);
+
+  const value = firstArg.value;
+  const booleanValue = getBooleanValue(value);
+
+  return MK.BOOL(booleanValue);
 });
 
 // -----------------------------------------------

@@ -1,7 +1,7 @@
 // PROJECT MODULES
-import { Err } from "../utils";
+import { Err, getBooleanValue } from "../utils";
 import { VariableEnv } from "./variableEnv";
-import { RUNTIME_FALSY_VALUES, VALID_MEMBER_EXP_RUNTIME_TYPES } from "../constants";
+import { VALID_MEMBER_EXP_RUNTIME_TYPES } from "../constants";
 import { MK, Runtime } from "./";
 
 // -----------------------------------------------
@@ -439,7 +439,7 @@ export class Interpreter {
 
         const runtimeOperand = this.evaluate(operand, env);
 
-        const operandBooleanValue = this.getBooleanValue(runtimeOperand.value);
+        const operandBooleanValue = getBooleanValue(runtimeOperand.value);
         const operandBooleanRuntimeValue = MK.BOOL(!operandBooleanValue);
 
         return operandBooleanRuntimeValue;
@@ -495,7 +495,7 @@ export class Interpreter {
 
   private evalTernaryExp(exp: AST_TernaryExp, env: VariableEnv): Runtime.Value {
     const runtimeTestValue = this.evaluate(exp.test, env).value;
-    const testBoolean = this.getBooleanValue(runtimeTestValue);
+    const testBoolean = getBooleanValue(runtimeTestValue);
 
     // TEST IS: 'truthy'
     if (testBoolean) {
@@ -636,8 +636,8 @@ export class Interpreter {
         // - at least one operand is "falsy" -> return first "falsy" operand
         // - both operands are "truthy" -> return last "truthy" operand
 
-        if (this.isFalsy(lhsValue)) return left;
-        if (this.isFalsy(rhsValue)) return right;
+        if (!getBooleanValue(lhsValue)) return left;
+        if (!getBooleanValue(rhsValue)) return right;
 
         // BOTH ARE 'truthy'
         return right;
@@ -648,8 +648,8 @@ export class Interpreter {
         // - at least one operand is "truthy" -> return first "truthy" operand
         // - both operands are "falsy" -> return last "falsy" operand
 
-        if (this.isTruthy(lhsValue)) return left;
-        if (this.isTruthy(rhsValue)) return right;
+        if (getBooleanValue(lhsValue)) return left;
+        if (getBooleanValue(rhsValue)) return right;
 
         // BOTH ARE 'falsy'
         return right;
@@ -794,20 +794,5 @@ export class Interpreter {
     const preparedTypes = a + " " + b;
 
     return validCombinationsRegExp.test(preparedTypes);
-  }
-
-  /**@desc determine whether given `Runtime.Value`.value is 'falsy' or 'truthy' (returns corresponding boolean)*/
-  private getBooleanValue(value: unknown): boolean {
-    return this.isTruthy(value);
-  }
-
-  /**@desc determine whether given `Runtime.Value`.value is falsy*/
-  private isFalsy(value: unknown): boolean {
-    return RUNTIME_FALSY_VALUES.some(({ value: falsyValue }) => falsyValue === value);
-  }
-
-  /**@desc determine whether given `Runtime.Value`.value is truthy*/
-  private isTruthy(value: unknown): boolean {
-    return !this.isFalsy(value);
   }
 }
