@@ -258,7 +258,7 @@ export class Lexer {
               );
             }
 
-            this.addToken(TokenType.STRING, value, startPosition);
+            this.addToken(TokenType.STRING, value, startPosition, this.position);
           }
 
           // IDENTIFIER
