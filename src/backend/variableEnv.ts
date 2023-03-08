@@ -109,6 +109,7 @@ export function createGlobalEnv() {
   env.declareVar("logVerbose", NATIVE_FUNCTION.logVerbose, options);
   env.declareVar("clear", NATIVE_FUNCTION.clear, options);
   env.declareVar("exit", NATIVE_FUNCTION.exit, options);
+  env.declareVar("prompt", NATIVE_FUNCTION.prompt, options);
 
   return env;
 }

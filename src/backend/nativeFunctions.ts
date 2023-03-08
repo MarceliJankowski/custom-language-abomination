@@ -1,3 +1,7 @@
+// PACKAGES
+import promptSyncPackage from "prompt-sync";
+const promptSync = promptSyncPackage();
+
 // PROJECT MODULES
 import { Err, parseForLogging } from "../utils";
 import * as MK from "./runtimeValueFactories";
@@ -36,4 +40,18 @@ export const exit = MK.NATIVE_FUNCTION(([firstArg]) => {
   const exitCode = (firstArg?.value as number) ?? 0;
 
   process.exit(exitCode);
+});
+
+export const prompt = MK.NATIVE_FUNCTION(([firstArg]) => {
+  if (firstArg && firstArg.type !== "string")
+    throw new Err(
+      `Invalid message argument type: '${firstArg.type}' passed to 'prompt()' native function`,
+      "interpreter"
+    );
+
+  const message = (firstArg?.value as string) ?? "";
+  const userInput = promptSync(message);
+
+  const output = MK.STRING(userInput);
+  return output;
 });
