@@ -3,7 +3,7 @@ import promptSyncPackage from "prompt-sync";
 const promptSync = promptSyncPackage();
 
 // PROJECT MODULES
-import { Err, parseForLogging, getBooleanValue } from "../utils";
+import { Err, parseForLogging, getBooleanValue, stringifyPretty } from "../utils";
 import * as MK from "./runtimeValueFactories";
 
 // -----------------------------------------------
@@ -80,6 +80,18 @@ export const bool = MK.NATIVE_FUNCTION(([firstArg]) => {
   const booleanValue = getBooleanValue(value);
 
   return MK.BOOL(booleanValue);
+});
+
+/**@desc coerce `value` to `string` data-type
+@param value all data-types are valid. In case it isn't provided it defaults to empty string*/
+export const string = MK.NATIVE_FUNCTION(([firstArg]) => {
+  let value: unknown = "";
+
+  if (firstArg) value = parseForLogging(firstArg);
+
+  const stringValue = stringifyPretty(value);
+
+  return MK.STRING(stringValue);
 });
 
 // -----------------------------------------------

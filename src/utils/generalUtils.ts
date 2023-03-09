@@ -1,3 +1,6 @@
+// PACKAGES
+import stringify from "json-stringify-pretty-compact";
+
 // PROJECT MODULES
 import { Runtime } from "../backend";
 import { RUNTIME_FALSY_VALUES } from "../constants";
@@ -61,4 +64,17 @@ export function parseForLogging(runtimeValue: Runtime.Value): unknown {
 /**@desc determine whether given `value` is 'falsy' or 'truthy' (returns corresponding boolean)*/
 export function getBooleanValue(value: unknown): boolean {
   return RUNTIME_FALSY_VALUES.every(({ value: falsyValue }) => falsyValue !== value);
+}
+
+type StringifyPrettyOptions = Parameters<typeof stringify>[1];
+
+/**@desc `stringify` package wrapper. It cleans `stringify` output (by removing JSON double-quotes), thus making it `pretty`*/
+export function stringifyPretty(value: unknown, options: StringifyPrettyOptions = { indent: 4 }): string {
+  if (value === undefined) value = "undefined"; // prevent stringify from receiving undefined value (in which case it returns undefined)
+
+  const stringifyOutput = stringify(value, options);
+
+  const cleanStringifyOutput = stringifyOutput.replace(/(?<!\\)"/g, "").replace(/\\"/g, '"');
+
+  return cleanStringifyOutput;
 }
