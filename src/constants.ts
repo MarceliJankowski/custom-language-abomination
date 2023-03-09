@@ -39,16 +39,8 @@ export const UNARY_OPERATORS = ["!", "++", "--"];
 export const ASSIGNMENT_OPERATORS = ["=", "+=", "-=", "*=", "/=", "%=", "||=", "&&="];
 
 // -----------------------------------------------
-//        VALID MEMBER-EXPRESSION NODES
+//        VALID MEMBER-EXPRESSION TYPES
 // -----------------------------------------------
-
-export const VALID_MEMBER_EXP_AST_NODES: AST_Node[] = [
-  "Identifier", // includes booleans
-  "ArrayLiteral",
-  "ObjectLiteral",
-  "StringLiteral",
-  "NumericLiteral",
-];
 
 export const VALID_MEMBER_EXP_RUNTIME_TYPES: Runtime.ValueType[] = [
   "number",

@@ -7,7 +7,6 @@ import {
   isMultiplicativeOperator,
 } from "../utils";
 import { Err } from "../utils";
-import { VALID_MEMBER_EXP_AST_NODES } from "../constants";
 
 // -----------------------------------------------
 //                    PARSER
@@ -276,17 +275,14 @@ export class Parser {
       end: objectEnd,
     };
 
+    // handle immediately following member-expression
+    if (this.isCurrentTokenAccessingProperty()) return this.parseMemberExp(objectLiteral);
+
     return objectLiteral;
   }
 
   private parseArrayExp(): AST_Expression {
-    if (
-      this.at().type !== TokenType.OPEN_BRACKET ||
-      // if previous node is a valid memberExpObject and current token: '[' is following that node, don't treat it as another array, but a computed member-expression (down the line)
-      (this.isPrevNodeValidMemberExpObj() && this.isCurrentTokenFollowingPrevNode())
-    ) {
-      return this.parseLogicalExpOR();
-    }
+    if (this.at().type !== TokenType.OPEN_BRACKET) return this.parseLogicalExpOR();
 
     const elements = new Array<AST_Expression>();
     const arrayStart = this.eat().start; // advance past OPEN_BRACKET
@@ -310,6 +306,9 @@ export class Parser {
       start: arrayStart,
       end: arrayEnd,
     };
+
+    // handle immediately following member-expression
+    if (this.isCurrentTokenAccessingProperty()) return this.parseMemberExp(arrayLiteral);
 
     return arrayLiteral;
   }
@@ -494,24 +493,13 @@ export class Parser {
     return callExp;
   }
 
-  private parseMemberExp(): AST_Expression {
-    const isCurrentTokenAccessingProperty = () =>
-      this.at().type === TokenType.DOT || this.at().type === TokenType.OPEN_BRACKET;
-
+  private parseMemberExp(expObject?: AST_ArrayLiteral | AST_ObjectLiteral): AST_Expression {
     let object: AST_Expression;
 
-    // enable: '[1,2,3][0]', '{}.type' and so on
-    if (
-      this.isPrevNodeValidMemberExpObj() &&
-      this.isCurrentTokenFollowingPrevNode() &&
-      isCurrentTokenAccessingProperty()
-    ) {
-      object = this.programBody.pop()!; // use prevNode in as memberExpObj, and pop it to prevent duplication
-    } else object = this.parsePrimaryExp();
+    if (expObject) object = expObject; // enable: '[1,2,3][0]', '{}.type' and so on
+    else object = this.parsePrimaryExp();
 
-    do {
-      if (!isCurrentTokenAccessingProperty()) break;
-
+    while (this.isCurrentTokenAccessingProperty() && this.isCurrentTokenFollowingToken(object)) {
       const operator = this.eat(); // '.' or '[' for computed expressions
 
       let property: AST_Expression;
@@ -555,7 +543,7 @@ export class Parser {
       };
 
       object = memberExp;
-    } while (this.isCurrentTokenFollowingPrevNode());
+    }
 
     return object;
   }
@@ -607,32 +595,20 @@ export class Parser {
   // -----------------------------------------------
   //                  UTILITIES
   // -----------------------------------------------
-
-  /**@desc determine whehter previous `node` is a valid memberExp object*/
-  private isPrevNodeValidMemberExpObj(): boolean {
-    const previousNodeKind = String(this.previousNode()?.kind);
-
-    return VALID_MEMBER_EXP_AST_NODES.some(validType => validType === previousNodeKind);
+  /**@desc determine whether current token is accessing property / whether current token is a: `'.'` or `'['`*/
+  private isCurrentTokenAccessingProperty() {
+    return this.at().type === TokenType.DOT || this.at().type === TokenType.OPEN_BRACKET;
   }
 
-  /**@desc determine whether current `token` is on the same line as previous `node`*/
-  private isCurrentTokenFollowingPrevNode() {
-    const previousNode = this.previousNode();
+  /**@desc determine whether currentToken is following `precedingToken` (both are on the same line, and currentToken starts after `precedingToken` ends)*/
+  private isCurrentTokenFollowingToken(precedingToken: AST_Expression) {
+    const precedingTokenEnd = precedingToken.end;
+    const currentTokenStart = this.at().start;
 
-    // if there are no previously parsed tokens (AST nodes), current token couldn't be following them (linewise)
-    if (previousNode === undefined) return false;
+    const areOnTheSameLine = precedingTokenEnd[0] === currentTokenStart[0];
+    const doesCurrentTokenStartAfterPrecedingTokenEnds = currentTokenStart[1] > precedingTokenEnd[1];
 
-    const previousNodeLine = previousNode.end[0];
-    const currentTokenLine = this.at().start[0];
-
-    const areOnTheSameLine = previousNodeLine === currentTokenLine;
-
-    return areOnTheSameLine;
-  }
-
-  /**@desc returns previously parsed token / latest AST node / last `programBody` node*/
-  private previousNode(): AST_Statement | undefined {
-    return this.programBody.at(-1);
+    return areOnTheSameLine && doesCurrentTokenStartAfterPrecedingTokenEnds;
   }
 
   /**@desc helper function for parsing binary-expressions. It generates and returns `AST Binary Expression` node*/
