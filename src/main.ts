@@ -76,18 +76,23 @@ class InterpreterInterface {
     const args = process.argv.slice(2); // actual arguments passed to interpreter
 
     /**@desc parsed arguments array
-    @original [-vf, fileName -x]
-    @parsed [v, f, fileName, x]*/
+    @original [-vf, fileName, -e, parser]
+    @parsed [-v, -f, fileName, -e, parser]*/
     const parsedArgs: string[] = [];
 
-    // build parsedArgs
+    // BUILD parsedArgs
     args.forEach(arg => {
+      // FLAG SEGMENT
       if (arg.startsWith("-")) {
-        const flagComponents = arg.slice(1).split("");
-        parsedArgs.push(...flagComponents);
-      } else {
-        parsedArgs.push(arg);
+        const flagSegment = arg.slice(1); // turn '-rwx' into 'rwx' (one flagSegment can contain multiple flags)
+        const flagComponents = flagSegment.split(""); // split 'rwx' into ['r', 'w', 'x']
+        const individualFlags = flagComponents.map(flag => "-" + flag); // precede each flag with '-' to distinguish them from arguments
+
+        parsedArgs.push(...individualFlags);
       }
+
+      // ARGUMENT
+      else parsedArgs.push(arg);
     });
 
     // if there are no parsedArgs print manual
@@ -98,20 +103,20 @@ class InterpreterInterface {
       const arg = parsedArgs.shift();
 
       switch (arg) {
-        case "h": {
+        case "-h": {
           this.printManual();
           break;
         }
 
-        case "v": {
+        case "-v": {
           this.verboseMode = true;
           break;
         }
 
-        case "r": {
+        case "-r": {
           if (this.interactionMethod === "file")
             throw new Err(
-              "Invalid arguments. Flags: 'r' and 'f' are present, this is invalid because these flags exclude each other (please checkout manual for more information)",
+              "Invalid arguments. Flags: '-r' and '-f' are present, this is invalid because these flags exclude each other (please checkout manual for more information)",
               "invalidArg"
             );
 
@@ -119,10 +124,10 @@ class InterpreterInterface {
           break;
         }
 
-        case "f": {
+        case "-f": {
           if (this.interactionMethod === "repl")
             throw new Err(
-              "Invalid arguments. Flags: 'r' and 'f' are present, this is invalid because these flags exclude each other (please checkout manual for more information)",
+              "Invalid arguments. Flags: '-r' and '-f' are present, this is invalid because these flags exclude each other (please checkout manual for more information)",
               "invalidArg"
             );
 
@@ -131,7 +136,7 @@ class InterpreterInterface {
           break;
         }
 
-        case "e": {
+        case "-e": {
           const arg = parsedArgs.shift();
 
           // CHECK 'arg' VALIDITY
