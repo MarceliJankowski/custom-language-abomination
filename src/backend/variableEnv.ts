@@ -112,6 +112,7 @@ export function createGlobalEnv() {
   env.declareVar("Number", NATIVE_FUNCTION.number, options);
   env.declareVar("date", NATIVE_FUNCTION.date, options);
   env.declareVar("clock", NATIVE_FUNCTION.clock, options);
+  env.declareVar("time", NATIVE_FUNCTION.time, options);
 
   // GLOBAL OBJECTS
   env.declareVar(

@@ -172,6 +172,13 @@ export const clock = MK.NATIVE_FUNCTION(() => {
   return MK.STRING(formattedTime);
 });
 
+/**@desc wrapper around javascript's `'Date.now()'` method*/
+export const time = MK.NATIVE_FUNCTION(() => {
+  const milliseconds = Date.now();
+
+  return MK.NUMBER(milliseconds);
+});
+
 // -----------------------------------------------
 //                    UTILS
 // -----------------------------------------------
