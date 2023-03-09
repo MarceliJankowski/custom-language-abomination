@@ -1,13 +1,12 @@
 // PACKAGES
 import fs from "fs";
 import path from "path";
-import stringify from "json-stringify-pretty-compact";
 import promptSync from "prompt-sync";
 const prompt = promptSync();
 
 // PROJECT MODULES
 import { ErrorCode } from "./constants";
-import { Err, parseForLogging } from "./utils";
+import { Err, parseForLogging, stringifyPretty } from "./utils";
 import { Lexer, Parser } from "./frontend";
 import { Interpreter, createGlobalEnv, Runtime } from "./backend";
 
@@ -290,7 +289,9 @@ class InterpreterInterface {
 
     if (outputSrc === "lexer") stringifyMaxLength = 45; // decrease length to prevent wrapping (lexer tokens are shorter, hence they get line-wrapped more easilly)
 
-    console.log(stringify(output, { indent: 4, maxLength: stringifyMaxLength }));
+    const prettyOutput = stringifyPretty(output, { indent: 4, maxLength: stringifyMaxLength });
+
+    console.log(prettyOutput);
   }
 
   /**@desc print break-line
