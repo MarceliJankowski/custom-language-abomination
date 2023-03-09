@@ -184,6 +184,15 @@ class InterpreterInterface {
         process.exit(0);
       }
 
+      const trimmedInput = input.trim();
+
+      // REPL COMMANDS
+      if (trimmedInput === "exit") process.exit(0);
+      if (trimmedInput === "clear") {
+        console.clear();
+        continue;
+      }
+
       try {
         const output = this.evaluateSrc(input);
 
