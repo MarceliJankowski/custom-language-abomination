@@ -56,7 +56,7 @@ export const exit = MK.NATIVE_FUNCTION(([firstArg]) => {
 });
 
 /**@desc prompt user for input
-@param message string preceding input prompt. If message isn't provided it defaults to empty string*/
+@param message string preceding input prompt. If message isn't provided, it defaults to empty string*/
 export const prompt = MK.NATIVE_FUNCTION(([firstArg]) => {
   if (firstArg && firstArg.type !== "string")
     throw new Err(
@@ -72,7 +72,7 @@ export const prompt = MK.NATIVE_FUNCTION(([firstArg]) => {
 });
 
 /**@desc determine whether given `value` is 'falsy' or 'truthy' (returns corresponding boolean)
-@param value in case it isn't provided it defaults to 'false'*/
+@param value in case it isn't provided, it defaults to 'false'*/
 export const bool = MK.NATIVE_FUNCTION(([firstArg]) => {
   if (firstArg === undefined) return MK.BOOL(false);
 
@@ -83,7 +83,7 @@ export const bool = MK.NATIVE_FUNCTION(([firstArg]) => {
 });
 
 /**@desc coerce `value` to `string` data-type
-@param value all data-types are valid. In case it isn't provided it defaults to empty string*/
+@param value all data-types are valid. In case it isn't provided, it defaults to empty string*/
 export const string = MK.NATIVE_FUNCTION(([firstArg]) => {
   let value: unknown = "";
 
@@ -92,6 +92,42 @@ export const string = MK.NATIVE_FUNCTION(([firstArg]) => {
   const stringValue = stringifyPretty(value);
 
   return MK.STRING(stringValue);
+});
+
+/**@desc coerce `value` to `number` data-type
+@param value only numbers and number-coercible strings are valid. In case value isn't provided, it defaults to zero*/
+export const number = MK.NATIVE_FUNCTION(([firstArg]) => {
+  let value: number = 0;
+
+  if (firstArg) {
+    switch (firstArg.type) {
+      case "number": {
+        value = firstArg.value as number;
+        break;
+      }
+
+      case "string": {
+        const coercedValue = Number(firstArg.value);
+
+        if (Number.isNaN(coercedValue))
+          throw new Err(
+            `Invalid value argument: '${firstArg.value}' (failed number-coercion) passed to 'Number()' native function`,
+            "interpreter"
+          );
+
+        value = coercedValue;
+        break;
+      }
+
+      default:
+        throw new Err(
+          `Invalid value argument type: '${firstArg.type}' passed to 'Number()' native function`,
+          "interpreter"
+        );
+    }
+  }
+
+  return MK.NUMBER(value);
 });
 
 // -----------------------------------------------
