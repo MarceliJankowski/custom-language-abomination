@@ -110,6 +110,7 @@ export function createGlobalEnv() {
   env.declareVar("Bool", NATIVE_FUNCTION.bool, options);
   env.declareVar("String", NATIVE_FUNCTION.string, options);
   env.declareVar("Number", NATIVE_FUNCTION.number, options);
+  env.declareVar("date", NATIVE_FUNCTION.date, options);
 
   // GLOBAL OBJECTS
   env.declareVar(

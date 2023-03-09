@@ -139,6 +139,23 @@ export const number = MK.NATIVE_FUNCTION(([firstArg]) => {
   return MK.NUMBER(value);
 });
 
+/**@desc get current date in a `'DD/MM/YYYY'` format*/
+export const date = MK.NATIVE_FUNCTION(() => {
+  // code stollen from stackoverflow: https://stackoverflow.com/questions/12409299/how-to-get-current-formatted-date-dd-mm-yyyy-in-javascript-and-append-it-to-an-i
+
+  const today = new Date();
+  const year = today.getFullYear();
+  let month: string | number = today.getMonth() + 1; // months start at 0
+  let day: string | number = today.getDate();
+
+  if (day < 10) day = "0" + day;
+  if (month < 10) month = "0" + month;
+
+  const formattedToday = day + "/" + month + "/" + year;
+
+  return MK.STRING(formattedToday);
+});
+
 // -----------------------------------------------
 //                    UTILS
 // -----------------------------------------------
