@@ -105,14 +105,24 @@ export function createGlobalEnv() {
   env.declareVar("undefined", MK.UNDEFINED(), options);
 
   // NATIVE FUNCTIONS
-  env.declareVar("log", NATIVE_FUNCTION.log, options);
-  env.declareVar("logVerbose", NATIVE_FUNCTION.logVerbose, options);
-  env.declareVar("clear", NATIVE_FUNCTION.clear, options);
+  env.declareVar("echo", NATIVE_FUNCTION.log, options);
   env.declareVar("exit", NATIVE_FUNCTION.exit, options);
-  env.declareVar("prompt", NATIVE_FUNCTION.prompt, options);
   env.declareVar("Bool", NATIVE_FUNCTION.bool, options);
   env.declareVar("String", NATIVE_FUNCTION.string, options);
   env.declareVar("Number", NATIVE_FUNCTION.number, options);
+
+  // GLOBAL OBJECTS
+  env.declareVar(
+    "console",
+    MK.OBJECT({
+      log: NATIVE_FUNCTION.log,
+      logVerbose: NATIVE_FUNCTION.logVerbose,
+      clear: NATIVE_FUNCTION.clear,
+      prompt: NATIVE_FUNCTION.prompt,
+      error: NATIVE_FUNCTION.error,
+    }),
+    options
+  );
 
   return env;
 }

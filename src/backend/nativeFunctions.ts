@@ -10,7 +10,7 @@ import * as MK from "./runtimeValueFactories";
 //               NATIVE FUNCTIONS
 // -----------------------------------------------
 
-/**@desc log `arguments` to std output in a `non-verbose` way*/
+/**@desc log `arguments` to std output*/
 export const log = MK.NATIVE_FUNCTION(args => {
   const parsedArgs = args.map(arg => parseForLogging(arg));
 
@@ -22,6 +22,15 @@ export const log = MK.NATIVE_FUNCTION(args => {
 /**@desc log `arguments` to std output in a `verbose` way*/
 export const logVerbose = MK.NATIVE_FUNCTION(args => {
   console.log(...args);
+
+  return MK.UNDEFINED();
+});
+
+/**@desc log `arguments` to std error*/
+export const error = MK.NATIVE_FUNCTION(args => {
+  const parsedArgs = args.map(arg => parseForLogging(arg));
+
+  console.error(...parsedArgs);
 
   return MK.UNDEFINED();
 });
