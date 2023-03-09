@@ -156,6 +156,22 @@ export const date = MK.NATIVE_FUNCTION(() => {
   return MK.STRING(formattedToday);
 });
 
+/**@desc check virtual clock and return current time in a `'HH:MM:SS'` format*/
+export const clock = MK.NATIVE_FUNCTION(() => {
+  const time = new Date();
+  let hours: string | number = time.getHours();
+  let minutes: string | number = time.getMinutes();
+  let seconds: string | number = time.getSeconds();
+
+  if (hours < 10) hours = "0" + hours;
+  if (minutes < 10) minutes = "0" + minutes;
+  if (seconds < 10) seconds = "0" + seconds;
+
+  const formattedTime = hours + ":" + minutes + ":" + seconds;
+
+  return MK.STRING(formattedTime);
+});
+
 // -----------------------------------------------
 //                    UTILS
 // -----------------------------------------------
