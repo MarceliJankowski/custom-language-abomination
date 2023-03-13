@@ -89,14 +89,13 @@ export class Lexer {
     this.tokens = new Array<Token>();
 
     this.line = this.isSrcNotEmpty() ? 1 : 0;
-    this.column = 0; // tokenize will increment column to 1 by default
+    this.column = 0;
   }
 
   /**@desc parses `sourceCode` into Token[]*/
   public tokenize(): Token[] {
     while (this.isSrcNotEmpty()) {
       const char = this.at();
-      this.column++; // increment column because new character is being parsed
 
       switch (char) {
         // HANDLE SINGLE-CHARACTER TOKENS
@@ -164,10 +163,7 @@ export class Lexer {
             let value = this.eat();
 
             // BUILD `intStr`
-            while (this.isSrcNotEmpty() && this.isInt(this.at())) {
-              value += this.eat();
-              this.column++;
-            }
+            while (this.isSrcNotEmpty() && this.isInt(this.at())) value += this.eat();
 
             this.addToken(TokenType.NUMBER, value, startPosition, this.position);
           }
@@ -184,7 +180,6 @@ export class Lexer {
             // BUILD `str`
             while (this.isSrcNotEmpty()) {
               let char = this.eat();
-              this.column++;
 
               // handle escape-sign (allow for double escape-sign, like '\\' with: !isEscaped)
               if (char === Sign.ESCAPE && !isEscaped) {
@@ -266,13 +261,10 @@ export class Lexer {
           // IDENTIFIER
           else if (this.isAlpha(char)) {
             const startPosition = this.position;
-            let identifier = "";
+            let identifier = this.eat();
 
             // BUILD identifier
-            while (this.isSrcNotEmpty() && this.isAlpha(this.at())) {
-              identifier += this.eat();
-              this.column++;
-            }
+            while (this.isSrcNotEmpty() && this.isAlpha(this.at())) identifier += this.eat();
 
             // handle reserved keywords
             const keywordType = KEYWORDS[identifier];
@@ -299,7 +291,6 @@ export class Lexer {
             ) {
               // BUILD operator
               operator += this.eat();
-              this.column++;
             }
 
             switch (operator) {
@@ -342,12 +333,12 @@ export class Lexer {
 
           // WHITESPACE
           else if (this.isWhitespace(char)) {
+            this.eat(); // skip whitespace character
+
             if (this.isNewLine(char)) {
-              this.line++; // if character is a new-line increment line counter
+              this.line++; // increment line counter
               this.column = 0; // set column back to 0
             }
-
-            this.eat(); // skip whitespace character
           }
 
           // UNRECOGNIZED
@@ -384,6 +375,8 @@ export class Lexer {
   private eat(): string {
     if (!this.isSrcNotEmpty())
       throw new Err("Lexer internal error: cannot eat when src is empty!", "internal");
+
+    this.column++; // increase column count because new character is being parsed
 
     return this.src.shift()!;
   }
