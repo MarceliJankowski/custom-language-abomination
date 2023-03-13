@@ -9,6 +9,7 @@ type AST_Node =
   | "VarDeclaration"
   | "BlockStatement"
   | "FunctionDeclaration"
+  | "ReturnStatement"
 
   // EXPRESSIONS
   | "AssignmentExp"
@@ -55,6 +56,11 @@ interface AST_VarDeclaration extends AST_Statement {
 interface AST_BlockStatement extends AST_Statement {
   kind: "BlockStatement";
   body: AST_Statement[];
+}
+
+interface AST_ReturnStatement extends AST_Statement {
+  kind: "ReturnStatement";
+  argument?: AST_Statement;
 }
 
 interface AST_FunctionDeclaration extends AST_Statement {

@@ -57,6 +57,12 @@ export class Interpreter {
       case "FunctionDeclaration":
         return this.evalFuncDeclaration(astNode as AST_FunctionDeclaration, env);
 
+      case "ReturnStatement":
+        throw new Err(
+          `Invalid return-statement. Found return-statement outside of a function body, at position ${astNode.start}`,
+          "interpreter"
+        );
+
       case "AssignmentExp":
         return this.evalAssignmentExp(astNode as AST_AssignmentExp, env);
 
@@ -433,10 +439,21 @@ export class Interpreter {
           funcInvocationEnv.declareVar(parameter.value, value, { position: parameter.start });
         });
 
-        const funcReturnValue: Runtime.Value = MK.UNDEFINED();
+        let funcReturnValue: Runtime.Value = MK.UNDEFINED();
 
         // evaluate function body one statement at a time
-        for (const statement of func.body.body) this.evaluate(statement, funcInvocationEnv);
+        for (const statement of func.body.body) {
+          if (statement.kind === "ReturnStatement") {
+            const returnStatement = statement as AST_ReturnStatement;
+
+            if (returnStatement.argument)
+              funcReturnValue = this.evaluate(returnStatement.argument, funcInvocationEnv);
+
+            break;
+          }
+
+          this.evaluate(statement, funcInvocationEnv);
+        }
 
         return funcReturnValue;
       }

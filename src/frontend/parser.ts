@@ -42,6 +42,7 @@ export class Parser {
 
   // varDeclaration - LEAST IMPORTANT / INVOKED FIRST
   // funcDeclaration
+  // returnStatement
   // assignmentExp
   // ternaryExp
   // objectExp
@@ -75,6 +76,11 @@ export class Parser {
 
       case TokenType.FUNC: {
         parsedStatement = this.parseFuncDeclaration();
+        break;
+      }
+
+      case TokenType.RETURN: {
+        parsedStatement = this.parseReturnStatement();
         break;
       }
 
@@ -213,6 +219,25 @@ export class Parser {
     };
 
     return func;
+  }
+
+  private parseReturnStatement(): AST_ReturnStatement {
+    const returnKeyword = this.eat();
+
+    let argument;
+
+    // handle case when there's a return value
+    if (this.isCurrentTokenFollowing(returnKeyword)) argument = this.parseStatement();
+
+    // BUILD returnStatement
+    const returnStatement: AST_ReturnStatement = {
+      kind: "ReturnStatement",
+      argument,
+      start: returnKeyword.start,
+      end: argument?.end ?? returnKeyword.end,
+    };
+
+    return returnStatement;
   }
 
   private parseAssignmentExp(): AST_Expression {
@@ -523,7 +548,6 @@ export class Parser {
     const { argumentList, argumentListEnd } = this.parseArgumentList();
 
     // BUILD CALL-EXP
-
     let callExp: AST_CallExp = {
       kind: "CallExp",
       callee,
@@ -577,7 +601,7 @@ export class Parser {
     if (expObject) object = expObject; // enable: '[1,2,3][0]', '{}.type' and so on
     else object = this.parsePrimaryExp();
 
-    while (this.isCurrentTokenAccessingProperty() && this.isCurrentTokenFollowingToken(object)) {
+    while (this.isCurrentTokenAccessingProperty() && this.isCurrentTokenFollowing(object)) {
       const operator = this.eat(); // '.' or '[' for computed expressions
 
       let property: AST_Expression;
@@ -678,9 +702,9 @@ export class Parser {
     return this.at().type === TokenType.DOT || this.at().type === TokenType.OPEN_BRACKET;
   }
 
-  /**@desc determine whether currentToken is following `precedingToken` (both are on the same line, and currentToken starts after `precedingToken` ends)*/
-  private isCurrentTokenFollowingToken(precedingToken: AST_Expression) {
-    const precedingTokenEnd = precedingToken.end;
+  /**@desc determine whether currentToken is following preceding `Token/Node` (both are on the same line, and currentToken starts after preceding `Token/Node` ends)*/
+  private isCurrentTokenFollowing(preceding: Token | AST_Expression) {
+    const precedingTokenEnd = preceding.end;
     const currentTokenStart = this.at().start;
 
     const areOnTheSameLine = precedingTokenEnd[0] === currentTokenStart[0];
