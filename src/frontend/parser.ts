@@ -540,8 +540,9 @@ export class Parser {
     return left;
   }
 
-  private parseCallExp(): AST_Expression {
-    const callee = this.parseMemberExp();
+  private parseCallExp(prevCallExp?: AST_CallExp): AST_Expression {
+    const callee = prevCallExp ?? this.parseMemberExp();
+
     if (this.at().type !== TokenType.OPEN_PAREN) return callee;
 
     // HANDLE ARGUMENTS
@@ -557,7 +558,7 @@ export class Parser {
     };
 
     // handle another call-expression immediately following current callExp (example: 'func()()')
-    if (this.at().type === TokenType.OPEN_PAREN) callExp = this.parseCallExp() as AST_CallExp;
+    if (this.at().type === TokenType.OPEN_PAREN) callExp = this.parseCallExp(callExp) as AST_CallExp;
 
     return callExp;
   }
