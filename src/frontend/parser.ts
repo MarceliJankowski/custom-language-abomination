@@ -41,6 +41,7 @@ export class Parser {
   // helpful web page: https://en.cppreference.com/w/cpp/language/operator_precedence
 
   // varDeclaration - LEAST IMPORTANT / INVOKED FIRST
+  // funcDeclaration
   // assignmentExp
   // ternaryExp
   // objectExp
@@ -69,6 +70,11 @@ export class Parser {
       case TokenType.VAR:
       case TokenType.CONST: {
         parsedStatement = this.parseVarDeclaration();
+        break;
+      }
+
+      case TokenType.FUNC: {
+        parsedStatement = this.parseFuncDeclaration();
         break;
       }
 
@@ -143,6 +149,70 @@ export class Parser {
     };
 
     return varDeclaration;
+  }
+
+  private parseBlockStatement(): AST_BlockStatement {
+    const start = this.eatAndExpect(
+      TokenType.OPEN_CURLY_BRACE,
+      "Invalid block statement. Missing openining curly-brace ('{')"
+    ).start;
+
+    const body: AST_Statement[] = [];
+
+    // BUILD body
+    while (this.notEOF() && this.at().type !== TokenType.CLOSE_CURLY_BRACE) body.push(this.parseStatement());
+
+    const end = this.eatAndExpect(
+      TokenType.CLOSE_CURLY_BRACE,
+      "Invalid block statement. Missing closing curly-brace ('}')"
+    ).end;
+
+    const blockStatement: AST_BlockStatement = {
+      kind: "BlockStatement",
+      body,
+      start,
+      end,
+    };
+
+    return blockStatement;
+  }
+
+  private parseFuncDeclaration(): AST_FunctionDeclaration {
+    const funcStart = this.eat().start; // advance past 'func' keyword
+
+    const name = this.eatAndExpect(
+      TokenType.IDENTIFIER,
+      "Invalid function declaration. Missing function name following func keyword"
+    ).value;
+
+    // HANDLE PARAMETERS
+    const { argumentList } = this.parseArgumentList();
+
+    // make sure that each parameter is an identifier
+    argumentList.forEach(arg => {
+      if (arg.kind !== "Identifier")
+        throw new Err(
+          `Invalid function declaration. Invalid parameter: '${arg.kind}' (only identifiers are valid) at position: ${arg.start}`,
+          "parser"
+        );
+    });
+
+    const parameters = argumentList as AST_Identifier[];
+
+    // HANDLE BODY
+    const blockStatement = this.parseBlockStatement();
+
+    // BUILD FUNC
+    const func: AST_FunctionDeclaration = {
+      kind: "FunctionDeclaration",
+      body: blockStatement,
+      name,
+      parameters,
+      start: funcStart,
+      end: blockStatement.end,
+    };
+
+    return func;
   }
 
   private parseAssignmentExp(): AST_Expression {
@@ -449,17 +519,35 @@ export class Parser {
     const callee = this.parseMemberExp();
     if (this.at().type !== TokenType.OPEN_PAREN) return callee;
 
-    // HANDLE ARGUMENT LIST
+    // HANDLE ARGUMENTS
+    const { argumentList, argumentListEnd } = this.parseArgumentList();
 
-    this.eat(); // advance past OPEN_PAREN
+    // BUILD CALL-EXP
 
-    const args: AST_Expression[] = [];
+    let callExp: AST_CallExp = {
+      kind: "CallExp",
+      callee,
+      arguments: argumentList,
+      start: callee.start,
+      end: argumentListEnd,
+    };
+
+    // handle another call-expression immediately following current callExp (example: 'func()()')
+    if (this.at().type === TokenType.OPEN_PAREN) callExp = this.parseCallExp() as AST_CallExp;
+
+    return callExp;
+  }
+
+  private parseArgumentList() {
+    this.eatAndExpect(TokenType.OPEN_PAREN, "Invalid argument list. Missing opening parentheses ('(')");
+
+    const argumentList: AST_Expression[] = [];
 
     // handle case when there are arguments
     if (this.at().type !== TokenType.CLOSE_PAREN) {
       const handleArgument = () => {
         const arg = this.parseAssignmentExp();
-        args.push(arg);
+        argumentList.push(arg);
       };
 
       // handle first argument
@@ -474,23 +562,13 @@ export class Parser {
 
     const argumentListEnd = this.eatAndExpect(
       TokenType.CLOSE_PAREN,
-      "Invalid call-expression. Missing closing parentheses (')') inside argument list"
+      "Invalid argument list. Missing closing parentheses (')')"
     ).end;
 
-    // BUILD CALL-EXP
-
-    let callExp: AST_CallExp = {
-      kind: "CallExp",
-      callee,
-      arguments: args,
-      start: callee.start,
-      end: argumentListEnd,
+    return {
+      argumentList,
+      argumentListEnd,
     };
-
-    // handle another call-expression immediately following current callExp (example: 'func()()')
-    if (this.at().type === TokenType.OPEN_PAREN) callExp = this.parseCallExp() as AST_CallExp;
-
-    return callExp;
   }
 
   private parseMemberExp(expObject?: AST_ArrayLiteral | AST_ObjectLiteral): AST_Expression {

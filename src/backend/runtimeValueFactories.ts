@@ -7,15 +7,38 @@ import { Runtime } from "./";
 
 // DATA-TYPES WITH PROTOTYPE
 
-// NATIVE FUNC
+// FUNCTION
 
-const NATIVE_FUNC_PROTOTYPE = {};
+const FUNCTION_PROTOTYPE = {};
 
-export function NATIVE_FUNCTION(value: Runtime.NativeFunctionImplementation): Runtime.NativeFunction {
+export function FUNCTION(
+  name: Runtime.Function["name"],
+  parameters: Runtime.Function["parameters"],
+  body: Runtime.Function["body"],
+  declarationEnv: Runtime.Function["declarationEnv"]
+): Runtime.Function {
+  return {
+    type: "function",
+    name,
+    parameters,
+    body,
+    declarationEnv,
+    value: "[Function: " + name + "]",
+    prototype: FUNCTION_PROTOTYPE,
+  };
+}
+
+// NATIVE FUNCTION
+
+const NATIVE_FUNCTION_PROTOTYPE = {};
+
+export function NATIVE_FUNCTION(
+  implementation: Runtime.NativeFunctionImplementation
+): Runtime.NativeFunction {
   return {
     type: "nativeFunction",
-    value,
-    prototype: NATIVE_FUNC_PROTOTYPE,
+    implementation,
+    prototype: NATIVE_FUNCTION_PROTOTYPE,
   };
 }
 

@@ -7,6 +7,8 @@ type AST_Node =
   // STATEMENTS
   | "Program"
   | "VarDeclaration"
+  | "BlockStatement"
+  | "FunctionDeclaration"
 
   // EXPRESSIONS
   | "AssignmentExp"
@@ -48,6 +50,18 @@ interface AST_VarDeclaration extends AST_Statement {
   operator?: string;
   value?: AST_Expression;
   constant: boolean;
+}
+
+interface AST_BlockStatement extends AST_Statement {
+  kind: "BlockStatement";
+  body: AST_Statement[];
+}
+
+interface AST_FunctionDeclaration extends AST_Statement {
+  kind: "FunctionDeclaration";
+  name: string;
+  parameters: AST_Identifier[];
+  body: AST_BlockStatement;
 }
 
 /**@desc returns value at run-time*/

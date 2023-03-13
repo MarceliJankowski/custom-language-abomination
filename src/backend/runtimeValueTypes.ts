@@ -12,12 +12,13 @@ export type ValueType =
   | "object"
   | "array"
   | "nativeFunction"
+  | "function"
   | "null"
   | "undefined";
 
 export interface Value {
   type: ValueType;
-  value: unknown;
+  value?: unknown;
 }
 
 // TYPES WITH PROTOTYPE (containing build-in properties / allowing member-expressions)
@@ -56,7 +57,15 @@ export type NativeFunctionImplementation = (args: Value[], env: VariableEnv) => 
 
 export interface NativeFunction extends ProtoValue {
   type: "nativeFunction";
-  value: NativeFunctionImplementation;
+  implementation: NativeFunctionImplementation;
+}
+
+export interface Function extends ProtoValue {
+  type: "function";
+  name: string;
+  parameters: AST_Identifier[];
+  body: AST_BlockStatement;
+  declarationEnv: VariableEnv;
 }
 
 // TYPES WITHOUT PROTOTYPE (not containing any build-in properties / forbidding member-expressions)

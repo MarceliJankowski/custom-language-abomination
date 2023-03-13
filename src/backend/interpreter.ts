@@ -54,6 +54,9 @@ export class Interpreter {
       case "VarDeclaration":
         return this.evalVarDeclaration(astNode as AST_VarDeclaration, env);
 
+      case "FunctionDeclaration":
+        return this.evalFuncDeclaration(astNode as AST_FunctionDeclaration, env);
+
       case "AssignmentExp":
         return this.evalAssignmentExp(astNode as AST_AssignmentExp, env);
 
@@ -108,7 +111,18 @@ export class Interpreter {
       position: varDeclaration.start,
     });
 
-    // treat variable declaration as statement, hence return undefined
+    // treat variable declaration as a statement, hence return undefined
+    return MK.UNDEFINED();
+  }
+
+  private evalFuncDeclaration(funcDeclaration: AST_FunctionDeclaration, env: VariableEnv): Runtime.Value {
+    const { name, parameters, body, start } = funcDeclaration;
+
+    const func = MK.FUNCTION(name, parameters, body, env);
+
+    env.declareVar(name, func, { position: start, constant: true });
+
+    // treat function declaration as a statement, hence return undefined
     return MK.UNDEFINED();
   }
 
@@ -400,16 +414,39 @@ export class Interpreter {
     const runtimeArgs = callExp.arguments.map(arg => this.evaluate(arg, env));
     const runtimeCallee = this.evaluate(callExp.callee, env);
 
-    if (runtimeCallee.type !== "nativeFunction")
-      throw new Err(
-        `Invalid call-expression. Invalid callee type: '${runtimeCallee.type}', at position ${callExp.start}`,
-        "interpreter"
-      );
+    switch (runtimeCallee.type) {
+      case "nativeFunction": {
+        const nativeFunc = runtimeCallee as Runtime.NativeFunction;
+        const output = nativeFunc.implementation(runtimeArgs, env);
 
-    const nativeFunc = runtimeCallee as Runtime.NativeFunction;
-    const output = nativeFunc.value(runtimeArgs, env);
+        return output;
+      }
 
-    return output;
+      case "function": {
+        const func = runtimeCallee as Runtime.Function;
+        const funcInvocationEnv = new VariableEnv(func.declarationEnv);
+
+        // CREATE PARAMETER LIST VARIABLES
+        func.parameters.forEach((parameter, index) => {
+          const value = runtimeArgs[index] ?? MK.UNDEFINED();
+
+          funcInvocationEnv.declareVar(parameter.value, value, { position: parameter.start });
+        });
+
+        const funcReturnValue: Runtime.Value = MK.UNDEFINED();
+
+        // evaluate function body one statement at a time
+        for (const statement of func.body.body) this.evaluate(statement, funcInvocationEnv);
+
+        return funcReturnValue;
+      }
+
+      default:
+        throw new Err(
+          `Invalid call-expression. Invalid callee type: '${runtimeCallee.type}', at position ${callExp.start}`,
+          "interpreter"
+        );
+    }
   }
 
   private evalPrefixUnaryExp(
