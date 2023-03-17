@@ -22,10 +22,25 @@ export function STATIC_FUNCTION(
 //           STATIC BUILDIN FUNCTIONS
 // -----------------------------------------------
 
+// -----------------------------------------------
+//                ALL DATA-TYPES
+// -----------------------------------------------
+
 /**@desc coerce `value` into `string` data-type*/
-export const toString = STATIC_FUNCTION(value => {
-  const parsedValue = parseForLogging(value);
+export const toString = STATIC_FUNCTION(runtimeValue => {
+  const parsedValue = parseForLogging(runtimeValue);
   const stringValue = stringifyPretty(parsedValue);
 
   return MK.STRING(stringValue);
+});
+
+// -----------------------------------------------
+//                STRING / ARRAY
+// -----------------------------------------------
+
+/**@desc get `string/array` length*/
+export const getLength = STATIC_FUNCTION(runtimeStringOrArray => {
+  const length = (runtimeStringOrArray.value as string | []).length;
+
+  return MK.NUMBER(length);
 });

@@ -1,6 +1,6 @@
 // PROJECT MODULES
 import { Runtime, MK } from "./";
-import { toString } from "./staticFunctions";
+import { toString, getLength } from "./staticFunctions";
 
 // -----------------------------------------------
 //                    TYPES
@@ -19,6 +19,7 @@ export const TOP_PROTOTYPE: Prototype = {
 
 export const ARRAY_PROTOTYPE: Prototype = {
   prototype: TOP_PROTOTYPE,
+  length: getLength,
 };
 
 export const OBJECT_PROTOTYPE: Prototype = {
@@ -31,6 +32,7 @@ export const NUMBER_PROTOTYPE: Prototype = {
 
 export const STRING_PROTOTYPE: Prototype = {
   prototype: TOP_PROTOTYPE,
+  length: getLength,
 };
 
 export const BOOL_PROTOTYPE: Prototype = {
