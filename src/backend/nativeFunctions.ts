@@ -4,14 +4,27 @@ const promptSync = promptSyncPackage();
 
 // PROJECT MODULES
 import { Err, parseForLogging, getBooleanValue, stringifyPretty } from "../utils";
-import * as MK from "./runtimeValueFactories";
+import { Runtime, MK } from "./";
+
+// -----------------------------------------------
+//           NATIVE FUNCTION FACTORY
+// -----------------------------------------------
+
+function NATIVE_FUNCTION(implementation: Runtime.BuildInFunctionImplementation): Runtime.NativeFunction {
+  return {
+    type: "nativeFunction",
+    value: "nativeFunction", // for logging purposes
+    implementation,
+    prototype: null,
+  };
+}
 
 // -----------------------------------------------
 //               NATIVE FUNCTIONS
 // -----------------------------------------------
 
 /**@desc log `arguments` to std output*/
-export const log = MK.NATIVE_FUNCTION(args => {
+export const log = NATIVE_FUNCTION((...args) => {
   const parsedArgs = args.map(arg => parseForLogging(arg));
 
   console.log(...parsedArgs);
@@ -20,14 +33,14 @@ export const log = MK.NATIVE_FUNCTION(args => {
 });
 
 /**@desc log `arguments` to std output in a `verbose` way*/
-export const logVerbose = MK.NATIVE_FUNCTION(args => {
+export const logVerbose = NATIVE_FUNCTION((...args) => {
   console.log(...args);
 
   return MK.UNDEFINED();
 });
 
 /**@desc log `arguments` to std error*/
-export const error = MK.NATIVE_FUNCTION(args => {
+export const error = NATIVE_FUNCTION((...args) => {
   const parsedArgs = args.map(arg => parseForLogging(arg));
 
   console.error(...parsedArgs);
@@ -36,7 +49,7 @@ export const error = MK.NATIVE_FUNCTION(args => {
 });
 
 /**@desc clear the terminal/console*/
-export const clear = MK.NATIVE_FUNCTION(() => {
+export const clear = NATIVE_FUNCTION(() => {
   console.clear();
 
   return MK.UNDEFINED();
@@ -44,7 +57,7 @@ export const clear = MK.NATIVE_FUNCTION(() => {
 
 /**@desc terminate process with `exitCode` 
 @param exitCode integer in range of `0-255`*/
-export const exit = MK.NATIVE_FUNCTION(([firstArg]) => {
+export const exit = NATIVE_FUNCTION(firstArg => {
   if (firstArg !== undefined) {
     if (firstArg.type !== "number")
       throw new Err(
@@ -66,7 +79,7 @@ export const exit = MK.NATIVE_FUNCTION(([firstArg]) => {
 
 /**@desc prompt user for input
 @param message string preceding input prompt. If message isn't provided, it defaults to empty string*/
-export const prompt = MK.NATIVE_FUNCTION(([firstArg]) => {
+export const prompt = NATIVE_FUNCTION(firstArg => {
   if (firstArg && firstArg.type !== "string")
     throw new Err(
       `Invalid message argument type: '${firstArg.type}' passed to 'prompt()' native function`,
@@ -82,7 +95,7 @@ export const prompt = MK.NATIVE_FUNCTION(([firstArg]) => {
 
 /**@desc determine whether given `value` is 'falsy' or 'truthy' (returns corresponding boolean)
 @param value in case it isn't provided, it defaults to 'false'*/
-export const bool = MK.NATIVE_FUNCTION(([firstArg]) => {
+export const bool = NATIVE_FUNCTION(firstArg => {
   if (firstArg === undefined) return MK.BOOL(false);
 
   const value = firstArg.value;
@@ -93,7 +106,7 @@ export const bool = MK.NATIVE_FUNCTION(([firstArg]) => {
 
 /**@desc coerce `value` to `string` data-type
 @param value all data-types are valid. In case it isn't provided, it defaults to empty string*/
-export const string = MK.NATIVE_FUNCTION(([firstArg]) => {
+export const string = NATIVE_FUNCTION(firstArg => {
   let value: unknown = "";
 
   if (firstArg) value = parseForLogging(firstArg);
@@ -105,7 +118,7 @@ export const string = MK.NATIVE_FUNCTION(([firstArg]) => {
 
 /**@desc coerce `value` to `number` data-type
 @param value only numbers and number-coercible strings are valid. In case value isn't provided, it defaults to zero*/
-export const number = MK.NATIVE_FUNCTION(([firstArg]) => {
+export const number = NATIVE_FUNCTION(firstArg => {
   let value: number = 0;
 
   if (firstArg) {
@@ -140,7 +153,7 @@ export const number = MK.NATIVE_FUNCTION(([firstArg]) => {
 });
 
 /**@desc get current date in a `'DD/MM/YYYY'` format*/
-export const date = MK.NATIVE_FUNCTION(() => {
+export const date = NATIVE_FUNCTION(() => {
   // code stollen from stackoverflow: https://stackoverflow.com/questions/12409299/how-to-get-current-formatted-date-dd-mm-yyyy-in-javascript-and-append-it-to-an-i
 
   const today = new Date();
@@ -157,7 +170,7 @@ export const date = MK.NATIVE_FUNCTION(() => {
 });
 
 /**@desc check virtual clock and return current time in a `'HH:MM:SS'` format*/
-export const clock = MK.NATIVE_FUNCTION(() => {
+export const clock = NATIVE_FUNCTION(() => {
   const time = new Date();
   let hours: string | number = time.getHours();
   let minutes: string | number = time.getMinutes();
@@ -173,7 +186,7 @@ export const clock = MK.NATIVE_FUNCTION(() => {
 });
 
 /**@desc wrapper around javascript's `'Date.now()'` method*/
-export const time = MK.NATIVE_FUNCTION(() => {
+export const time = NATIVE_FUNCTION(() => {
   const milliseconds = Date.now();
 
   return MK.NUMBER(milliseconds);

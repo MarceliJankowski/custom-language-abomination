@@ -52,10 +52,6 @@ export function parseForLogging(runtimeValue: Runtime.Value): unknown {
       return outputObj;
     }
 
-    case "nativeFunction": {
-      return runtimeValue.type;
-    }
-
     default:
       return runtimeValue.value;
   }

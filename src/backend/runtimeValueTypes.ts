@@ -12,20 +12,25 @@ export type ValueType =
   | "object"
   | "array"
   | "nativeFunction"
+  | "staticFunction"
   | "function"
   | "null"
   | "undefined";
 
 export interface Value {
   type: ValueType;
-  value?: unknown;
+  value: unknown;
 }
 
 // TYPES WITH PROTOTYPE (containing build-in properties / allowing member-expressions)
 
 /**@desc represents runtime type with access to `prototype-chain`*/
 export interface ProtoValue extends Value {
-  prototype: { [key: string]: Value };
+  // using object instead of Map as prototype data-structure, due to typescript inference algorithm limitations (forbidden self-referencing)
+  prototype: {
+    prototype: ProtoValue["prototype"];
+    [key: string]: ProtoValue["prototype"] | Value;
+  } | null;
 }
 
 export interface Number extends ProtoValue {
@@ -53,11 +58,16 @@ export interface Boolean extends ProtoValue {
   value: boolean;
 }
 
-export type NativeFunctionImplementation = (args: Value[], env: VariableEnv) => Value;
+export type BuildInFunctionImplementation = (...args: Value[]) => Value;
+
+export interface StaticFunction extends ProtoValue {
+  type: "staticFunction";
+  implementation: BuildInFunctionImplementation;
+}
 
 export interface NativeFunction extends ProtoValue {
   type: "nativeFunction";
-  implementation: NativeFunctionImplementation;
+  implementation: BuildInFunctionImplementation;
 }
 
 export interface Function extends ProtoValue {

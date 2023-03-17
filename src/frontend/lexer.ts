@@ -53,14 +53,6 @@ export enum TokenType {
   EOF = "EOF",
 }
 
-const KEYWORDS: { [key: string]: TokenType } = {
-  var: TokenType.VAR,
-  const: TokenType.CONST,
-  typeof: TokenType.UNARY_OPERATOR,
-  func: TokenType.FUNC,
-  return: TokenType.RETURN,
-};
-
 /**@desc represents `valid` language Token*/
 export class Token {
   constructor(
@@ -70,6 +62,16 @@ export class Token {
     public end: CharPosition
   ) {}
 }
+
+// KEYWORDS
+
+const KEYWORDS: Map<string, TokenType> = new Map();
+
+KEYWORDS.set("var", TokenType.VAR);
+KEYWORDS.set("const", TokenType.CONST);
+KEYWORDS.set("typeof", TokenType.UNARY_OPERATOR);
+KEYWORDS.set("func", TokenType.FUNC);
+KEYWORDS.set("return", TokenType.RETURN);
 
 // -----------------------------------------------
 //                    LEXER
@@ -269,7 +271,7 @@ export class Lexer {
             while (this.isSrcNotEmpty() && this.isAlpha(this.at())) identifier += this.eat();
 
             // handle reserved keywords
-            const keywordType = KEYWORDS[identifier];
+            const keywordType = KEYWORDS.get(identifier);
 
             if (keywordType) this.addToken(keywordType, identifier, startPosition, this.position);
             else this.addToken(TokenType.IDENTIFIER, identifier, startPosition, this.position);

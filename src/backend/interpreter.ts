@@ -2,6 +2,8 @@
 import { Err, getBooleanValue } from "../utils";
 import { VariableEnv } from "./variableEnv";
 import { VALID_MEMBER_EXP_RUNTIME_TYPES } from "../constants";
+import { traversePrototypeChain } from "./prototypeChain";
+import { STATIC_FUNCTION } from "./staticFunctions";
 import { MK, Runtime } from "./";
 
 // -----------------------------------------------
@@ -366,16 +368,18 @@ export class Interpreter {
 
       switch (runtimeObject.type) {
         case "object": {
-          // if member-expression object is an actual runtime object, first look into it's properties
-          value = (runtimeObject as Runtime.Object).value[key];
+          const objValue = (runtimeObject as Runtime.Object).value;
 
-          // if property doesn't exist, look it up on object's prototype
-          if (value === undefined) value = runtimeObject.prototype[key];
+          // look into runtimeObject properties (excluding JS prototype-chain)
+          value = objValue.hasOwnProperty(key)
+            ? objValue[key]
+            : this.lookupPropertyOnPrototypeChain(runtimeObject, key); // if property doesn't exist, look it up on object's prototype
+
           break;
         }
 
         default:
-          value = runtimeObject.prototype[key];
+          value = this.lookupPropertyOnPrototypeChain(runtimeObject, key);
       }
     }
 
@@ -421,9 +425,10 @@ export class Interpreter {
     const runtimeCallee = this.evaluate(callExp.callee, env);
 
     switch (runtimeCallee.type) {
+      case "staticFunction":
       case "nativeFunction": {
         const nativeFunc = runtimeCallee as Runtime.NativeFunction;
-        const output = nativeFunc.implementation(runtimeArgs, env);
+        const output = nativeFunc.implementation(...runtimeArgs);
 
         return output;
       }
@@ -665,6 +670,22 @@ export class Interpreter {
   // -----------------------------------------------
   //            SHARED HELPER METHODS
   // -----------------------------------------------
+
+  /**@desc `traversePrototypeChain` wrapper, with added benefit of handling `static-functions`*/
+  private lookupPropertyOnPrototypeChain(value: Runtime.ProtoValue, key: string) {
+    const property = traversePrototypeChain(value.prototype, key);
+
+    if (property.type === "staticFunction") {
+      // wrapperFn is used for passing property into staticFunction
+      const wrapperFn = STATIC_FUNCTION((...args) =>
+        (property as Runtime.NativeFunction).implementation(value, ...args)
+      );
+
+      return wrapperFn;
+    }
+
+    return property;
+  }
 
   /**@desc evaluate all shared (among all data-types) binary operators*/
   private evalBinaryExpSharedOperators<T extends Runtime.Value, U extends Runtime.Value>(

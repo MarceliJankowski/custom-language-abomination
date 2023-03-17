@@ -1,15 +1,19 @@
 // PROJECT MODULES
 import { Runtime } from "./";
+import {
+  TOP_PROTOTYPE,
+  BOOL_PROTOTYPE,
+  NUMBER_PROTOTYPE,
+  STRING_PROTOTYPE,
+  ARRAY_PROTOTYPE,
+  OBJECT_PROTOTYPE,
+} from "./prototypeChain";
 
 // -----------------------------------------------
-//           Runtime.Value FACTORIES
+//           RUNTIME VALUE FACTORIES
 // -----------------------------------------------
 
 // DATA-TYPES WITH PROTOTYPE
-
-// FUNCTION
-
-const FUNCTION_PROTOTYPE = {};
 
 export function FUNCTION(
   name: Runtime.Function["name"],
@@ -24,27 +28,9 @@ export function FUNCTION(
     body,
     declarationEnv,
     value: "[Function: " + name + "]",
-    prototype: FUNCTION_PROTOTYPE,
+    prototype: TOP_PROTOTYPE,
   };
 }
-
-// NATIVE FUNCTION
-
-const NATIVE_FUNCTION_PROTOTYPE = {};
-
-export function NATIVE_FUNCTION(
-  implementation: Runtime.NativeFunctionImplementation
-): Runtime.NativeFunction {
-  return {
-    type: "nativeFunction",
-    implementation,
-    prototype: NATIVE_FUNCTION_PROTOTYPE,
-  };
-}
-
-// ARRAY
-
-const ARRAY_PROTOTYPE = {};
 
 export function ARRAY(elements: Runtime.Array["value"] = []): Runtime.Array {
   return {
@@ -54,10 +40,6 @@ export function ARRAY(elements: Runtime.Array["value"] = []): Runtime.Array {
   };
 }
 
-// OBJECT
-
-const OBJECT_PROTOTYPE = {};
-
 export function OBJECT(properties: Runtime.Object["value"] = {}): Runtime.Object {
   return {
     type: "object",
@@ -66,17 +48,9 @@ export function OBJECT(properties: Runtime.Object["value"] = {}): Runtime.Object
   };
 }
 
-// NUMBER
-
-const NUMBER_PROTOTYPE = {};
-
 export function NUMBER(value: number): Runtime.Number {
   return { type: "number", value, prototype: NUMBER_PROTOTYPE };
 }
-
-// STRING
-
-const STRING_PROTOTYPE = {};
 
 export function STRING(value: string): Runtime.String {
   return {
@@ -85,10 +59,6 @@ export function STRING(value: string): Runtime.String {
     prototype: STRING_PROTOTYPE,
   };
 }
-
-// BOOL
-
-const BOOL_PROTOTYPE = {};
 
 export function BOOL(value: boolean): Runtime.Boolean {
   return { type: "boolean", value, prototype: BOOL_PROTOTYPE };
