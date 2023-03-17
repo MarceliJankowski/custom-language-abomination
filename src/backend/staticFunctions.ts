@@ -66,33 +66,36 @@ export const includes = STATIC_FUNCTION((searchTarget, searchString) => {
 });
 
 /**@desc remove `whitespace` from the `beginning` of a string and return new trimmed string*/
-export const trimStart = STATIC_FUNCTION(runtimeString => {
-  const stringValue = (runtimeString as Runtime.String).value;
-  const trimmedValue = stringValue.trimStart();
+export const trimStart = STATIC_FUNCTION(({ value }) => {
+  const trimmedValue = (value as string).trimStart();
 
   return MK.STRING(trimmedValue);
 });
 
 /**@desc remove `whitespace` from the `end` of a string and return new trimmed string*/
-export const trimEnd = STATIC_FUNCTION(runtimeString => {
-  const stringValue = (runtimeString as Runtime.String).value;
-  const trimmedValue = stringValue.trimEnd();
+export const trimEnd = STATIC_FUNCTION(({ value }) => {
+  const trimmedValue = (value as string).trimEnd();
 
   return MK.STRING(trimmedValue);
 });
 
 /**@desc remove `whitespace` from `both ends` of a string and return new trimmed string*/
-export const trim = STATIC_FUNCTION(runtimeString => {
-  const stringValue = (runtimeString as Runtime.String).value;
-  const trimmedValue = stringValue.trim();
+export const trim = STATIC_FUNCTION(({ value }) => {
+  const trimmedValue = (value as string).trim();
 
   return MK.STRING(trimmedValue);
 });
 
 /**@desc create and return `uppercased` string counterpart*/
-export const toUpperCase = STATIC_FUNCTION(runtimeString => {
-  const stringValue = (runtimeString as Runtime.String).value;
-  const upperCasedStr = stringValue.toUpperCase();
+export const toUpperCase = STATIC_FUNCTION(({ value }) => {
+  const upperCasedStr = (value as string).toUpperCase();
 
   return MK.STRING(upperCasedStr);
+});
+
+/**@desc create and return `lowercased` string counterpart*/
+export const toLowerCase = STATIC_FUNCTION(({ value }) => {
+  const lowerCasedStr = (value as string).toLowerCase();
+
+  return MK.STRING(lowerCasedStr);
 });
