@@ -99,3 +99,18 @@ export const toLowerCase = STATIC_FUNCTION(({ value }) => {
 
   return MK.STRING(lowerCasedStr);
 });
+
+/**@desc split/divide string by `delimiter` into a string array*/
+export const split = STATIC_FUNCTION(({ value }, runtimeDelimiter) => {
+  if (runtimeDelimiter && runtimeDelimiter.type !== "string")
+    throw new Err(
+      `Invalid delimiter argument type: '${runtimeDelimiter.type}' passed to 'split()' static function`,
+      "interpreter"
+    );
+
+  const delimiter = (runtimeDelimiter as Runtime.String)?.value;
+  const splittedStringArr = (value as string).split(delimiter);
+  const runtimeValueArr = splittedStringArr.map(str => MK.STRING(str));
+
+  return MK.ARRAY(runtimeValueArr);
+});

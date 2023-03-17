@@ -9,6 +9,7 @@ import {
   trim,
   toUpperCase,
   toLowerCase,
+  split,
 } from "./staticFunctions";
 
 // -----------------------------------------------
@@ -48,6 +49,7 @@ export const STRING_PROTOTYPE: Prototype = {
   trim,
   toUpperCase,
   toLowerCase,
+  split,
 };
 
 export const BOOL_PROTOTYPE: Prototype = {
