@@ -10,6 +10,7 @@ import {
   toUpperCase,
   toLowerCase,
   split,
+  startsWith,
 } from "./staticFunctions";
 
 // -----------------------------------------------
@@ -50,6 +51,7 @@ export const STRING_PROTOTYPE: Prototype = {
   toUpperCase,
   toLowerCase,
   split,
+  startsWith,
 };
 
 export const BOOL_PROTOTYPE: Prototype = {

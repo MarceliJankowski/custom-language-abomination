@@ -120,3 +120,23 @@ export const split = STATIC_FUNCTION(({ value }, runtimeDelimiter) => {
 
   return MK.ARRAY(runtimeValueArr);
 });
+
+/**@desc determine whether string `starts` with searchString*/
+export const startsWith = STATIC_FUNCTION(({ value }, searchString) => {
+  if (searchString === undefined)
+    throw new Err(
+      `Missing 'searchString' argument at 'startsWith()' static function invocation`,
+      "interpreter"
+    );
+
+  if (searchString.type !== "string")
+    throw new Err(
+      `Invalid searchString argument type: '${searchString.type}' passed to 'startsWith()' static function`,
+      "interpreter"
+    );
+
+  const searchStringValue = (searchString as Runtime.String).value;
+  const startsWithBoolean = (value as string).startsWith(searchStringValue);
+
+  return MK.BOOL(startsWithBoolean);
+});
