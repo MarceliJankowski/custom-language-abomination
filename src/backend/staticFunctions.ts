@@ -1,5 +1,5 @@
 // PROJECT MODULES
-import { parseForLogging, stringifyPretty } from "../utils";
+import { Err, parseForLogging, stringifyPretty } from "../utils";
 import { Runtime, MK } from "./";
 
 // -----------------------------------------------
@@ -43,4 +43,24 @@ export const getLength = STATIC_FUNCTION(runtimeStringOrArray => {
   const length = (runtimeStringOrArray.value as string | []).length;
 
   return MK.NUMBER(length);
+});
+
+// -----------------------------------------------
+//                    STRING
+// -----------------------------------------------
+
+/**@desc determine whether `searchTarget` includes/contains `searchString`*/
+export const includes = STATIC_FUNCTION((searchTarget, searchString) => {
+  if (searchString.type !== "string")
+    throw new Err(
+      `Invalid searchString argument type: '${searchString.type}' passed to 'includes()' static function`,
+      "interpreter"
+    );
+
+  const targetValue = (searchTarget as Runtime.String).value;
+  const searchStringValue = (searchString as Runtime.String).value;
+
+  const isIncluded = targetValue.includes(searchStringValue);
+
+  return MK.BOOL(isIncluded);
 });
