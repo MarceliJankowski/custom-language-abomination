@@ -51,6 +51,12 @@ export const getLength = STATIC_FUNCTION(runtimeStringOrArray => {
 
 /**@desc determine whether `searchTarget` includes/contains `searchString`*/
 export const includes = STATIC_FUNCTION((searchTarget, searchString) => {
+  if (searchString === undefined)
+    throw new Err(
+      `Missing 'searchString' argument at 'includes()' static function invocation`,
+      "interpreter"
+    );
+
   if (searchString.type !== "string")
     throw new Err(
       `Invalid searchString argument type: '${searchString.type}' passed to 'includes()' static function`,
