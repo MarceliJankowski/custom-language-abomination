@@ -49,7 +49,8 @@ export const getLength = STATIC_FUNCTION(runtimeStringOrArray => {
 //                    STRING
 // -----------------------------------------------
 
-/**@desc determine whether `searchTarget` includes/contains `searchString`*/
+/**@desc determine whether `searchTarget` includes/contains `searchString`
+@param searchString string used as a search pattern*/
 export const includes = STATIC_FUNCTION((searchTarget, searchString) => {
   if (searchString === undefined)
     throw new Err(`Missing searchString argument at 'includes()' static function invocation`, "interpreter");
@@ -103,7 +104,8 @@ export const toLowerCase = STATIC_FUNCTION(({ value }) => {
   return MK.STRING(lowerCasedStr);
 });
 
-/**@desc split/divide string by `delimiter` into a string array*/
+/**@desc split/divide string by `delimiter` into a string array
+@param delimiter string used as a seperator/delimiter*/
 export const split = STATIC_FUNCTION(({ value }, runtimeDelimiter) => {
   if (runtimeDelimiter && runtimeDelimiter.type !== "string")
     throw new Err(
@@ -118,7 +120,8 @@ export const split = STATIC_FUNCTION(({ value }, runtimeDelimiter) => {
   return MK.ARRAY(runtimeValueArr);
 });
 
-/**@desc determine whether string `starts` with searchString*/
+/**@desc determine whether string `starts` with `searchString`
+@param searchString string used as a search pattern*/
 export const startsWith = STATIC_FUNCTION(({ value }, searchString) => {
   if (searchString === undefined)
     throw new Err(
@@ -138,7 +141,8 @@ export const startsWith = STATIC_FUNCTION(({ value }, searchString) => {
   return MK.BOOL(startsWithBoolean);
 });
 
-/**@desc determine whether string `ends` with searchString*/
+/**@desc determine whether string `ends` with `searchString`
+@param searchString string used as a search pattern*/
 export const endsWith = STATIC_FUNCTION(({ value }, searchString) => {
   if (searchString === undefined)
     throw new Err(`Missing searchString argument at 'endsWith()' static function invocation`, "interpreter");
