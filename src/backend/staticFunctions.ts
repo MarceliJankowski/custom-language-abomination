@@ -80,3 +80,11 @@ export const trimEnd = STATIC_FUNCTION(runtimeString => {
 
   return MK.STRING(trimmedValue);
 });
+
+/**@desc remove `whitespace` from `both ends` of a string and return new trimmed string*/
+export const trim = STATIC_FUNCTION(runtimeString => {
+  const stringValue = (runtimeString as Runtime.String).value;
+  const trimmedValue = stringValue.trim();
+
+  return MK.STRING(trimmedValue);
+});
