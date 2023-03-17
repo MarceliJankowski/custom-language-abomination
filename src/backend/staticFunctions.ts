@@ -88,3 +88,11 @@ export const trim = STATIC_FUNCTION(runtimeString => {
 
   return MK.STRING(trimmedValue);
 });
+
+/**@desc create and return `uppercased` string counterpart*/
+export const toUpperCase = STATIC_FUNCTION(runtimeString => {
+  const stringValue = (runtimeString as Runtime.String).value;
+  const upperCasedStr = stringValue.toUpperCase();
+
+  return MK.STRING(upperCasedStr);
+});
