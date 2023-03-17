@@ -1,6 +1,6 @@
 // PROJECT MODULES
 import { Runtime, MK } from "./";
-import { toString, getLength, includes, trimStart } from "./staticFunctions";
+import { toString, getLength, includes, trimStart, trimEnd } from "./staticFunctions";
 
 // -----------------------------------------------
 //                    TYPES
@@ -35,6 +35,7 @@ export const STRING_PROTOTYPE: Prototype = {
   length: getLength,
   includes,
   trimStart,
+  trimEnd,
 };
 
 export const BOOL_PROTOTYPE: Prototype = {

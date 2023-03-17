@@ -65,10 +65,18 @@ export const includes = STATIC_FUNCTION((searchTarget, searchString) => {
   return MK.BOOL(isIncluded);
 });
 
-/**@desc remove whitespace from the beginning of a `string` and return new trimmed string*/
+/**@desc remove `whitespace` from the `beginning` of a string and return new trimmed string*/
 export const trimStart = STATIC_FUNCTION(runtimeString => {
   const stringValue = (runtimeString as Runtime.String).value;
   const trimmedValue = stringValue.trimStart();
+
+  return MK.STRING(trimmedValue);
+});
+
+/**@desc remove `whitespace` from the `end` of a string and return new trimmed string*/
+export const trimEnd = STATIC_FUNCTION(runtimeString => {
+  const stringValue = (runtimeString as Runtime.String).value;
+  const trimmedValue = stringValue.trimEnd();
 
   return MK.STRING(trimmedValue);
 });
