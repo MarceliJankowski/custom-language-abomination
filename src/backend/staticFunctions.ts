@@ -52,10 +52,7 @@ export const getLength = STATIC_FUNCTION(runtimeStringOrArray => {
 /**@desc determine whether `searchTarget` includes/contains `searchString`*/
 export const includes = STATIC_FUNCTION((searchTarget, searchString) => {
   if (searchString === undefined)
-    throw new Err(
-      `Missing 'searchString' argument at 'includes()' static function invocation`,
-      "interpreter"
-    );
+    throw new Err(`Missing searchString argument at 'includes()' static function invocation`, "interpreter");
 
   if (searchString.type !== "string")
     throw new Err(
@@ -125,7 +122,7 @@ export const split = STATIC_FUNCTION(({ value }, runtimeDelimiter) => {
 export const startsWith = STATIC_FUNCTION(({ value }, searchString) => {
   if (searchString === undefined)
     throw new Err(
-      `Missing 'searchString' argument at 'startsWith()' static function invocation`,
+      `Missing searchString argument at 'startsWith()' static function invocation`,
       "interpreter"
     );
 
@@ -139,4 +136,21 @@ export const startsWith = STATIC_FUNCTION(({ value }, searchString) => {
   const startsWithBoolean = (value as string).startsWith(searchStringValue);
 
   return MK.BOOL(startsWithBoolean);
+});
+
+/**@desc determine whether string `ends` with searchString*/
+export const endsWith = STATIC_FUNCTION(({ value }, searchString) => {
+  if (searchString === undefined)
+    throw new Err(`Missing searchString argument at 'endsWith()' static function invocation`, "interpreter");
+
+  if (searchString.type !== "string")
+    throw new Err(
+      `Invalid searchString argument type: '${searchString.type}' passed to 'endsWith()' static function`,
+      "interpreter"
+    );
+
+  const searchStringValue = (searchString as Runtime.String).value;
+  const endsWithBoolean = (value as string).endsWith(searchStringValue);
+
+  return MK.BOOL(endsWithBoolean);
 });
