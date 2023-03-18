@@ -131,6 +131,7 @@ export function createGlobalEnv() {
     "Math",
     MK.OBJECT({
       randomFloat: NATIVE_FUNCTION.randomFloat,
+      randomInt: NATIVE_FUNCTION.randomInt,
     }),
     options
   );

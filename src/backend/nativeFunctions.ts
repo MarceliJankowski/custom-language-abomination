@@ -192,8 +192,31 @@ export const time = NATIVE_FUNCTION(() => {
   return MK.NUMBER(milliseconds);
 });
 
-/**@desc returns pseudo-random generated floating number. In range of: `0-1`*/
+/**@desc returns pseudo-random generated `float`. In range of: 0 (inclusive) to 1 (exclusive)*/
 export const randomFloat = NATIVE_FUNCTION(() => MK.NUMBER(Math.random()));
+
+/**@desc returns pseudo-random generated `integer`. In range of: `min` (inclusive) to `max` (exclusive)
+@param min specifies integer lower limit (inclusive). If omitted it defaults to `0`
+@param max specifies integer upper limit (exclusive). If omitted it defaults to `100`*/
+export const randomInt = NATIVE_FUNCTION((runtimeMin, runtimeMax) => {
+  if (runtimeMin && runtimeMin.type !== "number")
+    throw new Err(
+      `Invalid min argument type: '${runtimeMin.type}' passed to 'randomInt()' native function`,
+      "interpreter"
+    );
+
+  if (runtimeMax && runtimeMax.type !== "number")
+    throw new Err(
+      `Invalid max argument type: '${runtimeMax.type}' passed to 'randomInt()' native function`,
+      "interpreter"
+    );
+
+  const min = (runtimeMin?.value ?? 0) as number;
+  const max = (runtimeMax?.value ?? 100) as number;
+  const randomInteger = Math.floor(Math.random() * (max - min)) + min;
+
+  return MK.NUMBER(randomInteger);
+});
 
 // -----------------------------------------------
 //                    UTILS
