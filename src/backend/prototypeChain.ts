@@ -17,6 +17,7 @@ import {
   lastIndexOf,
   repeat,
   replace,
+  replaceAll,
 } from "./staticFunctions";
 
 // -----------------------------------------------
@@ -64,6 +65,7 @@ export const STRING_PROTOTYPE: Prototype = {
   lastIndexOf,
   repeat,
   replace,
+  replaceAll,
 };
 
 export const BOOL_PROTOTYPE: Prototype = {

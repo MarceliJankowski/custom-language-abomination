@@ -238,7 +238,7 @@ export const repeat = STATIC_FUNCTION(({ value }, runtimeCount) => {
   return MK.STRING(repeatedStr);
 });
 
-/**@desc replaces first occurrence of a `pattern` in a string with `replacement`, returns newly created string (doesn't modify the original)
+/**@desc replaces first `pattern` occurrence in a string with `replacement`, returns newly created string (doesn't modify the original)
 @param pattern string specifying substring meant for replacement
 @param replacement string used for replacing substring matched by `pattern`*/
 export const replace = STATIC_FUNCTION(({ value }, runtimePattern, runtimeReplacement) => {
@@ -263,6 +263,35 @@ export const replace = STATIC_FUNCTION(({ value }, runtimePattern, runtimeReplac
   const pattern = (runtimePattern as Runtime.String).value;
   const replacement = (runtimeReplacement as Runtime.String).value;
   const replacedStr = (value as string).replace(pattern, replacement);
+
+  return MK.STRING(replacedStr);
+});
+
+/**@desc replaces every `pattern` occurrence in a string with `replacement`, returns newly created string (doesn't modify the original)
+@param pattern string specifying substring meant for replacement
+@param replacement string used for replacing substring matched by `pattern`*/
+export const replaceAll = STATIC_FUNCTION(({ value }, runtimePattern, runtimeReplacement) => {
+  if (runtimePattern === undefined)
+    throw new Err(`Missing pattern argument at 'replaceAll()' static function invocation`, "interpreter");
+
+  if (runtimePattern.type !== "string")
+    throw new Err(
+      `Invalid pattern argument type: '${runtimePattern.type}' passed to 'replaceAll()' static function`,
+      "interpreter"
+    );
+
+  if (runtimeReplacement === undefined)
+    throw new Err(`Missing replacement argument at 'replaceAll()' static function invocation`, "interpreter");
+
+  if (runtimeReplacement.type !== "string")
+    throw new Err(
+      `Invalid replacement argument type: '${runtimeReplacement.type}' passed to 'replaceAll()' static function`,
+      "interpreter"
+    );
+
+  const pattern = (runtimePattern as Runtime.String).value;
+  const replacement = (runtimeReplacement as Runtime.String).value;
+  const replacedStr = (value as string).replaceAll(pattern, replacement);
 
   return MK.STRING(replacedStr);
 });
