@@ -219,3 +219,21 @@ export const lastIndexOf = STATIC_FUNCTION(({ value }, searchString) => {
 
   return MK.NUMBER(index);
 });
+
+/**@desc repeats string `count` number of times, returns newly created string (doesn't modify the original)
+@param count specifies how many times string should be repeated*/
+export const repeat = STATIC_FUNCTION(({ value }, runtimeCount) => {
+  if (runtimeCount === undefined)
+    throw new Err(`Missing count argument at 'repeat()' static function invocation`, "interpreter");
+
+  if (runtimeCount.type !== "number")
+    throw new Err(
+      `Invalid count argument type: '${runtimeCount.type}' passed to 'repeat()' static function`,
+      "interpreter"
+    );
+
+  const count = (runtimeCount as Runtime.Number).value + 1;
+  const repeatedStr = (value as string).repeat(count);
+
+  return MK.STRING(repeatedStr);
+});
