@@ -12,6 +12,7 @@ import {
   split,
   startsWith,
   endsWith,
+  slice,
 } from "./staticFunctions";
 
 // -----------------------------------------------
@@ -54,6 +55,7 @@ export const STRING_PROTOTYPE: Prototype = {
   split,
   startsWith,
   endsWith,
+  slice,
 };
 
 export const BOOL_PROTOTYPE: Prototype = {
