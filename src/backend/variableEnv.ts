@@ -127,5 +127,13 @@ export function createGlobalEnv() {
     options
   );
 
+  env.declareVar(
+    "Math",
+    MK.OBJECT({
+      randomFloat: NATIVE_FUNCTION.randomFloat,
+    }),
+    options
+  );
+
   return env;
 }

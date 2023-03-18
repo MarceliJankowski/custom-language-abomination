@@ -192,6 +192,9 @@ export const time = NATIVE_FUNCTION(() => {
   return MK.NUMBER(milliseconds);
 });
 
+/**@desc returns pseudo-random generated floating number. In range of: `0-1`*/
+export const randomFloat = NATIVE_FUNCTION(() => MK.NUMBER(Math.random()));
+
 // -----------------------------------------------
 //                    UTILS
 // -----------------------------------------------
