@@ -18,6 +18,7 @@ import {
   repeat,
   replace,
   replaceAll,
+  isInt,
 } from "./staticFunctions";
 
 // -----------------------------------------------
@@ -46,6 +47,7 @@ export const OBJECT_PROTOTYPE: Prototype = {
 
 export const NUMBER_PROTOTYPE: Prototype = {
   prototype: TOP_PROTOTYPE,
+  isInt,
 };
 
 export const STRING_PROTOTYPE: Prototype = {

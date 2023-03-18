@@ -295,3 +295,14 @@ export const replaceAll = STATIC_FUNCTION(({ value }, runtimePattern, runtimeRep
 
   return MK.STRING(replacedStr);
 });
+
+// -----------------------------------------------
+//                    NUMBER
+// -----------------------------------------------
+
+/**@desc determine whether number is an integer*/
+export const isInt = STATIC_FUNCTION(({ value }) => {
+  const isInteger = Number.isInteger(value as number);
+
+  return MK.BOOL(isInteger);
+});
