@@ -7,9 +7,7 @@ import { Runtime, MK } from "./";
 // -----------------------------------------------
 // defining static-function factory here to avoid cyclic-dependency issue
 
-export function STATIC_FUNCTION(
-  implementation: Runtime.BuildInFunctionImplementation
-): Runtime.StaticFunction {
+export function STATIC_FUNCTION(implementation: Runtime.StaticFuncImplementation): Runtime.StaticFunction {
   return {
     type: "staticFunction",
     value: "staticFunction", // for logging purposes

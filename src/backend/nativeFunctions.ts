@@ -10,7 +10,7 @@ import { Runtime, MK } from "./";
 //           NATIVE FUNCTION FACTORY
 // -----------------------------------------------
 
-function NATIVE_FUNCTION(implementation: Runtime.BuildInFunctionImplementation): Runtime.NativeFunction {
+function NATIVE_FUNCTION(implementation: Runtime.NativeFuncImplementation): Runtime.NativeFunction {
   return {
     type: "nativeFunction",
     value: "nativeFunction", // for logging purposes
@@ -25,7 +25,7 @@ function NATIVE_FUNCTION(implementation: Runtime.BuildInFunctionImplementation):
 
 /**@desc log `arguments` to std output*/
 export const log = NATIVE_FUNCTION((...args) => {
-  const parsedArgs = args.map(arg => parseForLogging(arg));
+  const parsedArgs = args.map(arg => arg && parseForLogging(arg));
 
   console.log(...parsedArgs);
 
@@ -41,7 +41,7 @@ export const logVerbose = NATIVE_FUNCTION((...args) => {
 
 /**@desc log `arguments` to std error*/
 export const error = NATIVE_FUNCTION((...args) => {
-  const parsedArgs = args.map(arg => parseForLogging(arg));
+  const parsedArgs = args.map(arg => arg && parseForLogging(arg));
 
   console.error(...parsedArgs);
 
@@ -57,36 +57,36 @@ export const clear = NATIVE_FUNCTION(() => {
 
 /**@desc terminate process with `exitCode` 
 @param exitCode integer in range of `0-255`*/
-export const exit = NATIVE_FUNCTION(firstArg => {
-  if (firstArg !== undefined) {
-    if (firstArg.type !== "number")
+export const exit = NATIVE_FUNCTION(runtimeExitCode => {
+  if (runtimeExitCode !== undefined) {
+    if (runtimeExitCode.type !== "number")
       throw new Err(
-        `Invalid exitCode type: '${firstArg.type}' passed to 'exit()' native function`,
+        `Invalid exitCode type: '${runtimeExitCode.type}' passed to 'exit()' native function`,
         "interpreter"
       );
 
-    if (!isValidExitCode(firstArg.value as number))
+    if (!isValidExitCode(runtimeExitCode.value as number))
       throw new Err(
-        `Invalid exitCode argument: '${firstArg.value}' (valid range: 0-255) passed to 'exit()' native function`,
+        `Invalid exitCode argument: '${runtimeExitCode.value}' (valid range: 0-255) passed to 'exit()' native function`,
         "interpreter"
       );
   }
 
-  const exitCode = (firstArg?.value as number) ?? 0;
+  const exitCode = (runtimeExitCode?.value as number) ?? 0;
 
   process.exit(exitCode);
 });
 
 /**@desc prompt user for input
 @param message string preceding input prompt. If message isn't provided, it defaults to empty string*/
-export const prompt = NATIVE_FUNCTION(firstArg => {
-  if (firstArg && firstArg.type !== "string")
+export const prompt = NATIVE_FUNCTION(runtimeMessage => {
+  if (runtimeMessage && runtimeMessage.type !== "string")
     throw new Err(
-      `Invalid message argument type: '${firstArg.type}' passed to 'prompt()' native function`,
+      `Invalid message argument type: '${runtimeMessage.type}' passed to 'prompt()' native function`,
       "interpreter"
     );
 
-  const message = (firstArg?.value as string) ?? "";
+  const message = (runtimeMessage?.value as string) ?? "";
   const userInput = promptSync(message);
 
   const output = MK.STRING(userInput);
@@ -95,10 +95,10 @@ export const prompt = NATIVE_FUNCTION(firstArg => {
 
 /**@desc determine whether given `value` is 'falsy' or 'truthy' (returns corresponding boolean)
 @param value in case it isn't provided, it defaults to 'false'*/
-export const bool = NATIVE_FUNCTION(firstArg => {
-  if (firstArg === undefined) return MK.BOOL(false);
+export const bool = NATIVE_FUNCTION(runtimeValue => {
+  if (runtimeValue === undefined) return MK.BOOL(false);
 
-  const value = firstArg.value;
+  const value = runtimeValue.value;
   const booleanValue = getBooleanValue(value);
 
   return MK.BOOL(booleanValue);
@@ -106,10 +106,10 @@ export const bool = NATIVE_FUNCTION(firstArg => {
 
 /**@desc coerce `value` to `string` data-type
 @param value all data-types are valid. In case it isn't provided, it defaults to empty string*/
-export const string = NATIVE_FUNCTION(firstArg => {
+export const string = NATIVE_FUNCTION(runtimeValue => {
   let value: unknown = "";
 
-  if (firstArg) value = parseForLogging(firstArg);
+  if (runtimeValue) value = parseForLogging(runtimeValue);
 
   const stringValue = stringifyPretty(value);
 
@@ -118,22 +118,22 @@ export const string = NATIVE_FUNCTION(firstArg => {
 
 /**@desc coerce `value` to `number` data-type
 @param value only numbers and number-coercible strings are valid. In case value isn't provided, it defaults to zero*/
-export const number = NATIVE_FUNCTION(firstArg => {
+export const number = NATIVE_FUNCTION(runtimeValue => {
   let value: number = 0;
 
-  if (firstArg) {
-    switch (firstArg.type) {
+  if (runtimeValue) {
+    switch (runtimeValue.type) {
       case "number": {
-        value = firstArg.value as number;
+        value = runtimeValue.value as number;
         break;
       }
 
       case "string": {
-        const coercedValue = Number(firstArg.value);
+        const coercedValue = Number(runtimeValue.value);
 
         if (Number.isNaN(coercedValue))
           throw new Err(
-            `Invalid value argument: '${firstArg.value}' (failed number-coercion) passed to 'Number()' native function`,
+            `Invalid value argument: '${runtimeValue.value}' (failed number-coercion) passed to 'Number()' native function`,
             "interpreter"
           );
 
@@ -143,7 +143,7 @@ export const number = NATIVE_FUNCTION(firstArg => {
 
       default:
         throw new Err(
-          `Invalid value argument type: '${firstArg.type}' passed to 'Number()' native function`,
+          `Invalid value argument type: '${runtimeValue.type}' passed to 'Number()' native function`,
           "interpreter"
         );
     }

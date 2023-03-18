@@ -58,16 +58,18 @@ export interface Boolean extends ProtoValue {
   value: boolean;
 }
 
-export type BuildInFunctionImplementation = (...args: Value[]) => Value;
+export type StaticFuncImplementation = (runtimeValue: Value, ...args: (Value | undefined)[]) => Value;
 
 export interface StaticFunction extends ProtoValue {
   type: "staticFunction";
-  implementation: BuildInFunctionImplementation;
+  implementation: StaticFuncImplementation;
 }
+
+export type NativeFuncImplementation = (...args: (Value | undefined)[]) => Value;
 
 export interface NativeFunction extends ProtoValue {
   type: "nativeFunction";
-  implementation: BuildInFunctionImplementation;
+  implementation: NativeFuncImplementation;
 }
 
 export interface Function extends ProtoValue {
