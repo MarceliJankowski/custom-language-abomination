@@ -181,7 +181,7 @@ export const slice = STATIC_FUNCTION(({ value }, runtimeStart, runtimeEnd) => {
   return MK.STRING(strSlice);
 });
 
-/**@desc searches string and returns `index` of the first occurrence of `searchString`
+/**@desc searches string and returns starting index of the `first` occurrence of `searchString`
 @param searchString string used as a search pattern*/
 export const indexOf = STATIC_FUNCTION(({ value }, searchString) => {
   if (searchString === undefined)
@@ -195,6 +195,27 @@ export const indexOf = STATIC_FUNCTION(({ value }, searchString) => {
 
   const searchStringValue = (searchString as Runtime.String).value;
   const index = (value as string).indexOf(searchStringValue);
+
+  return MK.NUMBER(index);
+});
+
+/**@desc searches string and returns starting index of the `last` occurrence of `searchString`
+@param searchString string used as a search pattern*/
+export const lastIndexOf = STATIC_FUNCTION(({ value }, searchString) => {
+  if (searchString === undefined)
+    throw new Err(
+      `Missing searchString argument at 'lastIndexOf()' static function invocation`,
+      "interpreter"
+    );
+
+  if (searchString.type !== "string")
+    throw new Err(
+      `Invalid searchString argument type: '${searchString.type}' passed to 'lastIndexOf()' static function`,
+      "interpreter"
+    );
+
+  const searchStringValue = (searchString as Runtime.String).value;
+  const index = (value as string).lastIndexOf(searchStringValue);
 
   return MK.NUMBER(index);
 });

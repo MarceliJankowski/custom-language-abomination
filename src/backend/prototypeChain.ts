@@ -14,6 +14,7 @@ import {
   endsWith,
   slice,
   indexOf,
+  lastIndexOf,
 } from "./staticFunctions";
 
 // -----------------------------------------------
@@ -58,6 +59,7 @@ export const STRING_PROTOTYPE: Prototype = {
   endsWith,
   slice,
   indexOf,
+  lastIndexOf,
 };
 
 export const BOOL_PROTOTYPE: Prototype = {
