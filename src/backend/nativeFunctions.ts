@@ -1,7 +1,3 @@
-// PACKAGES
-import promptSyncPackage from "prompt-sync";
-const promptSync = promptSyncPackage();
-
 // PROJECT MODULES
 import { Err, parseForLogging, getBooleanValue, stringifyPretty } from "../utils";
 import { Runtime, MK } from "./";
@@ -23,34 +19,11 @@ function NATIVE_FUNCTION(implementation: Runtime.NativeFuncImplementation): Runt
 //               NATIVE FUNCTIONS
 // -----------------------------------------------
 
-/**@desc log `arguments` to std output*/
-export const log = NATIVE_FUNCTION((...args) => {
+/**@desc echo `arguments` to std output*/
+export const echo = NATIVE_FUNCTION((...args) => {
   const parsedArgs = args.map(arg => arg && parseForLogging(arg));
 
   console.log(...parsedArgs);
-
-  return MK.UNDEFINED();
-});
-
-/**@desc log `arguments` to std output in a `verbose` way*/
-export const logVerbose = NATIVE_FUNCTION((...args) => {
-  console.log(...args);
-
-  return MK.UNDEFINED();
-});
-
-/**@desc log `arguments` to std error*/
-export const error = NATIVE_FUNCTION((...args) => {
-  const parsedArgs = args.map(arg => arg && parseForLogging(arg));
-
-  console.error(...parsedArgs);
-
-  return MK.UNDEFINED();
-});
-
-/**@desc clear the terminal/console*/
-export const clear = NATIVE_FUNCTION(() => {
-  console.clear();
 
   return MK.UNDEFINED();
 });
@@ -75,22 +48,6 @@ export const exit = NATIVE_FUNCTION(runtimeExitCode => {
   const exitCode = (runtimeExitCode?.value as number) ?? 0;
 
   process.exit(exitCode);
-});
-
-/**@desc prompt user for input
-@param message string preceding input prompt. If message isn't provided, it defaults to empty string*/
-export const prompt = NATIVE_FUNCTION(runtimeMessage => {
-  if (runtimeMessage && runtimeMessage.type !== "string")
-    throw new Err(
-      `Invalid message argument type: '${runtimeMessage.type}' passed to 'prompt()' native function`,
-      "interpreter"
-    );
-
-  const message = (runtimeMessage?.value as string) ?? "";
-  const userInput = promptSync(message);
-
-  const output = MK.STRING(userInput);
-  return output;
 });
 
 /**@desc determine whether given `value` is 'falsy' or 'truthy' (returns corresponding boolean)
@@ -190,32 +147,6 @@ export const time = NATIVE_FUNCTION(() => {
   const milliseconds = Date.now();
 
   return MK.NUMBER(milliseconds);
-});
-
-/**@desc returns pseudo-random generated `float`. In range of: 0 (inclusive) to 1 (exclusive)*/
-export const randomFloat = NATIVE_FUNCTION(() => MK.NUMBER(Math.random()));
-
-/**@desc returns pseudo-random generated `integer`. In range of: `min` (inclusive) to `max` (exclusive)
-@param min specifies integer lower limit (inclusive). If omitted it defaults to `0`
-@param max specifies integer upper limit (exclusive). If omitted it defaults to `100`*/
-export const randomInt = NATIVE_FUNCTION((runtimeMin, runtimeMax) => {
-  if (runtimeMin && runtimeMin.type !== "number")
-    throw new Err(
-      `Invalid min argument type: '${runtimeMin.type}' passed to 'randomInt()' native function`,
-      "interpreter"
-    );
-
-  if (runtimeMax && runtimeMax.type !== "number")
-    throw new Err(
-      `Invalid max argument type: '${runtimeMax.type}' passed to 'randomInt()' native function`,
-      "interpreter"
-    );
-
-  const min = (runtimeMin?.value ?? 0) as number;
-  const max = (runtimeMax?.value ?? 100) as number;
-  const randomInteger = Math.floor(Math.random() * (max - min)) + min;
-
-  return MK.NUMBER(randomInteger);
 });
 
 // -----------------------------------------------

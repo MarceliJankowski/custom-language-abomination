@@ -2,6 +2,7 @@
 import { Err } from "../utils";
 import { MK, Runtime } from "./";
 import * as NATIVE_FUNCTION from "./nativeFunctions";
+import { STATIC_CONSOLE_FUNCTIONS, STATIC_MATH_FUNCTIONS } from "./staticFunctions";
 
 // -----------------------------------------------
 //                    TYPES
@@ -105,7 +106,7 @@ export function createGlobalEnv() {
   env.declareVar("undefined", MK.UNDEFINED(), options);
 
   // NATIVE FUNCTIONS
-  env.declareVar("echo", NATIVE_FUNCTION.log, options);
+  env.declareVar("echo", NATIVE_FUNCTION.echo, options);
   env.declareVar("exit", NATIVE_FUNCTION.exit, options);
   env.declareVar("Bool", NATIVE_FUNCTION.bool, options);
   env.declareVar("String", NATIVE_FUNCTION.string, options);
@@ -115,26 +116,8 @@ export function createGlobalEnv() {
   env.declareVar("time", NATIVE_FUNCTION.time, options);
 
   // GLOBAL OBJECTS
-  env.declareVar(
-    "console",
-    MK.OBJECT({
-      log: NATIVE_FUNCTION.log,
-      logVerbose: NATIVE_FUNCTION.logVerbose,
-      clear: NATIVE_FUNCTION.clear,
-      prompt: NATIVE_FUNCTION.prompt,
-      error: NATIVE_FUNCTION.error,
-    }),
-    options
-  );
-
-  env.declareVar(
-    "Math",
-    MK.OBJECT({
-      randomFloat: NATIVE_FUNCTION.randomFloat,
-      randomInt: NATIVE_FUNCTION.randomInt,
-    }),
-    options
-  );
+  env.declareVar("console", MK.OBJECT(STATIC_CONSOLE_FUNCTIONS), options);
+  env.declareVar("Math", MK.OBJECT(STATIC_MATH_FUNCTIONS), options);
 
   return env;
 }

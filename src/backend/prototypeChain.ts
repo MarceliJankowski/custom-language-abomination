@@ -1,24 +1,10 @@
 // PROJECT MODULES
 import { Runtime, MK } from "./";
 import {
-  toString,
-  getLength,
-  includes,
-  trimStart,
-  trimEnd,
-  trim,
-  toUpperCase,
-  toLowerCase,
-  split,
-  startsWith,
-  endsWith,
-  slice,
-  indexOf,
-  lastIndexOf,
-  repeat,
-  replace,
-  replaceAll,
-  isInt,
+  STATIC_ALL_FUNCTIONS,
+  STATIC_STRING_FUNCTIONS,
+  STATIC_NUMBER_FUNCTIONS,
+  STATIC_ARRAY_FUNCTIONS,
 } from "./staticFunctions";
 
 // -----------------------------------------------
@@ -33,12 +19,12 @@ type Prototype = Runtime.ProtoValue["prototype"];
 
 export const TOP_PROTOTYPE: Prototype = {
   prototype: null,
-  toString,
+  ...STATIC_ALL_FUNCTIONS,
 };
 
 export const ARRAY_PROTOTYPE: Prototype = {
   prototype: TOP_PROTOTYPE,
-  length: getLength,
+  ...STATIC_ARRAY_FUNCTIONS,
 };
 
 export const OBJECT_PROTOTYPE: Prototype = {
@@ -47,27 +33,12 @@ export const OBJECT_PROTOTYPE: Prototype = {
 
 export const NUMBER_PROTOTYPE: Prototype = {
   prototype: TOP_PROTOTYPE,
-  isInt,
+  ...STATIC_NUMBER_FUNCTIONS,
 };
 
 export const STRING_PROTOTYPE: Prototype = {
   prototype: TOP_PROTOTYPE,
-  length: getLength,
-  includes,
-  trimStart,
-  trimEnd,
-  trim,
-  toUpperCase,
-  toLowerCase,
-  split,
-  startsWith,
-  endsWith,
-  slice,
-  indexOf,
-  lastIndexOf,
-  repeat,
-  replace,
-  replaceAll,
+  ...STATIC_STRING_FUNCTIONS,
 };
 
 export const BOOL_PROTOTYPE: Prototype = {
