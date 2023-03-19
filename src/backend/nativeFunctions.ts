@@ -1,3 +1,7 @@
+// PACKAGES
+import promptSyncPackage from "prompt-sync";
+const promptSync = promptSyncPackage();
+
 // PROJECT MODULES
 import { Err, parseForLogging, getBooleanValue, stringifyPretty } from "../utils";
 import { Runtime, MK } from "./";
@@ -148,6 +152,136 @@ export const time = NATIVE_FUNCTION(() => {
 
   return MK.NUMBER(milliseconds);
 });
+
+// -----------------------------------------------
+//           GLOBAL 'console' OBJECT
+// -----------------------------------------------
+
+/**@desc log `arguments` to std output*/
+const log = NATIVE_FUNCTION((...args) => {
+  const parsedArgs = args.map(arg => arg && parseForLogging(arg));
+
+  console.log(...parsedArgs);
+
+  return MK.UNDEFINED();
+});
+
+/**@desc log `arguments` to std output in a `verbose` way*/
+const logVerbose = NATIVE_FUNCTION((...args) => {
+  console.log(...args);
+
+  return MK.UNDEFINED();
+});
+
+/**@desc log `arguments` to std error*/
+const error = NATIVE_FUNCTION((...args) => {
+  const parsedArgs = args.map(arg => arg && parseForLogging(arg));
+
+  console.error(...parsedArgs);
+
+  return MK.UNDEFINED();
+});
+
+/**@desc clear the terminal/console*/
+const clear = NATIVE_FUNCTION(() => {
+  console.clear();
+
+  return MK.UNDEFINED();
+});
+
+/**@desc prompt user for input
+@param message string preceding input prompt. If message isn't provided, it defaults to empty string*/
+const prompt = NATIVE_FUNCTION(runtimeMessage => {
+  if (runtimeMessage && runtimeMessage.type !== "string")
+    throw new Err(
+      `Invalid message argument type: '${runtimeMessage.type}' passed to 'console.prompt()' native function`,
+      "interpreter"
+    );
+
+  const message = (runtimeMessage?.value as string) ?? "";
+  const userInput = promptSync(message);
+
+  const output = MK.STRING(userInput);
+  return output;
+});
+
+export const CONSOLE = {
+  log,
+  logVerbose,
+  error,
+  clear,
+  prompt,
+};
+
+// -----------------------------------------------
+//             GLOBAL 'Math' OBJECT
+// -----------------------------------------------
+
+/**@desc returns pseudo-random generated `float`. In range of: 0 (inclusive) to 1 (exclusive)*/
+const randomFloat = NATIVE_FUNCTION(() => MK.NUMBER(Math.random()));
+
+/**@desc returns pseudo-random generated `integer`. In range of: `min` (inclusive) to `max` (exclusive)
+@param min specifies integer lower limit (inclusive). If omitted it defaults to `0`
+@param max specifies integer upper limit (exclusive). If omitted it defaults to `100`*/
+const randomInt = NATIVE_FUNCTION((runtimeMin, runtimeMax) => {
+  if (runtimeMin && runtimeMin.type !== "number")
+    throw new Err(
+      `Invalid min argument type: '${runtimeMin.type}' passed to 'Math.randomInt()' native function`,
+      "interpreter"
+    );
+
+  if (runtimeMax && runtimeMax.type !== "number")
+    throw new Err(
+      `Invalid max argument type: '${runtimeMax.type}' passed to 'Math.randomInt()' native function`,
+      "interpreter"
+    );
+
+  const min = (runtimeMin?.value ?? 0) as number;
+  const max = (runtimeMax?.value ?? 100) as number;
+  const randomInteger = Math.floor(Math.random() * (max - min)) + min;
+
+  return MK.NUMBER(randomInteger);
+});
+
+/**@desc returns smallest number argument*/
+const min = NATIVE_FUNCTION((...args) => {
+  if (args.length === 0)
+    throw new Err(`Invalid 'Math.min()' native function invocation, no arguments were passed`, "interpreter");
+
+  args.forEach(arg => {
+    if (arg?.type !== "number")
+      throw new Err(
+        `Invalid argument type: '${arg?.type}' passed to 'Math.min()' native function`,
+        "interpreter"
+      );
+  });
+
+  const numbers = args.map(runtimeValue => runtimeValue!.value as number);
+  const smallestNumber = Math.min(...numbers);
+
+  return MK.NUMBER(smallestNumber);
+});
+
+/**@desc returns largest number argument*/
+const max = NATIVE_FUNCTION((...args) => {
+  if (args.length === 0)
+    throw new Err(`Invalid 'Math.max()' native function invocation, no arguments were passed`, "interpreter");
+
+  args.forEach(arg => {
+    if (arg?.type !== "number")
+      throw new Err(
+        `Invalid argument type: '${arg?.type}' passed to 'Math.max()' native function`,
+        "interpreter"
+      );
+  });
+
+  const numbers = args.map(runtimeValue => runtimeValue!.value as number);
+  const largestNumber = Math.max(...numbers);
+
+  return MK.NUMBER(largestNumber);
+});
+
+export const MATH = { randomFloat, randomInt, min, max };
 
 // -----------------------------------------------
 //                    UTILS

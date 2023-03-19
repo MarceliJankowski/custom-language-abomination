@@ -2,7 +2,6 @@
 import { Err } from "../utils";
 import { MK, Runtime } from "./";
 import * as NATIVE_FUNCTION from "./nativeFunctions";
-import { STATIC_CONSOLE_FUNCTIONS, STATIC_MATH_FUNCTIONS } from "./staticFunctions";
 
 // -----------------------------------------------
 //                    TYPES
@@ -116,8 +115,8 @@ export function createGlobalEnv() {
   env.declareVar("time", NATIVE_FUNCTION.time, options);
 
   // GLOBAL OBJECTS
-  env.declareVar("console", MK.OBJECT(STATIC_CONSOLE_FUNCTIONS), options);
-  env.declareVar("Math", MK.OBJECT(STATIC_MATH_FUNCTIONS), options);
+  env.declareVar("console", MK.OBJECT(NATIVE_FUNCTION.CONSOLE), options);
+  env.declareVar("Math", MK.OBJECT(NATIVE_FUNCTION.MATH), options);
 
   return env;
 }
