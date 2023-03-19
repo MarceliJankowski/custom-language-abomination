@@ -65,7 +65,7 @@ const clear = STATIC_FUNCTION(() => {
 const prompt = STATIC_FUNCTION(runtimeMessage => {
   if (runtimeMessage && runtimeMessage.type !== "string")
     throw new Err(
-      `Invalid message argument type: '${runtimeMessage.type}' passed to 'prompt()' static function`,
+      `Invalid message argument type: '${runtimeMessage.type}' passed to 'console.prompt()' static function`,
       "interpreter"
     );
 
@@ -97,13 +97,13 @@ const randomFloat = STATIC_FUNCTION(() => MK.NUMBER(Math.random()));
 const randomInt = STATIC_FUNCTION((runtimeMin, runtimeMax) => {
   if (runtimeMin && runtimeMin.type !== "number")
     throw new Err(
-      `Invalid min argument type: '${runtimeMin.type}' passed to 'randomInt()' static function`,
+      `Invalid min argument type: '${runtimeMin.type}' passed to 'Math.randomInt()' static function`,
       "interpreter"
     );
 
   if (runtimeMax && runtimeMax.type !== "number")
     throw new Err(
-      `Invalid max argument type: '${runtimeMax.type}' passed to 'randomInt()' static function`,
+      `Invalid max argument type: '${runtimeMax.type}' passed to 'Math.randomInt()' static function`,
       "interpreter"
     );
 
@@ -114,7 +114,26 @@ const randomInt = STATIC_FUNCTION((runtimeMin, runtimeMax) => {
   return MK.NUMBER(randomInteger);
 });
 
-export const STATIC_MATH_FUNCTIONS = { randomFloat, randomInt };
+/**@desc returns smallest number argument*/
+const min = STATIC_FUNCTION((...args) => {
+  if (args.length === 0)
+    throw new Err(`Invalid 'Math.min()' static function invocation, no arguments were passed`, "interpreter");
+
+  args.forEach(arg => {
+    if (arg?.type !== "number")
+      throw new Err(
+        `Invalid argument type: '${arg?.type}' passed to 'Math.min()' static function`,
+        "interpreter"
+      );
+  });
+
+  const numbers = args.map(runtimeValue => runtimeValue!.value as number);
+  const smallestNumber = Math.min(...numbers);
+
+  return MK.NUMBER(smallestNumber);
+});
+
+export const STATIC_MATH_FUNCTIONS = { randomFloat, randomInt, min };
 
 // -----------------------------------------------
 //            ALL RUNTIME DATA-TYPES
