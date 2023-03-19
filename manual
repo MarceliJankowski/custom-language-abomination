@@ -19,6 +19,7 @@ OPTIONS
 
       -v
           Turn on VERBOSE_MODE (increases output), mostly useful for debugging purposes
+          Supplying additional 'v' option will enable ULTRA_VERBOSE_MODE (outputs everything, including prototype-chain)
 
       -e stage (possible values: ['l', 'lexer', 'p', 'parser', 'i', 'interpreter'])
           Execute interpreter up to a given 'stage' (useful for examining interpreter stages)

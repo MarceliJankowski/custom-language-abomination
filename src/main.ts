@@ -6,14 +6,13 @@ const prompt = promptSync();
 
 // PROJECT MODULES
 import { ErrorCode } from "./constants";
-import { Err, parseForLogging, stringifyPretty } from "./utils";
+import { Err, parseForLogging, stringifyPretty, removePrototypeChainRecursively } from "./utils";
 import { Lexer, Parser } from "./frontend";
 import { Interpreter, createGlobalEnv, Runtime } from "./backend";
 
 // -----------------------------------------------
 //                    TYPES
 // -----------------------------------------------
-// here because I can't define them within Class
 
 interface EvaluateSrcOutput {
   lexer: ReturnType<typeof Lexer.prototype.tokenize>;
@@ -30,6 +29,7 @@ type EvaluateUpToType = "l" | "lexer" | "p" | "parser" | "i" | "interpreter";
 /**@desc embodiment of the interpreter / interface for interacting with it*/
 class InterpreterInterface {
   private verboseMode = false;
+  private ultraVerboseMode = false;
   private filePath: string | undefined;
   private evaluateUpTo: EvaluateUpToType = "interpreter";
   private globalEnv = createGlobalEnv(); // setup global variable environment
@@ -108,7 +108,9 @@ class InterpreterInterface {
         }
 
         case "-v": {
-          this.verboseMode = true;
+          if (this.verboseMode === true) this.ultraVerboseMode = true;
+          else this.verboseMode = true;
+
           break;
         }
 
@@ -269,18 +271,25 @@ class InterpreterInterface {
     console.log(output);
   }
 
-  /**@desc output verbose information (impacted by `evaluateUpTo` option)*/
+  /**@desc output verbose information (impacted by: `evaluateUpTo` and `ultraVerboseMode` options)*/
   private verboseOutput(src: string, output: EvaluateSrcOutput): void {
     this.printBreakLine();
     console.log("SRC:\n\n" + src);
     this.outputLog("LEXER OUTPUT:", output.lexer, "lexer");
 
-    // HANDLE evaluateUpTo OPTION
+    // HANDLE 'evaluateUpTo' OPTION
     if (this.evaluateUpTo === "parser" || this.evaluateUpTo === "interpreter") {
       this.outputLog("PARSER OUTPUT:", output.parser, "parser");
 
-      if (this.evaluateUpTo === "interpreter")
-        this.outputLog("INTERPRETER OUTPUT:", output.interpreter, "interpreter");
+      if (this.evaluateUpTo === "interpreter") {
+        let interpreterOutput = output.interpreter!;
+
+        // HANDLE 'ultraVerboseMode' OPTION
+        if (this.ultraVerboseMode === false)
+          interpreterOutput = removePrototypeChainRecursively(interpreterOutput);
+
+        this.outputLog("INTERPRETER OUTPUT:", interpreterOutput, "interpreter");
+      }
     }
 
     this.printBreakLine();

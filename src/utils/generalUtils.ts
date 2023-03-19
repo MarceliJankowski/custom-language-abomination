@@ -57,6 +57,45 @@ export function parseForLogging(runtimeValue: Runtime.Value): unknown {
   }
 }
 
+/**@desc create and return `runtimeValue` shallow copy, with `prototype-chain` recursively excluded*/
+export function removePrototypeChainRecursively(
+  runtimeValue: Runtime.ProtoValue | Runtime.Value
+): Runtime.Value {
+  switch (runtimeValue.type) {
+    case "array": {
+      const arrayShallowCopy = removePrototypeChain(runtimeValue) as Omit<Runtime.Array, "prototype">;
+
+      arrayShallowCopy.value = arrayShallowCopy.value.map(val => removePrototypeChainRecursively(val));
+
+      return arrayShallowCopy;
+    }
+
+    case "object": {
+      const objectShallowCopy = removePrototypeChain(runtimeValue) as Omit<Runtime.Object, "prototype">;
+
+      for (const [key, value] of Object.entries(objectShallowCopy.value)) {
+        objectShallowCopy.value[key] = removePrototypeChainRecursively(value);
+      }
+
+      return objectShallowCopy;
+    }
+
+    default:
+      return removePrototypeChain(runtimeValue);
+  }
+}
+
+/**@desc create and return `runtimeValue` shallow copy, with excluded `prototype-chain`*/
+function removePrototypeChain(runtimeValue: Runtime.Value): Runtime.Value {
+  if ((runtimeValue as Runtime.ProtoValue).prototype !== undefined) {
+    const { prototype, ...runtimeValueShallowCopyWithoutPrototype } = runtimeValue as Runtime.ProtoValue;
+
+    return runtimeValueShallowCopyWithoutPrototype;
+  }
+
+  return runtimeValue;
+}
+
 /**@desc determine whether given `value` is 'falsy' or 'truthy' (returns corresponding boolean)*/
 export function getBooleanValue(value: unknown): boolean {
   return RUNTIME_FALSY_VALUES.every(({ value: falsyValue }) => falsyValue !== value);
