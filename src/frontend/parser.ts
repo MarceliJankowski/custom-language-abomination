@@ -560,6 +560,9 @@ export class Parser {
     // handle another call-expression immediately following current callExp (example: 'func()()')
     if (this.at().type === TokenType.OPEN_PAREN) callExp = this.parseCallExp(callExp) as AST_CallExp;
 
+    // handle immediately following member-expression
+    if (this.isCurrentTokenAccessingProperty()) return this.parseMemberExp(callExp);
+
     return callExp;
   }
 
@@ -596,7 +599,7 @@ export class Parser {
     };
   }
 
-  private parseMemberExp(expObject?: AST_ArrayLiteral | AST_ObjectLiteral): AST_Expression {
+  private parseMemberExp(expObject?: AST_ArrayLiteral | AST_ObjectLiteral | AST_CallExp): AST_Expression {
     let object: AST_Expression;
 
     if (expObject) object = expObject; // enable: '[1,2,3][0]', '{}.type' and so on
