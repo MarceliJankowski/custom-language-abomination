@@ -133,7 +133,26 @@ const min = STATIC_FUNCTION((...args) => {
   return MK.NUMBER(smallestNumber);
 });
 
-export const STATIC_MATH_FUNCTIONS = { randomFloat, randomInt, min };
+/**@desc returns largest number argument*/
+const max = STATIC_FUNCTION((...args) => {
+  if (args.length === 0)
+    throw new Err(`Invalid 'Math.max()' static function invocation, no arguments were passed`, "interpreter");
+
+  args.forEach(arg => {
+    if (arg?.type !== "number")
+      throw new Err(
+        `Invalid argument type: '${arg?.type}' passed to 'Math.max()' static function`,
+        "interpreter"
+      );
+  });
+
+  const numbers = args.map(runtimeValue => runtimeValue!.value as number);
+  const largestNumber = Math.max(...numbers);
+
+  return MK.NUMBER(largestNumber);
+});
+
+export const STATIC_MATH_FUNCTIONS = { randomFloat, randomInt, min, max };
 
 // -----------------------------------------------
 //            ALL RUNTIME DATA-TYPES
