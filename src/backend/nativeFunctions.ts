@@ -181,6 +181,13 @@ const logVerbose = NATIVE_FUNCTION((...args) => {
   return MK.UNDEFINED();
 });
 
+/**@desc log `arguments` to std output in an `ULTRA_VERBOSE` way (including prototype-chain)*/
+const logUltraVerbose = NATIVE_FUNCTION((...args) => {
+  console.log(...args);
+
+  return MK.UNDEFINED();
+});
+
 /**@desc log `arguments` to std error*/
 const error = NATIVE_FUNCTION((...args) => {
   const parsedArgs = args.map(arg => arg && parseForLogging(arg));
@@ -216,6 +223,7 @@ const prompt = NATIVE_FUNCTION(runtimeMessage => {
 export const CONSOLE = {
   log,
   logVerbose,
+  logUltraVerbose,
   error,
   clear,
   prompt,
