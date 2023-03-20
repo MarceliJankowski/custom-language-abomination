@@ -343,7 +343,16 @@ const push = STATIC_FUNCTION((runtimeArray, ...elements) => {
   return MK.NUMBER(newLength);
 });
 
-export const STATIC_ARRAY_FUNCTIONS = { getLength, push };
+/**@desc removes the `last` element from the `end` of an array and returns that element*/
+const pop = STATIC_FUNCTION(runtimeArray => {
+  const array = (runtimeArray as Runtime.Array).value;
+
+  const removedElement = array.pop();
+
+  return removedElement ?? MK.UNDEFINED();
+});
+
+export const STATIC_ARRAY_FUNCTIONS = { getLength, push, pop };
 
 // -----------------------------------------------
 //                    OBJECT
