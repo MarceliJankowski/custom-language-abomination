@@ -45,6 +45,31 @@ const getLength = STATIC_FUNCTION(runtimeStringOrArray => {
   return MK.NUMBER(length);
 });
 
+/**@desc extracts and returns array/string section, without modifying the original
+@param startIndex index of the first element to `include` (if omitted, it defaults to 0)
+@param endIndex index of the first element to `exclude` (if omitted, no elements are excluded)*/
+const slice = STATIC_FUNCTION((runtimeValue, runtimeStart, runtimeEnd) => {
+  if (runtimeStart && runtimeStart.type !== "number")
+    throw new Err(
+      `Invalid startIndex argument type: '${runtimeStart.type}' passed to 'slice()' static function`,
+      "interpreter"
+    );
+
+  if (runtimeEnd && runtimeEnd.type !== "number")
+    throw new Err(
+      `Invalid endIndex argument type: '${runtimeEnd.type}' passed to 'slice()' static function`,
+      "interpreter"
+    );
+
+  const startIndex = (runtimeStart as Runtime.Number | undefined)?.value;
+  const endIndex = (runtimeEnd as Runtime.Number | undefined)?.value;
+
+  const slice = (runtimeValue as Runtime.Array | Runtime.String).value.slice(startIndex, endIndex);
+
+  if (runtimeValue.type === "array") return MK.ARRAY(slice as Runtime.Value[]);
+  else return MK.STRING(slice as string);
+});
+
 // -----------------------------------------------
 //                    STRING
 // -----------------------------------------------
@@ -157,30 +182,6 @@ const endsWith = STATIC_FUNCTION(({ value }, searchString) => {
   const endsWithBoolean = (value as string).endsWith(searchStringValue);
 
   return MK.BOOL(endsWithBoolean);
-});
-
-/**@desc extract section of a string and return it as a new string (without modifying the original)
-@param startIndex index of the first character to include in the returned string (if omitted, it defaults to 0)
-@param endIndex index of the first character to exclude from the returned string (if omitted, no characters are excluded)*/
-const slice = STATIC_FUNCTION(({ value }, runtimeStart, runtimeEnd) => {
-  if (runtimeStart && runtimeStart.type !== "number")
-    throw new Err(
-      `Invalid startIndex argument type: '${runtimeStart.type}' passed to 'slice()' static function`,
-      "interpreter"
-    );
-
-  if (runtimeEnd && runtimeEnd.type !== "number")
-    throw new Err(
-      `Invalid endIndex argument type: '${runtimeEnd.type}' passed to 'slice()' static function`,
-      "interpreter"
-    );
-
-  const startIndex = (runtimeStart as Runtime.Number | undefined)?.value;
-  const endIndex = (runtimeEnd as Runtime.Number | undefined)?.value;
-
-  const strSlice = (value as string).slice(startIndex, endIndex);
-
-  return MK.STRING(strSlice);
 });
 
 /**@desc searches string and returns starting index of the `first` occurrence of `searchString`
@@ -370,7 +371,7 @@ const shift = STATIC_FUNCTION(runtimeArray => {
   return removedElement ?? MK.UNDEFINED();
 });
 
-export const STATIC_ARRAY_FUNCTIONS = { getLength, push, pop, unshift, shift };
+export const STATIC_ARRAY_FUNCTIONS = { getLength, push, pop, unshift, shift, slice };
 
 // -----------------------------------------------
 //                    OBJECT
