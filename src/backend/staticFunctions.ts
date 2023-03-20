@@ -357,4 +357,22 @@ const hasOwn = STATIC_FUNCTION((runtimeObject, runtimeKey) => {
   return MK.BOOL(hasOwn);
 });
 
-export const STATIC_OBJECT_FUNCTIONS = { hasOwn };
+/**@desc returns an array of given object's `key-value` pairs*/
+const entries = STATIC_FUNCTION(({ value }) => {
+  const valueEntries = Object.entries(value as object);
+
+  const runtimeEntries = [];
+
+  // BUILD 'runtimeEntries'
+  for (const entry of valueEntries) {
+    const runtimeKey = MK.STRING(entry[0]);
+    const runtimeValue = entry[1];
+    const runtimeEntry = MK.ARRAY([runtimeKey, runtimeValue]);
+
+    runtimeEntries.push(runtimeEntry);
+  }
+
+  return MK.ARRAY(runtimeEntries);
+});
+
+export const STATIC_OBJECT_FUNCTIONS = { hasOwn, entries };
