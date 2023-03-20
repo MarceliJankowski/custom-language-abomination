@@ -281,7 +281,7 @@ const max = NATIVE_FUNCTION((...args) => {
   return MK.NUMBER(largestNumber);
 });
 
-/**@desc rounds `number` down to the largest integer less than or equal to `number` and returns that integer*/
+/**@desc returns `number` rounded down to the largest integer less than or equal to `number`*/
 const floor = NATIVE_FUNCTION(runtimeNumber => {
   if (runtimeNumber === undefined)
     throw new Err(`Missing number argument at 'Math.floor()' native function invocation`, "interpreter");
@@ -298,7 +298,7 @@ const floor = NATIVE_FUNCTION(runtimeNumber => {
   return MK.NUMBER(roundedNumber);
 });
 
-/**@desc rounds `number` up to the smallest integer greater than or equal to `number` and returns that integer*/
+/**@desc returns `number` rounded up to the smallest integer greater than or equal to `number`*/
 const ceil = NATIVE_FUNCTION(runtimeNumber => {
   if (runtimeNumber === undefined)
     throw new Err(`Missing number argument at 'Math.ceil()' native function invocation`, "interpreter");
@@ -315,7 +315,24 @@ const ceil = NATIVE_FUNCTION(runtimeNumber => {
   return MK.NUMBER(roundedNumber);
 });
 
-export const MATH = { randomFloat, randomInt, min, max, floor, ceil };
+/**@desc returns `number` rounded to the nearest integer*/
+const round = NATIVE_FUNCTION(runtimeNumber => {
+  if (runtimeNumber === undefined)
+    throw new Err(`Missing number argument at 'Math.round()' native function invocation`, "interpreter");
+
+  if (runtimeNumber.type !== "number")
+    throw new Err(
+      `Invalid number argument type: '${runtimeNumber.type}' passed to 'Math.round()' native function`,
+      "interpreter"
+    );
+
+  const number = (runtimeNumber as Runtime.Number).value;
+  const roundedNumber = Math.round(number);
+
+  return MK.NUMBER(roundedNumber);
+});
+
+export const MATH = { randomFloat, randomInt, min, max, floor, ceil, round };
 
 // -----------------------------------------------
 //                    UTILS
