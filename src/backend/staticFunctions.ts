@@ -321,7 +321,7 @@ export const STATIC_STRING_FUNCTIONS = {
 //                    NUMBER
 // -----------------------------------------------
 
-/**@desc determine whether number is an integer*/
+/**@desc determine whether `number` is an integer*/
 const isInt = STATIC_FUNCTION(({ value }) => {
   const isInteger = Number.isInteger(value as number);
 
@@ -335,3 +335,26 @@ export const STATIC_NUMBER_FUNCTIONS = { isInt };
 // -----------------------------------------------
 
 export const STATIC_ARRAY_FUNCTIONS = { length: getLength };
+
+// -----------------------------------------------
+//                    OBJECT
+// -----------------------------------------------
+
+/**@desc determine whether given `key` is defined directly on object / is object's own property (doesn't come from prototype-chain)*/
+const hasOwn = STATIC_FUNCTION((runtimeObject, runtimeKey) => {
+  if (runtimeKey === undefined)
+    throw new Err(`Missing key argument at 'hasOwn()' static function invocation`, "interpreter");
+
+  if (runtimeKey.type !== "string")
+    throw new Err(
+      `Invalid key argument type: '${runtimeKey.type}' passed to 'hasOwn()' static function`,
+      "interpreter"
+    );
+
+  const key = (runtimeKey as Runtime.String).value;
+  const hasOwn = Object.hasOwn((runtimeObject as Runtime.Object).value, key);
+
+  return MK.BOOL(hasOwn);
+});
+
+export const STATIC_OBJECT_FUNCTIONS = { hasOwn };

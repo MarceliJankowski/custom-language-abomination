@@ -5,6 +5,7 @@ import {
   STATIC_STRING_FUNCTIONS,
   STATIC_NUMBER_FUNCTIONS,
   STATIC_ARRAY_FUNCTIONS,
+  STATIC_OBJECT_FUNCTIONS,
 } from "./staticFunctions";
 
 // -----------------------------------------------
@@ -29,6 +30,7 @@ export const ARRAY_PROTOTYPE: Prototype = {
 
 export const OBJECT_PROTOTYPE: Prototype = {
   prototype: TOP_PROTOTYPE,
+  ...STATIC_OBJECT_FUNCTIONS,
 };
 
 export const NUMBER_PROTOTYPE: Prototype = {
