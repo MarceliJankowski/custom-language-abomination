@@ -281,7 +281,24 @@ const max = NATIVE_FUNCTION((...args) => {
   return MK.NUMBER(largestNumber);
 });
 
-export const MATH = { randomFloat, randomInt, min, max };
+/**@desc rounds `number` down to the largest integer less than or equal to `number` and returns that integer*/
+const floor = NATIVE_FUNCTION(runtimeNumber => {
+  if (runtimeNumber === undefined)
+    throw new Err(`Missing number argument at 'Math.floor()' native function invocation`, "interpreter");
+
+  if (runtimeNumber.type !== "number")
+    throw new Err(
+      `Invalid number argument type: '${runtimeNumber.type}' passed to 'Math.floor()' native function`,
+      "interpreter"
+    );
+
+  const number = (runtimeNumber as Runtime.Number).value;
+  const roundedNumber = Math.floor(number);
+
+  return MK.NUMBER(roundedNumber);
+});
+
+export const MATH = { randomFloat, randomInt, min, max, floor };
 
 // -----------------------------------------------
 //                    UTILS
