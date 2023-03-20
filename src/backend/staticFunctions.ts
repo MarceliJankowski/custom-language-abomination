@@ -406,7 +406,14 @@ const splice = STATIC_FUNCTION((runtimeArray, runtimeStartIndex, runtimeDeleteCo
   return MK.ARRAY(deletedElements);
 });
 
-export const STATIC_ARRAY_FUNCTIONS = { getLength, push, pop, unshift, shift, slice, splice };
+/**@desc reverses array in place (modifies original array), returns reference to modified array*/
+const reverse = STATIC_FUNCTION(runtimeArray => {
+  (runtimeArray as Runtime.Array).value.reverse();
+
+  return runtimeArray;
+});
+
+export const STATIC_ARRAY_FUNCTIONS = { getLength, push, pop, unshift, shift, slice, splice, reverse };
 
 // -----------------------------------------------
 //                    OBJECT
