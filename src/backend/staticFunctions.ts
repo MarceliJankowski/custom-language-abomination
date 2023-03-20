@@ -334,7 +334,7 @@ export const STATIC_NUMBER_FUNCTIONS = { isInt };
 //                    ARRAY
 // -----------------------------------------------
 
-/**@desc adds one or more elements to the `end` of an array and returns new length of array*/
+/**@desc adds one or more elements to the `end` of an array and returns updated array's length (time-complexity: O(1))*/
 const push = STATIC_FUNCTION((runtimeArray, ...elements) => {
   const array = (runtimeArray as Runtime.Array).value;
 
@@ -343,7 +343,7 @@ const push = STATIC_FUNCTION((runtimeArray, ...elements) => {
   return MK.NUMBER(newLength);
 });
 
-/**@desc removes the `last` element from the `end` of an array and returns that element*/
+/**@desc removes the `last` element from the `end` of an array and returns that element (time-complexity: O(1))*/
 const pop = STATIC_FUNCTION(runtimeArray => {
   const array = (runtimeArray as Runtime.Array).value;
 
@@ -352,7 +352,16 @@ const pop = STATIC_FUNCTION(runtimeArray => {
   return removedElement ?? MK.UNDEFINED();
 });
 
-export const STATIC_ARRAY_FUNCTIONS = { getLength, push, pop };
+/**@desc adds one or more elements to the `beginning` of an array and returns updated array's length (time-complexity: O(n))*/
+const unshift = STATIC_FUNCTION((runtimeArray, ...elements) => {
+  const array = (runtimeArray as Runtime.Array).value;
+
+  const newLength = array.unshift(...(elements as Runtime.Value[]));
+
+  return MK.NUMBER(newLength);
+});
+
+export const STATIC_ARRAY_FUNCTIONS = { getLength, push, pop, unshift };
 
 // -----------------------------------------------
 //                    OBJECT
