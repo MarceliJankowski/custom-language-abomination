@@ -3,7 +3,13 @@ import promptSyncPackage from "prompt-sync";
 const promptSync = promptSyncPackage();
 
 // PROJECT MODULES
-import { Err, parseForLogging, getBooleanValue, stringifyPretty } from "../utils";
+import {
+  Err,
+  parseForLogging,
+  getBooleanValue,
+  stringifyPretty,
+  removePrototypeChainRecursively,
+} from "../utils";
 import { Runtime, MK } from "./";
 
 // -----------------------------------------------
@@ -168,7 +174,9 @@ const log = NATIVE_FUNCTION((...args) => {
 
 /**@desc log `arguments` to std output in a `verbose` way*/
 const logVerbose = NATIVE_FUNCTION((...args) => {
-  console.log(...args);
+  const parsedArgs = args.map(arg => removePrototypeChainRecursively(arg!));
+
+  console.log(...parsedArgs);
 
   return MK.UNDEFINED();
 });
