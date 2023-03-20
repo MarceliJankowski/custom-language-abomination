@@ -375,4 +375,11 @@ const entries = STATIC_FUNCTION(({ value }) => {
   return MK.ARRAY(runtimeEntries);
 });
 
-export const STATIC_OBJECT_FUNCTIONS = { hasOwn, entries };
+/**@desc returns an array of given object's values*/
+const values = STATIC_FUNCTION(({ value }) => {
+  const runtimeValues = Object.values(value as object);
+
+  return MK.ARRAY(runtimeValues);
+});
+
+export const STATIC_OBJECT_FUNCTIONS = { hasOwn, entries, values };
