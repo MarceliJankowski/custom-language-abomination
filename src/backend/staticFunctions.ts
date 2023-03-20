@@ -358,7 +358,7 @@ const hasOwn = STATIC_FUNCTION((runtimeObject, runtimeKey) => {
 });
 
 /**@desc returns an array of given object's `key-value` pairs*/
-const entries = STATIC_FUNCTION(({ value }) => {
+const getEntries = STATIC_FUNCTION(({ value }) => {
   const valueEntries = Object.entries(value as object);
 
   const runtimeEntries = [];
@@ -376,18 +376,18 @@ const entries = STATIC_FUNCTION(({ value }) => {
 });
 
 /**@desc returns an array of given object's `values`*/
-const values = STATIC_FUNCTION(({ value }) => {
+const getValues = STATIC_FUNCTION(({ value }) => {
   const runtimeValues = Object.values(value as object);
 
   return MK.ARRAY(runtimeValues);
 });
 
 /**@desc returns an array of given object's `keys`*/
-const keys = STATIC_FUNCTION(({ value }) => {
-  const stringKeys = Object.keys(value as object);
-  const runtimeKeys = stringKeys.map(key => MK.STRING(key));
+const getKeys = STATIC_FUNCTION(({ value }) => {
+  const keys = Object.keys(value as object);
+  const runtimeKeys = keys.map(key => MK.STRING(key));
 
   return MK.ARRAY(runtimeKeys);
 });
 
-export const STATIC_OBJECT_FUNCTIONS = { hasOwn, entries, values, keys };
+export const STATIC_OBJECT_FUNCTIONS = { hasOwn, getEntries, getValues, getKeys };
