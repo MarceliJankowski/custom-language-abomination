@@ -343,7 +343,7 @@ const push = STATIC_FUNCTION((runtimeArray, ...elements) => {
   return MK.NUMBER(newLength);
 });
 
-/**@desc removes the `last` element from the `end` of an array and returns that element (time-complexity: O(1))*/
+/**@desc removes the `last` element from an array and returns that removed element (time-complexity: O(1))*/
 const pop = STATIC_FUNCTION(runtimeArray => {
   const array = (runtimeArray as Runtime.Array).value;
 
@@ -361,7 +361,16 @@ const unshift = STATIC_FUNCTION((runtimeArray, ...elements) => {
   return MK.NUMBER(newLength);
 });
 
-export const STATIC_ARRAY_FUNCTIONS = { getLength, push, pop, unshift };
+/**@desc removes the `first` element from an array and returns that removed element (time-complexity: O(n))*/
+const shift = STATIC_FUNCTION(runtimeArray => {
+  const array = (runtimeArray as Runtime.Array).value;
+
+  const removedElement = array.shift();
+
+  return removedElement ?? MK.UNDEFINED();
+});
+
+export const STATIC_ARRAY_FUNCTIONS = { getLength, push, pop, unshift, shift };
 
 // -----------------------------------------------
 //                    OBJECT
