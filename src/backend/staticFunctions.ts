@@ -299,7 +299,7 @@ const replaceAll = STATIC_FUNCTION(({ value }, runtimePattern, runtimeReplacemen
 });
 
 export const STATIC_STRING_FUNCTIONS = {
-  length: getLength,
+  getLength,
   includes,
   trimStart,
   trimEnd,
@@ -343,7 +343,7 @@ const push = STATIC_FUNCTION((runtimeArray, ...elements) => {
   return MK.NUMBER(newLength);
 });
 
-export const STATIC_ARRAY_FUNCTIONS = { length: getLength, push };
+export const STATIC_ARRAY_FUNCTIONS = { getLength, push };
 
 // -----------------------------------------------
 //                    OBJECT
