@@ -375,11 +375,19 @@ const entries = STATIC_FUNCTION(({ value }) => {
   return MK.ARRAY(runtimeEntries);
 });
 
-/**@desc returns an array of given object's values*/
+/**@desc returns an array of given object's `values`*/
 const values = STATIC_FUNCTION(({ value }) => {
   const runtimeValues = Object.values(value as object);
 
   return MK.ARRAY(runtimeValues);
 });
 
-export const STATIC_OBJECT_FUNCTIONS = { hasOwn, entries, values };
+/**@desc returns an array of given object's `keys`*/
+const keys = STATIC_FUNCTION(({ value }) => {
+  const stringKeys = Object.keys(value as object);
+  const runtimeKeys = stringKeys.map(key => MK.STRING(key));
+
+  return MK.ARRAY(runtimeKeys);
+});
+
+export const STATIC_OBJECT_FUNCTIONS = { hasOwn, entries, values, keys };
