@@ -334,7 +334,16 @@ export const STATIC_NUMBER_FUNCTIONS = { isInt };
 //                    ARRAY
 // -----------------------------------------------
 
-export const STATIC_ARRAY_FUNCTIONS = { length: getLength };
+/**@desc adds one or more elements to the `end` of an array and returns new length of array*/
+const push = STATIC_FUNCTION((runtimeArray, ...elements) => {
+  const array = (runtimeArray as Runtime.Array).value;
+
+  const newLength = array.push(...(elements as Runtime.Value[]));
+
+  return MK.NUMBER(newLength);
+});
+
+export const STATIC_ARRAY_FUNCTIONS = { length: getLength, push };
 
 // -----------------------------------------------
 //                    OBJECT
