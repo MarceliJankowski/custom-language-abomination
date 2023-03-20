@@ -425,10 +425,18 @@ export class Interpreter {
     const runtimeCallee = this.evaluate(callExp.callee, env);
 
     switch (runtimeCallee.type) {
-      case "staticFunction":
       case "nativeFunction": {
         const nativeFunc = runtimeCallee as Runtime.NativeFunction;
         const output = nativeFunc.implementation(...runtimeArgs);
+
+        return output;
+      }
+
+      case "staticFunction": {
+        const staticFunc = runtimeCallee as Runtime.StaticFunction;
+
+        // at this point static-function is already wrapped in wrapperFn
+        const output = (staticFunc.implementation as any)(...runtimeArgs);
 
         return output;
       }
