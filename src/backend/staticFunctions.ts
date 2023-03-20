@@ -413,7 +413,26 @@ const reverse = STATIC_FUNCTION(runtimeArray => {
   return runtimeArray;
 });
 
-export const STATIC_ARRAY_FUNCTIONS = { getLength, push, pop, unshift, shift, slice, splice, reverse };
+/**@desc creates and returns a new string by concatenating all of the elements in an array, separated by `delimiter`
+@param delimiter string used as a seperator/delimiter*/
+const join = STATIC_FUNCTION((runtimeArray, runtimeDelimiter) => {
+  if (runtimeDelimiter === undefined)
+    throw new Err(`Missing delimiter argument at 'join()' static function invocation`, "interpreter");
+
+  if (runtimeDelimiter.type !== "string")
+    throw new Err(
+      `Invalid delimiter argument type: '${runtimeDelimiter.type}' passed to 'join()' static function`,
+      "interpreter"
+    );
+
+  const delimiter = (runtimeDelimiter as Runtime.String).value;
+  const elements = (runtimeArray as Runtime.Array).value.map(runtimeValue => parseForLogging(runtimeValue));
+  const joinedElements = elements.join(delimiter);
+
+  return MK.STRING(joinedElements);
+});
+
+export const STATIC_ARRAY_FUNCTIONS = { getLength, push, pop, unshift, shift, slice, splice, reverse, join };
 
 // -----------------------------------------------
 //                    OBJECT
