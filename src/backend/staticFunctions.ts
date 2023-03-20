@@ -371,7 +371,42 @@ const shift = STATIC_FUNCTION(runtimeArray => {
   return removedElement ?? MK.UNDEFINED();
 });
 
-export const STATIC_ARRAY_FUNCTIONS = { getLength, push, pop, unshift, shift, slice };
+/**@desc modifies array by removing or replacing existing elements
+@param startIndex specifies from which element splicing should start
+@param deleteCount (optional) number of elements that should be removed, beginning from `startIndex`
+@param ...elements (optional) elements to add to the array, beginning from `startIndex`
+@return array containing deleted elements*/
+const splice = STATIC_FUNCTION((runtimeArray, runtimeStartIndex, runtimeDeleteCount, ...runtimeElements) => {
+  if (runtimeStartIndex === undefined)
+    throw new Err(`Missing startIndex argument at 'splice()' static function invocation`, "interpreter");
+
+  if (runtimeStartIndex.type !== "number")
+    throw new Err(
+      `Invalid startIndex argument type: '${runtimeStartIndex.type}' passed to 'splice()' static function`,
+      "interpreter"
+    );
+
+  if (runtimeDeleteCount === undefined)
+    throw new Err(`Missing deleteCount argument at 'splice()' static function invocation`, "interpreter");
+
+  if (runtimeDeleteCount.type !== "number")
+    throw new Err(
+      `Invalid deleteCount argument type: '${runtimeDeleteCount.type}' passed to 'splice()' static function`,
+      "interpreter"
+    );
+
+  const startIndex = (runtimeStartIndex as Runtime.Number).value;
+  const deleteCount = (runtimeDeleteCount as Runtime.Number).value;
+  const deletedElements = (runtimeArray as Runtime.Array).value.splice(
+    startIndex,
+    deleteCount,
+    ...(runtimeElements as Runtime.Value[])
+  );
+
+  return MK.ARRAY(deletedElements);
+});
+
+export const STATIC_ARRAY_FUNCTIONS = { getLength, push, pop, unshift, shift, slice, splice };
 
 // -----------------------------------------------
 //                    OBJECT
