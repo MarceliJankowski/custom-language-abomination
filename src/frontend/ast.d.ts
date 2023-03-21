@@ -10,6 +10,7 @@ type AST_Node =
   | "BlockStatement"
   | "FunctionDeclaration"
   | "ReturnStatement"
+  | "IfStatement"
 
   // EXPRESSIONS
   | "AssignmentExp"
@@ -68,6 +69,13 @@ interface AST_FunctionDeclaration extends AST_Statement {
   name: string;
   parameters: AST_Identifier[];
   body: AST_BlockStatement;
+}
+
+interface AST_IfStatement extends AST_Statement {
+  kind: "IfStatement";
+  test: AST_Expression;
+  consequent: AST_Statement;
+  alternate?: AST_Statement;
 }
 
 /**@desc returns value at run-time*/

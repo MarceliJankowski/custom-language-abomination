@@ -40,9 +40,7 @@ export class Parser {
   // -----------------------------------------------
   // helpful web page: https://en.cppreference.com/w/cpp/language/operator_precedence
 
-  // varDeclaration - LEAST IMPORTANT / INVOKED FIRST
-  // funcDeclaration
-  // returnStatement
+  // statements - LEAST IMPORTANT / INVOKED FIRST
   // assignmentExp
   // ternaryExp
   // objectExp
@@ -81,6 +79,11 @@ export class Parser {
 
       case TokenType.RETURN: {
         parsedStatement = this.parseReturnStatement();
+        break;
+      }
+
+      case TokenType.IF: {
+        parsedStatement = this.parseIfStatement();
         break;
       }
 
@@ -238,6 +241,51 @@ export class Parser {
     };
 
     return returnStatement;
+  }
+
+  private parseIfStatement(): AST_IfStatement {
+    const start = this.eat().start; // advance past 'if' keyword
+
+    // HANDLE TEST
+    this.eatAndExpect(
+      TokenType.OPEN_PAREN,
+      "Invalid if-statement. Missing opening parentheses ('(') following 'if' keyword"
+    );
+
+    const test = this.parseExpression();
+
+    this.eatAndExpect(
+      TokenType.CLOSE_PAREN,
+      "Invalid if-statement. Missing closing parentheses (')') following test"
+    );
+
+    // HANDLE CONSEQUENT
+    let consequent;
+
+    if (this.at().type === TokenType.OPEN_CURLY_BRACE) consequent = this.parseBlockStatement();
+    else consequent = this.parseStatement(); // enable one-liners
+
+    // HANDLE ALTERNATE
+    let alternate;
+
+    if (this.at().type === TokenType.ELSE) {
+      this.eat(); // advance past 'else' keyword
+
+      if (this.at().type === TokenType.OPEN_CURLY_BRACE) alternate = this.parseBlockStatement();
+      else alternate = this.parseStatement(); // enable one-liners
+    }
+
+    // BUILD IfStatement
+    const IfStatement: AST_IfStatement = {
+      kind: "IfStatement",
+      test,
+      consequent,
+      alternate,
+      start,
+      end: alternate?.end ?? consequent.end,
+    };
+
+    return IfStatement;
   }
 
   private parseAssignmentExp(): AST_Expression {

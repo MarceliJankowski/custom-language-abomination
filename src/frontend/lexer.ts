@@ -27,6 +27,8 @@ export enum TokenType {
   CONST = "CONST",
   FUNC = "FUNC",
   RETURN = "RETURN",
+  IF = "IF",
+  ELSE = "ELSE",
 
   // OPERATORS
   UNARY_OPERATOR = "UNARY_OPERATOR",
@@ -72,6 +74,8 @@ KEYWORDS.set("const", TokenType.CONST);
 KEYWORDS.set("typeof", TokenType.UNARY_OPERATOR);
 KEYWORDS.set("func", TokenType.FUNC);
 KEYWORDS.set("return", TokenType.RETURN);
+KEYWORDS.set("if", TokenType.IF);
+KEYWORDS.set("else", TokenType.ELSE);
 
 // -----------------------------------------------
 //                    LEXER

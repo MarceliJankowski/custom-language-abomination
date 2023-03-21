@@ -80,6 +80,9 @@ export class Interpreter {
       case "TernaryExp":
         return this.evalTernaryExp(astNode as AST_TernaryExp, env);
 
+      case "IfStatement":
+        return this.evalIfStatement(astNode as AST_IfStatement, env);
+
       default:
         throw new Err(
           `This AST node-kind has not yet been setup for interpretation.\nNode kind: '${astNode.kind}', at position: ${astNode.start}`,
@@ -443,6 +446,8 @@ export class Interpreter {
 
       case "function": {
         const func = runtimeCallee as Runtime.Function;
+
+        // function invocations have their own VariableEnv/scope
         const funcInvocationEnv = new VariableEnv(func.declarationEnv);
 
         // CREATE PARAMETER LIST VARIABLES
@@ -575,6 +580,30 @@ export class Interpreter {
     return runtimeAlternate;
   }
 
+  private evalIfStatement(ifStatement: AST_IfStatement, env: VariableEnv): Runtime.Value {
+    const testValue = this.evaluate(ifStatement.test, env).value;
+    const testBoolean = getBooleanValue(testValue);
+
+    // if-statements have their own VariableEnv/scope
+    const ifStatementEnv = new VariableEnv(env);
+
+    // TEST IS: 'truthy'
+    testBooleanIf: if (testBoolean) {
+      this.handleIfStatementBody(ifStatement.consequent, ifStatementEnv);
+    }
+
+    // TEST IS: 'falsy'
+    else {
+      // handle alternate / 'else' keyword
+      if (ifStatement.alternate === undefined) break testBooleanIf;
+
+      this.handleIfStatementBody(ifStatement.alternate, ifStatementEnv);
+    }
+
+    // treat if-statement as a statement, hence return undefined
+    return MK.UNDEFINED();
+  }
+
   private evalBinaryExp(binop: AST_BinaryExp, env: VariableEnv): Runtime.Value {
     const binopStart = binop.left.start;
     const left = this.evaluate(binop.left, env);
@@ -679,8 +708,22 @@ export class Interpreter {
   //            SHARED HELPER METHODS
   // -----------------------------------------------
 
+  /**@desc `evalIfStatement` helper method. Handles/evaluates if-statement body*/
+  private handleIfStatementBody(ifStatementBody: AST_Statement, env: VariableEnv): void {
+    // HANDLE BLOCK STATEMENT
+    if (ifStatementBody.kind === "BlockStatement") {
+      const blockBody = (ifStatementBody as AST_BlockStatement).body;
+
+      // evaluate blockBody one statement at a time
+      for (const statement of blockBody) this.evaluate(statement, env);
+    }
+
+    // HANDLE ONE-LINER
+    else this.evaluate(ifStatementBody, env);
+  }
+
   /**@desc `traversePrototypeChain` wrapper, with added benefit of handling `static-functions`*/
-  private lookupPropertyOnPrototypeChain(value: Runtime.ProtoValue, key: string) {
+  private lookupPropertyOnPrototypeChain(value: Runtime.ProtoValue, key: string): Runtime.Value {
     const property = traversePrototypeChain(value.prototype, key);
 
     if (property.type === "staticFunction") {
