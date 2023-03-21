@@ -12,6 +12,7 @@ type AST_Node =
   | "ReturnStatement"
   | "IfStatement"
   | "WhileStatement"
+  | "BreakStatement"
 
   // EXPRESSIONS
   | "AssignmentExp"
@@ -83,6 +84,10 @@ interface AST_WhileStatement extends AST_Statement {
   kind: "WhileStatement";
   test: AST_Expression;
   body: AST_Statement;
+}
+
+interface AST_BreakStatement extends AST_Statement {
+  kind: "BreakStatement";
 }
 
 /**@desc returns value at run-time*/

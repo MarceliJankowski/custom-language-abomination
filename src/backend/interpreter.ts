@@ -30,6 +30,8 @@ class Return {
   constructor(public readonly value: Runtime.Value) {}
 }
 
+class Break {}
+
 // -----------------------------------------------
 //                 INTERPRETER
 // -----------------------------------------------
@@ -68,9 +70,6 @@ export class Interpreter {
       case "FunctionDeclaration":
         return this.evalFuncDeclaration(astNode as AST_FunctionDeclaration, env);
 
-      case "ReturnStatement":
-        return this.evalReturnStatement(astNode as AST_ReturnStatement, env);
-
       case "AssignmentExp":
         return this.evalAssignmentExp(astNode as AST_AssignmentExp, env);
 
@@ -94,6 +93,12 @@ export class Interpreter {
 
       case "BlockStatement":
         return this.evalBlockStatement(astNode as AST_BlockStatement, env);
+
+      case "ReturnStatement":
+        return this.evalReturnStatement(astNode as AST_ReturnStatement, env);
+
+      case "BreakStatement":
+        return this.evalBreakStatement();
 
       default:
         throw new Err(
@@ -157,6 +162,11 @@ export class Interpreter {
     else returnValue = MK.UNDEFINED();
 
     throw new Return(returnValue);
+  }
+
+  /**@desc propagates `breakStatement` through call-stack with exceptions*/
+  private evalBreakStatement(): never {
+    throw new Break();
   }
 
   private evalAssignmentExp(assignmentExp: AST_AssignmentExp, env: VariableEnv): Runtime.Value {
@@ -635,7 +645,15 @@ export class Interpreter {
     // while statements have their own VariableEnv/scope
     const whileStatementEnv = new VariableEnv(env);
 
-    while (isTestTruthy()) this.evaluate(whileStatement.body, whileStatementEnv);
+    while (isTestTruthy()) {
+      try {
+        this.evaluate(whileStatement.body, whileStatementEnv);
+      } catch (err) {
+        // support 'break' keyword
+        if (err instanceof Break) break;
+        else throw err; // propagate exception
+      }
+    }
 
     return MK.UNDEFINED();
   }

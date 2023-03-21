@@ -92,6 +92,11 @@ export class Parser {
         break;
       }
 
+      case TokenType.BREAK: {
+        parsedStatement = this.parseBreakStatement();
+        break;
+      }
+
       // EXPRESSIONS
       default:
         return this.parseExpression();
@@ -325,6 +330,19 @@ export class Parser {
     };
 
     return whileStatement;
+  }
+
+  private parseBreakStatement(): AST_BreakStatement {
+    const breakKeyword = this.eat();
+
+    // BUILD breakStatement
+    const breakStatement: AST_BreakStatement = {
+      kind: "BreakStatement",
+      start: breakKeyword.start,
+      end: breakKeyword.end,
+    };
+
+    return breakStatement;
   }
 
   private parseAssignmentExp(): AST_Expression {
