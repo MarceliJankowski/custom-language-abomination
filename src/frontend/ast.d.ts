@@ -11,6 +11,7 @@ type AST_Node =
   | "FunctionDeclaration"
   | "ReturnStatement"
   | "IfStatement"
+  | "WhileStatement"
 
   // EXPRESSIONS
   | "AssignmentExp"
@@ -76,6 +77,12 @@ interface AST_IfStatement extends AST_Statement {
   test: AST_Expression;
   consequent: AST_Statement;
   alternate?: AST_Statement;
+}
+
+interface AST_WhileStatement extends AST_Statement {
+  kind: "WhileStatement";
+  test: AST_Expression;
+  body: AST_BlockStatement;
 }
 
 /**@desc returns value at run-time*/

@@ -83,6 +83,9 @@ export class Interpreter {
       case "IfStatement":
         return this.evalIfStatement(astNode as AST_IfStatement, env);
 
+      case "WhileStatement":
+        return this.evalWhileStatement(astNode as AST_WhileStatement, env);
+
       default:
         throw new Err(
           `This AST node-kind has not yet been setup for interpretation.\nNode kind: '${astNode.kind}', at position: ${astNode.start}`,
@@ -126,7 +129,7 @@ export class Interpreter {
     return MK.UNDEFINED();
   }
 
-  private evalFuncDeclaration(funcDeclaration: AST_FunctionDeclaration, env: VariableEnv): Runtime.Value {
+  private evalFuncDeclaration(funcDeclaration: AST_FunctionDeclaration, env: VariableEnv): Runtime.Undefined {
     const { name, parameters, body, start } = funcDeclaration;
 
     const func = MK.FUNCTION(name, parameters, body, env);
@@ -566,8 +569,8 @@ export class Interpreter {
   }
 
   private evalTernaryExp(exp: AST_TernaryExp, env: VariableEnv): Runtime.Value {
-    const runtimeTestValue = this.evaluate(exp.test, env).value;
-    const testBoolean = getBooleanValue(runtimeTestValue);
+    const testValue = this.evaluate(exp.test, env).value;
+    const testBoolean = getBooleanValue(testValue);
 
     // TEST IS: 'truthy'
     if (testBoolean) {
@@ -580,7 +583,7 @@ export class Interpreter {
     return runtimeAlternate;
   }
 
-  private evalIfStatement(ifStatement: AST_IfStatement, env: VariableEnv): Runtime.Value {
+  private evalIfStatement(ifStatement: AST_IfStatement, env: VariableEnv): Runtime.Undefined {
     const testValue = this.evaluate(ifStatement.test, env).value;
     const testBoolean = getBooleanValue(testValue);
 
@@ -600,7 +603,24 @@ export class Interpreter {
       this.handleIfStatementBody(ifStatement.alternate, ifStatementEnv);
     }
 
-    // treat if-statement as a statement, hence return undefined
+    return MK.UNDEFINED();
+  }
+
+  private evalWhileStatement(whileStatement: AST_WhileStatement, env: VariableEnv): Runtime.Undefined {
+    const isTestTruthy = () => {
+      const testValue = this.evaluate(whileStatement.test, env).value;
+      const testBoolean = getBooleanValue(testValue);
+      return testBoolean;
+    };
+
+    // while statements have their own VariableEnv/scope
+    const whileStatementEnv = new VariableEnv(env);
+    const blockBody = whileStatement.body.body;
+
+    while (isTestTruthy()) {
+      for (const statement of blockBody) this.evaluate(statement, whileStatementEnv);
+    }
+
     return MK.UNDEFINED();
   }
 

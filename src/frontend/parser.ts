@@ -87,6 +87,11 @@ export class Parser {
         break;
       }
 
+      case TokenType.WHILE: {
+        parsedStatement = this.parseWhileStatement();
+        break;
+      }
+
       // EXPRESSIONS
       default:
         return this.parseExpression();
@@ -249,14 +254,14 @@ export class Parser {
     // HANDLE TEST
     this.eatAndExpect(
       TokenType.OPEN_PAREN,
-      "Invalid if-statement. Missing opening parentheses ('(') following 'if' keyword"
+      "Invalid if statement. Missing opening parentheses ('(') following 'if' keyword"
     );
 
     const test = this.parseExpression();
 
     this.eatAndExpect(
       TokenType.CLOSE_PAREN,
-      "Invalid if-statement. Missing closing parentheses (')') following test"
+      "Invalid if statement. Missing closing parentheses (')') following test"
     );
 
     // HANDLE CONSEQUENT
@@ -276,7 +281,7 @@ export class Parser {
     }
 
     // BUILD IfStatement
-    const IfStatement: AST_IfStatement = {
+    const ifStatement: AST_IfStatement = {
       kind: "IfStatement",
       test,
       consequent,
@@ -285,7 +290,38 @@ export class Parser {
       end: alternate?.end ?? consequent.end,
     };
 
-    return IfStatement;
+    return ifStatement;
+  }
+
+  private parseWhileStatement(): AST_WhileStatement {
+    const start = this.eat().start; // advance past 'while' keyword
+
+    // HANDLE TEST
+    this.eatAndExpect(
+      TokenType.OPEN_PAREN,
+      "Invalid while statement. Missing opening parentheses ('(') following 'while' keyword"
+    );
+
+    const test = this.parseExpression();
+
+    this.eatAndExpect(
+      TokenType.CLOSE_PAREN,
+      "Invalid while statement. Missing closing parentheses (')') following test"
+    );
+
+    // HANDLE BODY
+    const body = this.parseBlockStatement();
+
+    // BUILD WhileStatement
+    const whileStatement: AST_WhileStatement = {
+      kind: "WhileStatement",
+      test,
+      body,
+      start,
+      end: body.end,
+    };
+
+    return whileStatement;
   }
 
   private parseAssignmentExp(): AST_Expression {
