@@ -92,6 +92,9 @@ export class Interpreter {
       case "WhileStatement":
         return this.evalWhileStatement(astNode as AST_WhileStatement, env);
 
+      case "BlockStatement":
+        return this.evalBlockStatement(astNode as AST_BlockStatement, env);
+
       default:
         throw new Err(
           `This AST node-kind has not yet been setup for interpretation.\nNode kind: '${astNode.kind}', at position: ${astNode.start}`,
@@ -479,12 +482,10 @@ export class Interpreter {
         let funcReturnValue: Runtime.Value = MK.UNDEFINED();
 
         try {
-          // evaluate function body one statement at a time
-          for (const statement of func.body.body) this.evaluate(statement, funcInvocationEnv);
+          this.evalBlockStatement(func.body, funcInvocationEnv);
         } catch (err) {
-          // support 'return' keyword
-          if (err instanceof Return) funcReturnValue = err.value;
-          else throw err;
+          if (err instanceof Return) funcReturnValue = err.value; // support 'return' keyword
+          else throw err; // propagate exception
         }
 
         return funcReturnValue;
@@ -496,6 +497,13 @@ export class Interpreter {
           "interpreter"
         );
     }
+  }
+
+  private evalBlockStatement(blockStatement: AST_BlockStatement, env: VariableEnv): Runtime.Undefined {
+    // evaluate blockStatement body one statement at a time
+    for (const statement of blockStatement.body) this.evaluate(statement, env);
+
+    return MK.UNDEFINED();
   }
 
   private evalPrefixUnaryExp(
@@ -603,7 +611,7 @@ export class Interpreter {
 
     // TEST IS: 'truthy'
     testBooleanIf: if (testBoolean) {
-      this.handleIfStatementBody(ifStatement.consequent, ifStatementEnv);
+      this.evaluate(ifStatement.consequent, ifStatementEnv);
     }
 
     // TEST IS: 'falsy'
@@ -611,7 +619,7 @@ export class Interpreter {
       // handle alternate / 'else' keyword
       if (ifStatement.alternate === undefined) break testBooleanIf;
 
-      this.handleIfStatementBody(ifStatement.alternate, ifStatementEnv);
+      this.evaluate(ifStatement.alternate, ifStatementEnv);
     }
 
     return MK.UNDEFINED();
@@ -626,11 +634,8 @@ export class Interpreter {
 
     // while statements have their own VariableEnv/scope
     const whileStatementEnv = new VariableEnv(env);
-    const blockBody = whileStatement.body.body;
 
-    while (isTestTruthy()) {
-      for (const statement of blockBody) this.evaluate(statement, whileStatementEnv);
-    }
+    while (isTestTruthy()) this.evaluate(whileStatement.body, whileStatementEnv);
 
     return MK.UNDEFINED();
   }
@@ -738,20 +743,6 @@ export class Interpreter {
   // -----------------------------------------------
   //            SHARED HELPER METHODS
   // -----------------------------------------------
-
-  /**@desc `evalIfStatement` helper method. Handles/evaluates if-statement body*/
-  private handleIfStatementBody(ifStatementBody: AST_Statement, env: VariableEnv): void {
-    // HANDLE BLOCK STATEMENT
-    if (ifStatementBody.kind === "BlockStatement") {
-      const blockBody = (ifStatementBody as AST_BlockStatement).body;
-
-      // evaluate blockBody one statement at a time
-      for (const statement of blockBody) this.evaluate(statement, env);
-    }
-
-    // HANDLE ONE-LINER
-    else this.evaluate(ifStatementBody, env);
-  }
 
   /**@desc `traversePrototypeChain` wrapper, with added benefit of handling `static-functions`*/
   private lookupPropertyOnPrototypeChain(value: Runtime.ProtoValue, key: string): Runtime.Value {
