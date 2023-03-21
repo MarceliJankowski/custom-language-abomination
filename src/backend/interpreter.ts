@@ -22,6 +22,15 @@ interface SharedUnaryExpOperatorsData {
 }
 
 // -----------------------------------------------
+//  STATEMENTS TO PROPAGATE THROUGH CALL-STACK
+// -----------------------------------------------
+// Constructors used for propagating statements through call-stack with exceptions
+
+class Return {
+  constructor(public readonly value: Runtime.Value) {}
+}
+
+// -----------------------------------------------
 //                 INTERPRETER
 // -----------------------------------------------
 
@@ -60,10 +69,7 @@ export class Interpreter {
         return this.evalFuncDeclaration(astNode as AST_FunctionDeclaration, env);
 
       case "ReturnStatement":
-        throw new Err(
-          `Invalid return-statement. Found return-statement outside of a function body, at position ${astNode.start}`,
-          "interpreter"
-        );
+        return this.evalReturnStatement(astNode as AST_ReturnStatement, env);
 
       case "AssignmentExp":
         return this.evalAssignmentExp(astNode as AST_AssignmentExp, env);
@@ -138,6 +144,16 @@ export class Interpreter {
 
     // treat function declaration as a statement, hence return undefined
     return MK.UNDEFINED();
+  }
+
+  /**@desc propagates `returnStatement` through call-stack with exceptions*/
+  private evalReturnStatement(returnStatement: AST_ReturnStatement, env: VariableEnv): never {
+    let returnValue: Runtime.Value;
+
+    if (returnStatement.argument) returnValue = this.evaluate(returnStatement.argument, env);
+    else returnValue = MK.UNDEFINED();
+
+    throw new Return(returnValue);
   }
 
   private evalAssignmentExp(assignmentExp: AST_AssignmentExp, env: VariableEnv): Runtime.Value {
@@ -462,18 +478,13 @@ export class Interpreter {
 
         let funcReturnValue: Runtime.Value = MK.UNDEFINED();
 
-        // evaluate function body one statement at a time
-        for (const statement of func.body.body) {
-          if (statement.kind === "ReturnStatement") {
-            const returnStatement = statement as AST_ReturnStatement;
-
-            if (returnStatement.argument)
-              funcReturnValue = this.evaluate(returnStatement.argument, funcInvocationEnv);
-
-            break;
-          }
-
-          this.evaluate(statement, funcInvocationEnv);
+        try {
+          // evaluate function body one statement at a time
+          for (const statement of func.body.body) this.evaluate(statement, funcInvocationEnv);
+        } catch (err) {
+          // support 'return' keyword
+          if (err instanceof Return) funcReturnValue = err.value;
+          else throw err;
         }
 
         return funcReturnValue;
