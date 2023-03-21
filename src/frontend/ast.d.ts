@@ -82,7 +82,7 @@ interface AST_IfStatement extends AST_Statement {
 interface AST_WhileStatement extends AST_Statement {
   kind: "WhileStatement";
   test: AST_Expression;
-  body: AST_BlockStatement;
+  body: AST_Statement;
 }
 
 /**@desc returns value at run-time*/

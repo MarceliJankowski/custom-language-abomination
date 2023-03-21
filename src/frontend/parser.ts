@@ -310,7 +310,10 @@ export class Parser {
     );
 
     // HANDLE BODY
-    const body = this.parseBlockStatement();
+    let body;
+
+    if (this.at().type === TokenType.OPEN_CURLY_BRACE) body = this.parseBlockStatement();
+    else body = this.parseStatement(); // enable one-liners
 
     // BUILD WhileStatement
     const whileStatement: AST_WhileStatement = {
