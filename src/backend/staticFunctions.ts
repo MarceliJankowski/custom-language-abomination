@@ -432,7 +432,36 @@ const join = STATIC_FUNCTION((runtimeArray, runtimeDelimiter) => {
   return MK.STRING(joinedElements);
 });
 
-export const STATIC_ARRAY_FUNCTIONS = { getLength, push, pop, unshift, shift, slice, splice, reverse, join };
+/**@desc creates and returns new array, by merging two or more arrays together (doesn't modify the original)*/
+const concat = STATIC_FUNCTION((runtimeArray, ...runtimeValues) => {
+  const arraysToMerge = runtimeValues.flatMap(runtimeValue => {
+    if (runtimeValue?.type !== "array")
+      throw new Err(
+        `Invalid value argument type: '${runtimeValue?.type}' passed to 'concat()' static function`,
+        "interpreter"
+      );
+
+    return (runtimeValue as Runtime.Array).value;
+  });
+
+  const targetArr = (runtimeArray as Runtime.Array).value;
+  const mergedArray = targetArr.concat(arraysToMerge);
+
+  return MK.ARRAY(mergedArray);
+});
+
+export const STATIC_ARRAY_FUNCTIONS = {
+  getLength,
+  push,
+  pop,
+  unshift,
+  shift,
+  slice,
+  splice,
+  reverse,
+  join,
+  concat,
+};
 
 // -----------------------------------------------
 //                    OBJECT
