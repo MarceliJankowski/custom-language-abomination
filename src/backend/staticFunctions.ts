@@ -517,4 +517,24 @@ const getKeys = STATIC_FUNCTION(({ value }) => {
   return MK.ARRAY(runtimeKeys);
 });
 
-export const STATIC_OBJECT_FUNCTIONS = { hasOwn, getEntries, getValues, getKeys };
+/**@desc modifies object by copying all properties from one or more source objects into it
+@param ...sourceObjects objects to copy properties from
+@return reference to modified object*/
+const assign = STATIC_FUNCTION((runtimeObject, ...runtimeSources) => {
+  const sourceObjects = runtimeSources.map(runtimeValue => {
+    if (runtimeValue?.type !== "object")
+      throw new Err(
+        `Invalid source argument type: '${runtimeValue?.type}' passed to 'assign()' static function`,
+        "interpreter"
+      );
+
+    return (runtimeValue as Runtime.Object).value;
+  });
+
+  const targetObj = (runtimeObject as Runtime.Object).value;
+  Object.assign(targetObj, ...sourceObjects);
+
+  return runtimeObject;
+});
+
+export const STATIC_OBJECT_FUNCTIONS = { hasOwn, getEntries, getValues, getKeys, assign };
