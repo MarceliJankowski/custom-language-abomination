@@ -31,6 +31,7 @@ export enum TokenType {
   ELSE = "ELSE",
   WHILE = "WHILE",
   BREAK = "BREAK",
+  CONTINUE = "CONTINUE",
 
   // OPERATORS
   UNARY_OPERATOR = "UNARY_OPERATOR",
@@ -80,6 +81,7 @@ KEYWORDS.set("if", TokenType.IF);
 KEYWORDS.set("else", TokenType.ELSE);
 KEYWORDS.set("while", TokenType.WHILE);
 KEYWORDS.set("break", TokenType.BREAK);
+KEYWORDS.set("continue", TokenType.CONTINUE);
 
 // -----------------------------------------------
 //                    LEXER

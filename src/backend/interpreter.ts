@@ -26,11 +26,16 @@ interface SharedUnaryExpOperatorsData {
 // -----------------------------------------------
 // Constructors used for propagating statements through call-stack with exceptions
 
+/**@decs Constructor used for propagating `returnStatement`*/
 class Return {
   constructor(public readonly value: Runtime.Value) {}
 }
 
+/**@decs Constructor used for propagating `breakStatement`*/
 class Break {}
+
+/**@decs Constructor used for propagating `continueStatement`*/
+class Continue {}
 
 // -----------------------------------------------
 //                 INTERPRETER
@@ -100,6 +105,9 @@ export class Interpreter {
       case "BreakStatement":
         return this.evalBreakStatement();
 
+      case "ContinueStatement":
+        return this.evalContinueStatement();
+
       default:
         throw new Err(
           `This AST node-kind has not yet been setup for interpretation.\nNode kind: '${astNode.kind}', at position: ${astNode.start}`,
@@ -154,7 +162,6 @@ export class Interpreter {
     return MK.UNDEFINED();
   }
 
-  /**@desc propagates `returnStatement` through call-stack with exceptions*/
   private evalReturnStatement(returnStatement: AST_ReturnStatement, env: VariableEnv): never {
     let returnValue: Runtime.Value;
 
@@ -164,9 +171,12 @@ export class Interpreter {
     throw new Return(returnValue);
   }
 
-  /**@desc propagates `breakStatement` through call-stack with exceptions*/
   private evalBreakStatement(): never {
     throw new Break();
+  }
+
+  private evalContinueStatement(): never {
+    throw new Continue();
   }
 
   private evalAssignmentExp(assignmentExp: AST_AssignmentExp, env: VariableEnv): Runtime.Value {
@@ -649,9 +659,11 @@ export class Interpreter {
       try {
         this.evaluate(whileStatement.body, whileStatementEnv);
       } catch (err) {
-        // support 'break' keyword
+        // supported keywords:
         if (err instanceof Break) break;
-        else throw err; // propagate exception
+        else if (err instanceof Continue) continue;
+        // propagate exception
+        else throw err;
       }
     }
 

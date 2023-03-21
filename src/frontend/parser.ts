@@ -97,6 +97,11 @@ export class Parser {
         break;
       }
 
+      case TokenType.CONTINUE: {
+        parsedStatement = this.parseContinueStatement();
+        break;
+      }
+
       // EXPRESSIONS
       default:
         return this.parseExpression();
@@ -343,6 +348,19 @@ export class Parser {
     };
 
     return breakStatement;
+  }
+
+  private parseContinueStatement(): AST_ContinueStatement {
+    const continueKeyword = this.eat();
+
+    // BUILD continueStatement
+    const continueStatement: AST_ContinueStatement = {
+      kind: "ContinueStatement",
+      start: continueKeyword.start,
+      end: continueKeyword.end,
+    };
+
+    return continueStatement;
   }
 
   private parseAssignmentExp(): AST_Expression {
