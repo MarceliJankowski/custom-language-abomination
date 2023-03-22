@@ -203,7 +203,7 @@ const stringIndexOf = STATIC_FUNCTION(({ value }, searchString) => {
 });
 
 /**@desc searches string and returns starting index of the `last` occurrence of `searchString` or -1 if it's not present*/
-const lastIndexOf = STATIC_FUNCTION(({ value }, searchString) => {
+const stringLastIndexOf = STATIC_FUNCTION(({ value }, searchString) => {
   if (searchString === undefined) return MK.NUMBER(-1);
 
   if (searchString && searchString.type !== "string")
@@ -307,7 +307,7 @@ export const STATIC_STRING_FUNCTIONS = {
   endsWith,
   slice,
   indexOf: stringIndexOf,
-  lastIndexOf,
+  lastIndexOf: stringLastIndexOf,
   repeat,
   replace,
   replaceAll,
@@ -452,8 +452,21 @@ const arrayIndexOf = STATIC_FUNCTION((runtimeArray, runtimeSearchElement) => {
   const array = (runtimeArray as Runtime.Array).value;
   const searchElement = runtimeSearchElement.value;
 
-  // find and return index of searchElement
+  // find and return index of searchElement's first occurrence
   for (let i = 0; i < array.length; i++) if (array[i].value === searchElement) return MK.NUMBER(i);
+
+  return MK.NUMBER(-1);
+});
+
+/**@desc returns the `last` index at which a given element can be found in the array, or -1 if it's not present*/
+const arrayLastIndexOf = STATIC_FUNCTION((runtimeArray, runtimeSearchElement) => {
+  if (runtimeSearchElement === undefined) return MK.NUMBER(-1);
+
+  const array = (runtimeArray as Runtime.Array).value;
+  const searchElement = runtimeSearchElement.value;
+
+  // find and return index of searchElement's last occurrence
+  for (let i = array.length - 1; i >= 0; i--) if (array[i].value === searchElement) return MK.NUMBER(i);
 
   return MK.NUMBER(-1);
 });
@@ -470,6 +483,7 @@ export const STATIC_ARRAY_FUNCTIONS = {
   join,
   concat,
   indexOf: arrayIndexOf,
+  lastIndexOf: arrayLastIndexOf,
 };
 
 // -----------------------------------------------
