@@ -19,6 +19,8 @@ export function STATIC_FUNCTION(implementation: Runtime.StaticFuncImplementation
 // -----------------------------------------------
 //           STATIC BUILDIN FUNCTIONS
 // -----------------------------------------------
+// I'm raising exceptions all over the place, without leaving user possibility of retaliating/handling them
+// that's a rather questionable design choice, but it'll do for this basic-interpreter
 
 // -----------------------------------------------
 //            ALL RUNTIME DATA-TYPES
@@ -184,13 +186,11 @@ const endsWith = STATIC_FUNCTION(({ value }, searchString) => {
   return MK.BOOL(endsWithBoolean);
 });
 
-/**@desc searches string and returns starting index of the `first` occurrence of `searchString`
-@param searchString string used as a search pattern*/
-const indexOf = STATIC_FUNCTION(({ value }, searchString) => {
-  if (searchString === undefined)
-    throw new Err(`Missing searchString argument at 'indexOf()' static function invocation`, "interpreter");
+/**@desc searches string and returns starting index of the `first` occurrence of `searchString` or -1 if it's not present*/
+const stringIndexOf = STATIC_FUNCTION(({ value }, searchString) => {
+  if (searchString === undefined) return MK.NUMBER(-1);
 
-  if (searchString.type !== "string")
+  if (searchString && searchString.type !== "string")
     throw new Err(
       `Invalid searchString argument type: '${searchString.type}' passed to 'indexOf()' static function`,
       "interpreter"
@@ -202,16 +202,11 @@ const indexOf = STATIC_FUNCTION(({ value }, searchString) => {
   return MK.NUMBER(index);
 });
 
-/**@desc searches string and returns starting index of the `last` occurrence of `searchString`
-@param searchString string used as a search pattern*/
+/**@desc searches string and returns starting index of the `last` occurrence of `searchString` or -1 if it's not present*/
 const lastIndexOf = STATIC_FUNCTION(({ value }, searchString) => {
-  if (searchString === undefined)
-    throw new Err(
-      `Missing searchString argument at 'lastIndexOf()' static function invocation`,
-      "interpreter"
-    );
+  if (searchString === undefined) return MK.NUMBER(-1);
 
-  if (searchString.type !== "string")
+  if (searchString && searchString.type !== "string")
     throw new Err(
       `Invalid searchString argument type: '${searchString.type}' passed to 'lastIndexOf()' static function`,
       "interpreter"
@@ -311,7 +306,7 @@ export const STATIC_STRING_FUNCTIONS = {
   startsWith,
   endsWith,
   slice,
-  indexOf,
+  indexOf: stringIndexOf,
   lastIndexOf,
   repeat,
   replace,
@@ -450,6 +445,19 @@ const concat = STATIC_FUNCTION((runtimeArray, ...runtimeValues) => {
   return MK.ARRAY(mergedArray);
 });
 
+/**@desc returns the `first` index at which a given element can be found in the array, or -1 if it's not present*/
+const arrayIndexOf = STATIC_FUNCTION((runtimeArray, runtimeSearchElement) => {
+  if (runtimeSearchElement === undefined) return MK.NUMBER(-1);
+
+  const array = (runtimeArray as Runtime.Array).value;
+  const searchElement = runtimeSearchElement.value;
+
+  // find and return index of searchElement
+  for (let i = 0; i < array.length; i++) if (array[i].value === searchElement) return MK.NUMBER(i);
+
+  return MK.NUMBER(-1);
+});
+
 export const STATIC_ARRAY_FUNCTIONS = {
   getLength,
   push,
@@ -461,6 +469,7 @@ export const STATIC_ARRAY_FUNCTIONS = {
   reverse,
   join,
   concat,
+  indexOf: arrayIndexOf,
 };
 
 // -----------------------------------------------
