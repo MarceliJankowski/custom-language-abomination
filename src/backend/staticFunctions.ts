@@ -485,6 +485,18 @@ const arrayIncludes = STATIC_FUNCTION((searchTarget, searchRuntimeValue) => {
   return MK.BOOL(false);
 });
 
+/**@desc replaces all array elements with a `value`. Returns modified array*/
+const fill = STATIC_FUNCTION((runtimeArray, runtimeValue) => {
+  if (runtimeValue === undefined)
+    throw new Err(`Missing value argument at 'fill()' static function invocation`, "interpreter");
+
+  const array = (runtimeArray as Runtime.Array).value;
+
+  array.fill(runtimeValue);
+
+  return runtimeArray;
+});
+
 export const STATIC_ARRAY_FUNCTIONS = {
   getLength,
   push,
@@ -499,6 +511,7 @@ export const STATIC_ARRAY_FUNCTIONS = {
   indexOf: arrayIndexOf,
   lastIndexOf: arrayLastIndexOf,
   includes: arrayIncludes,
+  fill,
 };
 
 // -----------------------------------------------
