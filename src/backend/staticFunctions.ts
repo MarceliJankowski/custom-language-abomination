@@ -78,7 +78,7 @@ const slice = STATIC_FUNCTION((runtimeValue, runtimeStart, runtimeEnd) => {
 
 /**@desc determine whether `searchTarget` includes/contains `searchString`
 @param searchString string used as a search pattern*/
-const includes = STATIC_FUNCTION((searchTarget, searchString) => {
+const stringIncludes = STATIC_FUNCTION((searchTarget, searchString) => {
   if (searchString === undefined)
     throw new Err(`Missing searchString argument at 'includes()' static function invocation`, "interpreter");
 
@@ -296,7 +296,7 @@ const replaceAll = STATIC_FUNCTION(({ value }, runtimePattern, runtimeReplacemen
 
 export const STATIC_STRING_FUNCTIONS = {
   getLength,
-  includes,
+  includes: stringIncludes,
   trimStart,
   trimEnd,
   trim,
@@ -471,6 +471,20 @@ const arrayLastIndexOf = STATIC_FUNCTION((runtimeArray, runtimeSearchElement) =>
   return MK.NUMBER(-1);
 });
 
+/**@desc determine whether array includes/contains `searchValue` among its entries*/
+const arrayIncludes = STATIC_FUNCTION((searchTarget, searchRuntimeValue) => {
+  if (searchRuntimeValue === undefined)
+    throw new Err(`Missing searchValue argument at 'includes()' static function invocation`, "interpreter");
+
+  const array = (searchTarget as Runtime.Array).value;
+  const searchValue = searchRuntimeValue.value;
+
+  // try finding searchValue
+  for (let i = 0; i < array.length; i++) if (array[i].value === searchValue) return MK.BOOL(true);
+
+  return MK.BOOL(false);
+});
+
 export const STATIC_ARRAY_FUNCTIONS = {
   getLength,
   push,
@@ -484,6 +498,7 @@ export const STATIC_ARRAY_FUNCTIONS = {
   concat,
   indexOf: arrayIndexOf,
   lastIndexOf: arrayLastIndexOf,
+  includes: arrayIncludes,
 };
 
 // -----------------------------------------------
