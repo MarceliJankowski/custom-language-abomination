@@ -489,7 +489,7 @@ export class Interpreter {
       case "function": {
         const func = runtimeCallee as Runtime.Function;
 
-        // function invocations have their own VariableEnv/scope
+        // function invocations have their own VariableEnv/scope (for parameter creation)
         const funcInvocationEnv = new VariableEnv(func.declarationEnv);
 
         // CREATE PARAMETER LIST VARIABLES
@@ -520,8 +520,11 @@ export class Interpreter {
   }
 
   private evalBlockStatement(blockStatement: AST_BlockStatement, env: VariableEnv): Runtime.Undefined {
+    // blocks have their own VariableEnv/scope
+    const blockEnv = new VariableEnv(env);
+
     // evaluate blockStatement body one statement at a time
-    for (const statement of blockStatement.body) this.evaluate(statement, env);
+    for (const statement of blockStatement.body) this.evaluate(statement, blockEnv);
 
     return MK.UNDEFINED();
   }
@@ -626,12 +629,9 @@ export class Interpreter {
     const testValue = this.evaluate(ifStatement.test, env).value;
     const testBoolean = getBooleanValue(testValue);
 
-    // if-statements have their own VariableEnv/scope
-    const ifStatementEnv = new VariableEnv(env);
-
     // TEST IS: 'truthy'
     testBooleanIf: if (testBoolean) {
-      this.evaluate(ifStatement.consequent, ifStatementEnv);
+      this.evaluate(ifStatement.consequent, env);
     }
 
     // TEST IS: 'falsy'
@@ -639,7 +639,7 @@ export class Interpreter {
       // handle alternate / 'else' keyword
       if (ifStatement.alternate === undefined) break testBooleanIf;
 
-      this.evaluate(ifStatement.alternate, ifStatementEnv);
+      this.evaluate(ifStatement.alternate, env);
     }
 
     return MK.UNDEFINED();
@@ -652,12 +652,9 @@ export class Interpreter {
       return testBoolean;
     };
 
-    // while statements have their own VariableEnv/scope
-    const whileStatementEnv = new VariableEnv(env);
-
     while (isTestTruthy()) {
       try {
-        this.evaluate(whileStatement.body, whileStatementEnv);
+        this.evaluate(whileStatement.body, env);
       } catch (err) {
         // supported keywords:
         if (err instanceof Break) break;

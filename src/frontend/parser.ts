@@ -21,7 +21,14 @@ export class Parser {
     const programStart = this.tokens[0].start; // define programStart before 'tokens' array get's eaten by parser
 
     // BUILD AST
-    while (this.notEOF()) this.programBody.push(this.parseStatement());
+    while (this.notEOF()) {
+      const statement = this.parseStatement();
+
+      // HANDLE OPTIONAL SEMICOLON
+      if (this.at().type === TokenType.SEMICOLON) this.eat();
+
+      this.programBody.push(statement);
+    }
 
     const program: AST_Program = {
       kind: "Program",
@@ -102,24 +109,21 @@ export class Parser {
         break;
       }
 
+      case TokenType.FOR: {
+        parsedStatement = this.parseForStatement();
+        break;
+      }
+
       // EXPRESSIONS
       default:
         return this.parseExpression();
     }
 
-    // HANDLE OPTIONAL SEMICOLON
-    if (this.at().type === TokenType.SEMICOLON) this.eat();
-
     return parsedStatement;
   }
 
   private parseExpression(): AST_Expression {
-    const parsedExpression = this.parseAssignmentExp();
-
-    // HANDLE OPTIONAL SEMICOLON
-    if (this.at().type === TokenType.SEMICOLON) this.eat();
-
-    return parsedExpression;
+    return this.parseAssignmentExp();
   }
 
   private parseVarDeclaration(): AST_Statement {
@@ -335,6 +339,113 @@ export class Parser {
     };
 
     return whileStatement;
+  }
+
+  private parseForStatement(): AST_Statement {
+    const forKeyword = this.eat();
+
+    this.eatAndExpect(
+      TokenType.OPEN_PAREN,
+      "Invalid for statement. Missing opening parentheses ('(') following 'for' keyword"
+    );
+
+    // HANDLE INITIALIZER
+    let initializer;
+
+    // allow initializer omission
+    if (this.at().type === TokenType.SEMICOLON) {
+      initializer = undefined;
+    }
+
+    // initializer as variable declaration
+    else if (this.at().type === TokenType.CONST || this.at().type === TokenType.VAR) {
+      initializer = this.parseVarDeclaration();
+    }
+
+    // initializer as expression
+    else initializer = this.parseExpression();
+
+    this.eatAndExpect(
+      TokenType.SEMICOLON,
+      "Invalid for statement. Missing semicolon (';') delimiter following initializer"
+    );
+
+    // HANDLE TEST
+    let test;
+
+    // allow test omission
+    if (this.at().type !== TokenType.SEMICOLON) test = this.parseExpression();
+
+    this.eatAndExpect(
+      TokenType.SEMICOLON,
+      "Invalid for statement. Missing semicolon (';') delimiter following test"
+    );
+
+    // HANDLE UPDATE
+    let update;
+
+    // allow update omission
+    if (this.at().type !== TokenType.CLOSE_PAREN) update = this.parseExpression();
+
+    this.eatAndExpect(
+      TokenType.CLOSE_PAREN,
+      "Invalid for statement. Missing closing parentheses (')') following update"
+    );
+
+    // HANDLE BODY
+    let body;
+
+    if (this.at().type === TokenType.OPEN_CURLY_BRACE) body = this.parseBlockStatement();
+    else body = this.parseStatement(); // enable one-liners
+
+    // DESUGARING
+    // forStatement doesn't introduce any "new" capabilities to the language, it can be fully implemented with already defined AST_NODES
+    // therefore, I treat it as syntactic-sugar. Here I'm desugaring forStatement (breaking it up) into its primary components / AST_NODES
+
+    if (update) {
+      const bodyWithUpdate: AST_BlockStatement = {
+        kind: "BlockStatement",
+        body: [body, update],
+        start: body.start,
+        end: body.end,
+      };
+
+      body = bodyWithUpdate;
+    }
+
+    if (test === undefined) {
+      const defaultTestValue: AST_Identifier = {
+        kind: "Identifier",
+        value: "true",
+        start: forKeyword.start,
+        end: forKeyword.end,
+      };
+
+      test = defaultTestValue;
+    }
+
+    const bodyWhileStatement: AST_WhileStatement = {
+      kind: "WhileStatement",
+      test,
+      body,
+      start: body.start,
+      end: body.end,
+    };
+
+    body = bodyWhileStatement;
+
+    if (initializer) {
+      const bodyWithInitializer: AST_BlockStatement = {
+        kind: "BlockStatement",
+        body: [initializer, body],
+        start: body.start,
+        end: body.end,
+      };
+
+      body = bodyWithInitializer;
+    }
+
+    return body;
   }
 
   private parseBreakStatement(): AST_BreakStatement {
