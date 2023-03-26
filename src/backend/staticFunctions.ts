@@ -497,6 +497,43 @@ const fill = STATIC_FUNCTION((runtimeArray, runtimeValue) => {
   return runtimeArray;
 });
 
+/**@desc `array.flat()` helper function*/
+function flattenArrayRecursively(runtimeArray: Runtime.Array, depth: number): Runtime.Array {
+  if (depth <= 0) return runtimeArray;
+
+  const flattenedArray = [];
+
+  // BUILD flattenedArray
+  for (const runtimeValue of runtimeArray.value) {
+    // HANDLE SUB-ARRAY
+    if (runtimeValue.type === "array") {
+      const flattenedSubArray = flattenArrayRecursively(runtimeValue as Runtime.Array, depth - 1).value;
+
+      flattenedArray.push(...flattenedSubArray);
+    }
+
+    // HANDLE RUNTIME-VALUE
+    else flattenedArray.push(runtimeValue);
+  }
+
+  return MK.ARRAY(flattenedArray);
+}
+
+/**@desc creates a new array with all sub-array elements concatenated into it recursively up to the specified `depth`
+@param depth specifies how deep a nested array structure should be flattened (if omitted, defaults to 1)*/
+const flat = STATIC_FUNCTION((runtimeArray, runtimeDepth) => {
+  if (runtimeDepth && runtimeDepth.type !== "number")
+    throw new Err(
+      `Invalid depth argument type: '${runtimeDepth.type}' passed to 'flat()' static function`,
+      "interpreter"
+    );
+
+  const depth = (runtimeDepth as Runtime.Number | undefined)?.value ?? 1;
+  const flattenedArray = flattenArrayRecursively(runtimeArray as Runtime.Array, depth);
+
+  return flattenedArray;
+});
+
 export const STATIC_ARRAY_FUNCTIONS = {
   getLength,
   push,
@@ -512,6 +549,7 @@ export const STATIC_ARRAY_FUNCTIONS = {
   lastIndexOf: arrayLastIndexOf,
   includes: arrayIncludes,
   fill,
+  flat,
 };
 
 // -----------------------------------------------
