@@ -54,4 +54,4 @@ export const VALID_MEMBER_EXP_RUNTIME_TYPES: Runtime.ValueType[] = [
 //                FALSY VALUSES
 // -----------------------------------------------
 
-export const RUNTIME_FALSY_VALUES = [MK.BOOL(false), MK.UNDEFINED(), MK.NULL(), MK.NUMBER(0)];
+export const RUNTIME_FALSY_VALUES = [MK.BOOL(false), MK.UNDEFINED(), MK.NULL(), MK.NUMBER(0), MK.STRING("")];
