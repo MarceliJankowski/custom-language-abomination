@@ -592,6 +592,34 @@ const every = STATIC_FUNCTION((runtimeArray, runtimeCallback): Runtime.Boolean =
   return MK.BOOL(outputBoolean);
 });
 
+/**@desc returns elements of an array that pass test specified in `callback`
+@param callback function executed for each element in the array (invoked with: `element`, `index`, `array` arguments). It should return `truthy` value to indicate that element passed the test*/
+const filter = STATIC_FUNCTION((runtimeArray, runtimeCallback): Runtime.Array => {
+  if (runtimeCallback === undefined)
+    throw new Err(`Missing callback argument at 'filter()' static function invocation`, "interpreter");
+
+  if (runtimeCallback.type !== "function")
+    throw new Err(
+      `Invalid callback argument type: '${runtimeCallback.type}' passed to 'filter()' static function`,
+      "interpreter"
+    );
+
+  const array = (runtimeArray as Runtime.Array).value;
+  const callback = runtimeCallback as Runtime.Function;
+
+  const filteredArray = array.filter((element, index) => {
+    const callbackOutput = interpreter.evalRuntimeFuncCall(callback, [
+      element,
+      MK.NUMBER(index),
+      runtimeArray,
+    ]);
+
+    return getBooleanValue(callbackOutput.value);
+  });
+
+  return MK.ARRAY(filteredArray);
+});
+
 export const STATIC_ARRAY_FUNCTIONS = {
   getLength,
   push,
@@ -610,6 +638,7 @@ export const STATIC_ARRAY_FUNCTIONS = {
   flat,
   some,
   every,
+  filter,
 };
 
 // -----------------------------------------------
