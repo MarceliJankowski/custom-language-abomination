@@ -486,30 +486,8 @@ export class Interpreter {
         return output;
       }
 
-      case "function": {
-        const func = runtimeCallee as Runtime.Function;
-
-        // function invocations have their own VariableEnv/scope (for parameter creation)
-        const funcInvocationEnv = new VariableEnv(func.declarationEnv);
-
-        // CREATE PARAMETER LIST VARIABLES
-        func.parameters.forEach((parameter, index) => {
-          const value = runtimeArgs[index] ?? MK.UNDEFINED();
-
-          funcInvocationEnv.declareVar(parameter.value, value, { position: parameter.start });
-        });
-
-        let funcReturnValue: Runtime.Value = MK.UNDEFINED();
-
-        try {
-          this.evalBlockStatement(func.body, funcInvocationEnv);
-        } catch (err) {
-          if (err instanceof Return) funcReturnValue = err.value; // support 'return' keyword
-          else throw err; // propagate exception
-        }
-
-        return funcReturnValue;
-      }
+      case "function":
+        return this.evalRuntimeFuncCall(runtimeCallee as Runtime.Function, runtimeArgs);
 
       default:
         throw new Err(
@@ -517,6 +495,29 @@ export class Interpreter {
           "interpreter"
         );
     }
+  }
+
+  public evalRuntimeFuncCall(func: Runtime.Function, args: Runtime.Value[]): Runtime.Value {
+    // function invocations have their own VariableEnv/scope (for parameter creation)
+    const funcInvocationEnv = new VariableEnv(func.declarationEnv);
+
+    // CREATE PARAMETER LIST VARIABLES
+    func.parameters.forEach((parameter, index) => {
+      const value = args[index] ?? MK.UNDEFINED();
+
+      funcInvocationEnv.declareVar(parameter.value, value, { position: parameter.start });
+    });
+
+    let funcReturnValue: Runtime.Value = MK.UNDEFINED();
+
+    try {
+      this.evalBlockStatement(func.body, funcInvocationEnv);
+    } catch (err) {
+      if (err instanceof Return) funcReturnValue = err.value; // support 'return' keyword
+      else throw err; // propagate exception
+    }
+
+    return funcReturnValue;
   }
 
   private evalBlockStatement(blockStatement: AST_BlockStatement, env: VariableEnv): Runtime.Undefined {

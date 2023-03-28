@@ -1,6 +1,6 @@
-// PROJECT MODULES
-import { Err, parseForLogging, stringifyPretty } from "../utils";
+import { Err, parseForLogging, stringifyPretty, getBooleanValue } from "../utils";
 import { Runtime, MK } from "./";
+import { interpreter } from "../main";
 
 // -----------------------------------------------
 //           STATIC FUNCTION FACTORY
@@ -353,7 +353,6 @@ const unshift = STATIC_FUNCTION((runtimeArray, ...elements) => {
   const array = (runtimeArray as Runtime.Array).value;
 
   const newLength = array.unshift(...(elements as Runtime.Value[]));
-
   return MK.NUMBER(newLength);
 });
 
@@ -534,6 +533,34 @@ const flat = STATIC_FUNCTION((runtimeArray, runtimeDepth) => {
   return flattenedArray;
 });
 
+/**@desc determines whether `at least one` element in the array passes through test implemented in the `callback` function. Returns corresponding boolean
+@param callback function executed for each element in the array (invoked with: `element`, `index`, `array` arguments). It should return `truthy` value to indicate that element passed the test*/
+const some = STATIC_FUNCTION((runtimeArray, runtimeCallback): Runtime.Boolean => {
+  if (runtimeCallback === undefined)
+    throw new Err(`Missing callback argument at 'some()' static function invocation`, "interpreter");
+
+  if (runtimeCallback.type !== "function")
+    throw new Err(
+      `Invalid callback argument type: '${runtimeCallback.type}' passed to 'some()' static function`,
+      "interpreter"
+    );
+
+  const array = (runtimeArray as Runtime.Array).value;
+  const callback = runtimeCallback as Runtime.Function;
+
+  const someOutputBoolean = array.some((element, index) => {
+    const callbackOutput = interpreter.evalRuntimeFuncCall(callback, [
+      element,
+      MK.NUMBER(index),
+      runtimeArray,
+    ]);
+
+    return getBooleanValue(callbackOutput.value);
+  });
+
+  return MK.BOOL(someOutputBoolean);
+});
+
 export const STATIC_ARRAY_FUNCTIONS = {
   getLength,
   push,
@@ -550,6 +577,7 @@ export const STATIC_ARRAY_FUNCTIONS = {
   includes: arrayIncludes,
   fill,
   flat,
+  some,
 };
 
 // -----------------------------------------------

@@ -23,6 +23,12 @@ interface EvaluateSrcOutput {
 type EvaluateUpToType = "l" | "lexer" | "p" | "parser" | "i" | "interpreter";
 
 // -----------------------------------------------
+//             INTERPRETER INSTANCE
+// -----------------------------------------------
+
+export const interpreter = new Interpreter();
+
+// -----------------------------------------------
 //            INTERPRETER INTERFACE
 // -----------------------------------------------
 
@@ -241,8 +247,7 @@ class InterpreterInterface {
     if (this.evaluateUpTo === "parser" || this.evaluateUpTo === "interpreter") {
       AST = new Parser([...lexerOutput]).buildAST(); // passing shallow-copy of lexerOutput because parser modifies it and I need original for the verboseOutput
 
-      if (this.evaluateUpTo === "interpreter")
-        interpreterOutput = new Interpreter().evaluate(AST, this.globalEnv);
+      if (this.evaluateUpTo === "interpreter") interpreterOutput = interpreter.evaluate(AST, this.globalEnv);
     }
 
     return {
