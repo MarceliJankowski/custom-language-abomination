@@ -624,6 +624,28 @@ const find = STATIC_FUNCTION((runtimeArray, runtimeCallback): Runtime.Value => {
   return foundElement ?? MK.UNDEFINED();
 });
 
+/**@desc returns index of the `first` element in the array that passes test specified in `callback` (in case no elements pass the test, returns `-1`)
+@param callback function executed for each element in the array (invoked with: `element`, `index`, `array` arguments). It should return `truthy` value to indicate that element passed the test*/
+const findIndex = STATIC_FUNCTION((runtimeArray, runtimeCallback): Runtime.Number => {
+  if (runtimeCallback === undefined)
+    throw new Err(`Missing callback argument at 'findIndex()' static function invocation`, "interpreter");
+
+  if (runtimeCallback.type !== "function")
+    throw new Err(
+      `Invalid callback argument type: '${runtimeCallback.type}' passed to 'findIndex()' static function`,
+      "interpreter"
+    );
+
+  const array = (runtimeArray as Runtime.Array).value;
+  const callback = runtimeCallback as Runtime.Function;
+
+  const foundIndex = array.findIndex((element, index) =>
+    handleCallback(callback, element, index, runtimeArray as Runtime.Array)
+  );
+
+  return MK.NUMBER(foundIndex);
+});
+
 export const STATIC_ARRAY_FUNCTIONS = {
   getLength,
   push,
@@ -644,6 +666,7 @@ export const STATIC_ARRAY_FUNCTIONS = {
   every,
   filter,
   find,
+  findIndex,
 };
 
 // -----------------------------------------------
