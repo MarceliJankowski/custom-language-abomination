@@ -551,15 +551,9 @@ const some = STATIC_FUNCTION((runtimeArray, runtimeCallback): Runtime.Boolean =>
   const array = (runtimeArray as Runtime.Array).value;
   const callback = runtimeCallback as Runtime.Function;
 
-  const outputBoolean = array.some((element, index) => {
-    const callbackOutput = interpreter.evalRuntimeFuncCall(callback, [
-      element,
-      MK.NUMBER(index),
-      runtimeArray,
-    ]);
-
-    return getBooleanValue(callbackOutput.value);
-  });
+  const outputBoolean = array.some((element, index) =>
+    handleCallback(callback, element, index, runtimeArray as Runtime.Array)
+  );
 
   return MK.BOOL(outputBoolean);
 });
@@ -579,15 +573,9 @@ const every = STATIC_FUNCTION((runtimeArray, runtimeCallback): Runtime.Boolean =
   const array = (runtimeArray as Runtime.Array).value;
   const callback = runtimeCallback as Runtime.Function;
 
-  const outputBoolean = array.every((element, index) => {
-    const callbackOutput = interpreter.evalRuntimeFuncCall(callback, [
-      element,
-      MK.NUMBER(index),
-      runtimeArray,
-    ]);
-
-    return getBooleanValue(callbackOutput.value);
-  });
+  const outputBoolean = array.every((element, index) =>
+    handleCallback(callback, element, index, runtimeArray as Runtime.Array)
+  );
 
   return MK.BOOL(outputBoolean);
 });
@@ -607,17 +595,33 @@ const filter = STATIC_FUNCTION((runtimeArray, runtimeCallback): Runtime.Array =>
   const array = (runtimeArray as Runtime.Array).value;
   const callback = runtimeCallback as Runtime.Function;
 
-  const filteredArray = array.filter((element, index) => {
-    const callbackOutput = interpreter.evalRuntimeFuncCall(callback, [
-      element,
-      MK.NUMBER(index),
-      runtimeArray,
-    ]);
-
-    return getBooleanValue(callbackOutput.value);
-  });
+  const filteredArray = array.filter((element, index) =>
+    handleCallback(callback, element, index, runtimeArray as Runtime.Array)
+  );
 
   return MK.ARRAY(filteredArray);
+});
+
+/**@desc returns `first` element in the array that passes test specified in `callback` (in case no elements pass the test, returns `undefined`)
+@param callback function executed for each element in the array (invoked with: `element`, `index`, `array` arguments). It should return `truthy` value to indicate that element passed the test*/
+const find = STATIC_FUNCTION((runtimeArray, runtimeCallback): Runtime.Value => {
+  if (runtimeCallback === undefined)
+    throw new Err(`Missing callback argument at 'find()' static function invocation`, "interpreter");
+
+  if (runtimeCallback.type !== "function")
+    throw new Err(
+      `Invalid callback argument type: '${runtimeCallback.type}' passed to 'find()' static function`,
+      "interpreter"
+    );
+
+  const array = (runtimeArray as Runtime.Array).value;
+  const callback = runtimeCallback as Runtime.Function;
+
+  const foundElement = array.find((element, index) =>
+    handleCallback(callback, element, index, runtimeArray as Runtime.Array)
+  );
+
+  return foundElement ?? MK.UNDEFINED();
 });
 
 export const STATIC_ARRAY_FUNCTIONS = {
@@ -639,7 +643,24 @@ export const STATIC_ARRAY_FUNCTIONS = {
   some,
   every,
   filter,
+  find,
 };
+
+// -----------------------------------------------
+//                 ARRAY UTILS
+// -----------------------------------------------
+
+/**@desc helper for many array static-functions. evaluates `runtimeCallback` and returns boolean value of its output*/
+function handleCallback(
+  callback: Runtime.Function,
+  element: Runtime.Value,
+  index: number,
+  array: Runtime.Array
+): boolean {
+  const callbackOutput = interpreter.evalRuntimeFuncCall(callback, [element, MK.NUMBER(index), array]);
+
+  return getBooleanValue(callbackOutput.value);
+}
 
 // -----------------------------------------------
 //                    OBJECT
