@@ -30,7 +30,7 @@ function NATIVE_FUNCTION(implementation: Runtime.NativeFuncImplementation): Runt
 // -----------------------------------------------
 
 /**@desc echo `arguments` to std output*/
-export const echo = NATIVE_FUNCTION((...args) => {
+export const echo = NATIVE_FUNCTION((...args): Runtime.Undefined => {
   const parsedArgs = args.map(arg => arg && parseForLogging(arg));
 
   console.log(...parsedArgs);
@@ -40,7 +40,7 @@ export const echo = NATIVE_FUNCTION((...args) => {
 
 /**@desc terminate process with `exitCode` 
 @param exitCode integer in range of `0-255`*/
-export const exit = NATIVE_FUNCTION(runtimeExitCode => {
+export const exit = NATIVE_FUNCTION((runtimeExitCode): never => {
   if (runtimeExitCode !== undefined) {
     if (runtimeExitCode.type !== "number")
       throw new Err(
@@ -62,7 +62,7 @@ export const exit = NATIVE_FUNCTION(runtimeExitCode => {
 
 /**@desc determine whether given `value` is 'falsy' or 'truthy' (returns corresponding boolean)
 @param value in case it isn't provided, it defaults to 'false'*/
-export const bool = NATIVE_FUNCTION(runtimeValue => {
+export const bool = NATIVE_FUNCTION((runtimeValue): Runtime.Boolean => {
   if (runtimeValue === undefined) return MK.BOOL(false);
 
   const value = runtimeValue.value;
@@ -73,7 +73,7 @@ export const bool = NATIVE_FUNCTION(runtimeValue => {
 
 /**@desc coerce `value` to `string` data-type
 @param value all data-types are valid. In case it isn't provided, it defaults to empty string*/
-export const string = NATIVE_FUNCTION(runtimeValue => {
+export const string = NATIVE_FUNCTION((runtimeValue): Runtime.String => {
   let value: unknown = "";
 
   if (runtimeValue) value = parseForLogging(runtimeValue);
@@ -83,9 +83,9 @@ export const string = NATIVE_FUNCTION(runtimeValue => {
   return MK.STRING(stringValue);
 });
 
-/**@desc coerce `value` to `number` data-type
+/**@desc coerce `value` to `number` data-type (returns `null` in case `value` is incoercible)
 @param value only numbers and number-coercible strings are valid. In case value isn't provided, it defaults to zero*/
-export const number = NATIVE_FUNCTION(runtimeValue => {
+export const number = NATIVE_FUNCTION((runtimeValue): Runtime.Null | Runtime.Number => {
   let value: number = 0;
 
   if (runtimeValue) {
@@ -98,11 +98,7 @@ export const number = NATIVE_FUNCTION(runtimeValue => {
       case "string": {
         const coercedValue = Number(runtimeValue.value);
 
-        if (Number.isNaN(coercedValue))
-          throw new Err(
-            `Invalid value argument: '${runtimeValue.value}' (failed number-coercion) passed to 'Number()' native function`,
-            "interpreter"
-          );
+        if (Number.isNaN(coercedValue)) return MK.NULL();
 
         value = coercedValue;
         break;
@@ -120,7 +116,7 @@ export const number = NATIVE_FUNCTION(runtimeValue => {
 });
 
 /**@desc get current date in a `'DD/MM/YYYY'` format*/
-export const date = NATIVE_FUNCTION(() => {
+export const date = NATIVE_FUNCTION((): Runtime.String => {
   // code stollen from stackoverflow: https://stackoverflow.com/questions/12409299/how-to-get-current-formatted-date-dd-mm-yyyy-in-javascript-and-append-it-to-an-i
 
   const today = new Date();
@@ -137,7 +133,7 @@ export const date = NATIVE_FUNCTION(() => {
 });
 
 /**@desc check virtual clock and return current time in a `'HH:MM:SS'` format*/
-export const clock = NATIVE_FUNCTION(() => {
+export const clock = NATIVE_FUNCTION((): Runtime.String => {
   const time = new Date();
   let hours: string | number = time.getHours();
   let minutes: string | number = time.getMinutes();
@@ -153,7 +149,7 @@ export const clock = NATIVE_FUNCTION(() => {
 });
 
 /**@desc wrapper around javascript's `'Date.now()'` method*/
-export const time = NATIVE_FUNCTION(() => {
+export const time = NATIVE_FUNCTION((): Runtime.Number => {
   const milliseconds = Date.now();
 
   return MK.NUMBER(milliseconds);
@@ -164,7 +160,7 @@ export const time = NATIVE_FUNCTION(() => {
 // -----------------------------------------------
 
 /**@desc log `arguments` to std output*/
-const log = NATIVE_FUNCTION((...args) => {
+const log = NATIVE_FUNCTION((...args): Runtime.Undefined => {
   const parsedArgs = args.map(arg => arg && parseForLogging(arg));
 
   console.log(...parsedArgs);
@@ -173,7 +169,7 @@ const log = NATIVE_FUNCTION((...args) => {
 });
 
 /**@desc log `arguments` to std output in a `verbose` way*/
-const logVerbose = NATIVE_FUNCTION((...args) => {
+const logVerbose = NATIVE_FUNCTION((...args): Runtime.Undefined => {
   const parsedArgs = args.map(arg => removePrototypeChainRecursively(arg!));
 
   console.log(...parsedArgs);
@@ -182,14 +178,14 @@ const logVerbose = NATIVE_FUNCTION((...args) => {
 });
 
 /**@desc log `arguments` to std output in an `ULTRA_VERBOSE` way (including prototype-chain)*/
-const logUltraVerbose = NATIVE_FUNCTION((...args) => {
+const logUltraVerbose = NATIVE_FUNCTION((...args): Runtime.Undefined => {
   console.log(...args);
 
   return MK.UNDEFINED();
 });
 
 /**@desc log `arguments` to std error*/
-const error = NATIVE_FUNCTION((...args) => {
+const error = NATIVE_FUNCTION((...args): Runtime.Undefined => {
   const parsedArgs = args.map(arg => arg && parseForLogging(arg));
 
   console.error(...parsedArgs);
@@ -198,7 +194,7 @@ const error = NATIVE_FUNCTION((...args) => {
 });
 
 /**@desc clear the terminal/console*/
-const clear = NATIVE_FUNCTION(() => {
+const clear = NATIVE_FUNCTION((): Runtime.Undefined => {
   console.clear();
 
   return MK.UNDEFINED();
@@ -206,7 +202,7 @@ const clear = NATIVE_FUNCTION(() => {
 
 /**@desc prompt user for input
 @param message string preceding input prompt. If message isn't provided, it defaults to empty string*/
-const prompt = NATIVE_FUNCTION(runtimeMessage => {
+const prompt = NATIVE_FUNCTION((runtimeMessage): Runtime.Value => {
   if (runtimeMessage && runtimeMessage.type !== "string")
     throw new Err(
       `Invalid message argument type: '${runtimeMessage.type}' passed to 'console.prompt()' native function`,
@@ -234,12 +230,12 @@ export const CONSOLE = {
 // -----------------------------------------------
 
 /**@desc returns pseudo-random generated `float`. In range of: 0 (inclusive) to 1 (exclusive)*/
-const randomFloat = NATIVE_FUNCTION(() => MK.NUMBER(Math.random()));
+const randomFloat = NATIVE_FUNCTION((): Runtime.Number => MK.NUMBER(Math.random()));
 
 /**@desc returns pseudo-random generated `integer`. In range of: `min` (inclusive) to `max` (exclusive)
 @param min specifies integer lower limit (inclusive). If omitted it defaults to `0`
 @param max specifies integer upper limit (exclusive). If omitted it defaults to `100`*/
-const randomInt = NATIVE_FUNCTION((runtimeMin, runtimeMax) => {
+const randomInt = NATIVE_FUNCTION((runtimeMin, runtimeMax): Runtime.Number => {
   if (runtimeMin && runtimeMin.type !== "number")
     throw new Err(
       `Invalid min argument type: '${runtimeMin.type}' passed to 'Math.randomInt()' native function`,
@@ -260,7 +256,7 @@ const randomInt = NATIVE_FUNCTION((runtimeMin, runtimeMax) => {
 });
 
 /**@desc returns smallest number argument*/
-const min = NATIVE_FUNCTION((...args) => {
+const min = NATIVE_FUNCTION((...args): Runtime.Number => {
   if (args.length === 0)
     throw new Err(`Invalid 'Math.min()' native function invocation, no arguments were passed`, "interpreter");
 
@@ -279,7 +275,7 @@ const min = NATIVE_FUNCTION((...args) => {
 });
 
 /**@desc returns largest number argument*/
-const max = NATIVE_FUNCTION((...args) => {
+const max = NATIVE_FUNCTION((...args): Runtime.Number => {
   if (args.length === 0)
     throw new Err(`Invalid 'Math.max()' native function invocation, no arguments were passed`, "interpreter");
 
@@ -298,7 +294,7 @@ const max = NATIVE_FUNCTION((...args) => {
 });
 
 /**@desc returns `number` rounded down to the largest integer less than or equal to `number`*/
-const floor = NATIVE_FUNCTION(runtimeNumber => {
+const floor = NATIVE_FUNCTION((runtimeNumber): Runtime.Number => {
   if (runtimeNumber === undefined)
     throw new Err(`Missing number argument at 'Math.floor()' native function invocation`, "interpreter");
 
@@ -315,7 +311,7 @@ const floor = NATIVE_FUNCTION(runtimeNumber => {
 });
 
 /**@desc returns `number` rounded up to the smallest integer greater than or equal to `number`*/
-const ceil = NATIVE_FUNCTION(runtimeNumber => {
+const ceil = NATIVE_FUNCTION((runtimeNumber): Runtime.Number => {
   if (runtimeNumber === undefined)
     throw new Err(`Missing number argument at 'Math.ceil()' native function invocation`, "interpreter");
 
@@ -332,7 +328,7 @@ const ceil = NATIVE_FUNCTION(runtimeNumber => {
 });
 
 /**@desc returns `number` rounded to the nearest integer*/
-const round = NATIVE_FUNCTION(runtimeNumber => {
+const round = NATIVE_FUNCTION((runtimeNumber): Runtime.Number => {
   if (runtimeNumber === undefined)
     throw new Err(`Missing number argument at 'Math.round()' native function invocation`, "interpreter");
 
@@ -355,6 +351,6 @@ export const MATH = { randomFloat, randomInt, min, max, floor, ceil, round };
 // -----------------------------------------------
 
 /**@desc determine whether `exitCode` is valid (in range: `0-255`)*/
-function isValidExitCode(exitCode: number) {
+function isValidExitCode(exitCode: number): boolean {
   return exitCode >= 0 && exitCode <= 255;
 }

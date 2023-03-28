@@ -27,7 +27,7 @@ export function STATIC_FUNCTION(implementation: Runtime.StaticFuncImplementation
 // -----------------------------------------------
 
 /**@desc coerce `value` into `string` data-type*/
-const toString = STATIC_FUNCTION(runtimeValue => {
+const toString = STATIC_FUNCTION((runtimeValue): Runtime.String => {
   const parsedValue = parseForLogging(runtimeValue);
   const stringValue = stringifyPretty(parsedValue);
 
@@ -41,7 +41,7 @@ export const STATIC_ALL_FUNCTIONS = { toString };
 // -----------------------------------------------
 
 /**@desc get `string/array` length*/
-const getLength = STATIC_FUNCTION(runtimeStringOrArray => {
+const getLength = STATIC_FUNCTION((runtimeStringOrArray): Runtime.Number => {
   const length = (runtimeStringOrArray.value as string | []).length;
 
   return MK.NUMBER(length);
@@ -50,7 +50,7 @@ const getLength = STATIC_FUNCTION(runtimeStringOrArray => {
 /**@desc extracts and returns array/string section, without modifying the original
 @param startIndex index of the first element to `include` (if omitted, it defaults to 0)
 @param endIndex index of the first element to `exclude` (if omitted, no elements are excluded)*/
-const slice = STATIC_FUNCTION((runtimeValue, runtimeStart, runtimeEnd) => {
+const slice = STATIC_FUNCTION((runtimeValue, runtimeStart, runtimeEnd): Runtime.String | Runtime.Array => {
   if (runtimeStart && runtimeStart.type !== "number")
     throw new Err(
       `Invalid startIndex argument type: '${runtimeStart.type}' passed to 'slice()' static function`,
@@ -78,7 +78,7 @@ const slice = STATIC_FUNCTION((runtimeValue, runtimeStart, runtimeEnd) => {
 
 /**@desc determine whether `searchTarget` includes/contains `searchString`
 @param searchString string used as a search pattern*/
-const stringIncludes = STATIC_FUNCTION((searchTarget, searchString) => {
+const stringIncludes = STATIC_FUNCTION((searchTarget, searchString): Runtime.Boolean => {
   if (searchString === undefined)
     throw new Err(`Missing searchString argument at 'includes()' static function invocation`, "interpreter");
 
@@ -97,35 +97,35 @@ const stringIncludes = STATIC_FUNCTION((searchTarget, searchString) => {
 });
 
 /**@desc remove `whitespace` from the `beginning` of a string and return new trimmed string*/
-const trimStart = STATIC_FUNCTION(({ value }) => {
+const trimStart = STATIC_FUNCTION(({ value }): Runtime.String => {
   const trimmedValue = (value as string).trimStart();
 
   return MK.STRING(trimmedValue);
 });
 
 /**@desc remove `whitespace` from the `end` of a string and return new trimmed string*/
-const trimEnd = STATIC_FUNCTION(({ value }) => {
+const trimEnd = STATIC_FUNCTION(({ value }): Runtime.String => {
   const trimmedValue = (value as string).trimEnd();
 
   return MK.STRING(trimmedValue);
 });
 
 /**@desc remove `whitespace` from `both ends` of a string and return new trimmed string*/
-const trim = STATIC_FUNCTION(({ value }) => {
+const trim = STATIC_FUNCTION(({ value }): Runtime.String => {
   const trimmedValue = (value as string).trim();
 
   return MK.STRING(trimmedValue);
 });
 
 /**@desc create and return `uppercased` string counterpart*/
-const toUpperCase = STATIC_FUNCTION(({ value }) => {
+const toUpperCase = STATIC_FUNCTION(({ value }): Runtime.String => {
   const upperCasedStr = (value as string).toUpperCase();
 
   return MK.STRING(upperCasedStr);
 });
 
 /**@desc create and return `lowercased` string counterpart*/
-const toLowerCase = STATIC_FUNCTION(({ value }) => {
+const toLowerCase = STATIC_FUNCTION(({ value }): Runtime.String => {
   const lowerCasedStr = (value as string).toLowerCase();
 
   return MK.STRING(lowerCasedStr);
@@ -133,7 +133,7 @@ const toLowerCase = STATIC_FUNCTION(({ value }) => {
 
 /**@desc split/divide string by `delimiter` into a string array
 @param delimiter string used as a seperator/delimiter*/
-const split = STATIC_FUNCTION(({ value }, runtimeDelimiter) => {
+const split = STATIC_FUNCTION(({ value }, runtimeDelimiter): Runtime.Array => {
   if (runtimeDelimiter && runtimeDelimiter.type !== "string")
     throw new Err(
       `Invalid delimiter argument type: '${runtimeDelimiter.type}' passed to 'split()' static function`,
@@ -149,7 +149,7 @@ const split = STATIC_FUNCTION(({ value }, runtimeDelimiter) => {
 
 /**@desc determine whether string `starts` with `searchString`
 @param searchString string used as a search pattern*/
-const startsWith = STATIC_FUNCTION(({ value }, searchString) => {
+const startsWith = STATIC_FUNCTION(({ value }, searchString): Runtime.Boolean => {
   if (searchString === undefined)
     throw new Err(
       `Missing searchString argument at 'startsWith()' static function invocation`,
@@ -170,7 +170,7 @@ const startsWith = STATIC_FUNCTION(({ value }, searchString) => {
 
 /**@desc determine whether string `ends` with `searchString`
 @param searchString string used as a search pattern*/
-const endsWith = STATIC_FUNCTION(({ value }, searchString) => {
+const endsWith = STATIC_FUNCTION(({ value }, searchString): Runtime.Boolean => {
   if (searchString === undefined)
     throw new Err(`Missing searchString argument at 'endsWith()' static function invocation`, "interpreter");
 
@@ -187,7 +187,7 @@ const endsWith = STATIC_FUNCTION(({ value }, searchString) => {
 });
 
 /**@desc searches string and returns starting index of the `first` occurrence of `searchString` or -1 if it's not present*/
-const stringIndexOf = STATIC_FUNCTION(({ value }, searchString) => {
+const stringIndexOf = STATIC_FUNCTION(({ value }, searchString): Runtime.Number => {
   if (searchString === undefined) return MK.NUMBER(-1);
 
   if (searchString && searchString.type !== "string")
@@ -203,7 +203,7 @@ const stringIndexOf = STATIC_FUNCTION(({ value }, searchString) => {
 });
 
 /**@desc searches string and returns starting index of the `last` occurrence of `searchString` or -1 if it's not present*/
-const stringLastIndexOf = STATIC_FUNCTION(({ value }, searchString) => {
+const stringLastIndexOf = STATIC_FUNCTION(({ value }, searchString): Runtime.Number => {
   if (searchString === undefined) return MK.NUMBER(-1);
 
   if (searchString && searchString.type !== "string")
@@ -220,7 +220,7 @@ const stringLastIndexOf = STATIC_FUNCTION(({ value }, searchString) => {
 
 /**@desc repeats string `count` number of times, returns newly created string (doesn't modify the original)
 @param count specifies how many times string should be repeated*/
-const repeat = STATIC_FUNCTION(({ value }, runtimeCount) => {
+const repeat = STATIC_FUNCTION(({ value }, runtimeCount): Runtime.String => {
   if (runtimeCount === undefined)
     throw new Err(`Missing count argument at 'repeat()' static function invocation`, "interpreter");
 
@@ -239,7 +239,7 @@ const repeat = STATIC_FUNCTION(({ value }, runtimeCount) => {
 /**@desc replaces first `pattern` occurrence in a string with `replacement`, returns newly created string (doesn't modify the original)
 @param pattern string specifying substring meant for replacement
 @param replacement string used for replacing substring matched by `pattern`*/
-const replace = STATIC_FUNCTION(({ value }, runtimePattern, runtimeReplacement) => {
+const replace = STATIC_FUNCTION(({ value }, runtimePattern, runtimeReplacement): Runtime.String => {
   if (runtimePattern === undefined)
     throw new Err(`Missing pattern argument at 'replace()' static function invocation`, "interpreter");
 
@@ -268,7 +268,7 @@ const replace = STATIC_FUNCTION(({ value }, runtimePattern, runtimeReplacement) 
 /**@desc replaces every `pattern` occurrence in a string with `replacement`, returns newly created string (doesn't modify the original)
 @param pattern string specifying substring meant for replacement
 @param replacement string used for replacing substring matched by `pattern`*/
-const replaceAll = STATIC_FUNCTION(({ value }, runtimePattern, runtimeReplacement) => {
+const replaceAll = STATIC_FUNCTION(({ value }, runtimePattern, runtimeReplacement): Runtime.String => {
   if (runtimePattern === undefined)
     throw new Err(`Missing pattern argument at 'replaceAll()' static function invocation`, "interpreter");
 
@@ -318,7 +318,7 @@ export const STATIC_STRING_FUNCTIONS = {
 // -----------------------------------------------
 
 /**@desc determine whether `number` is an integer*/
-const isInt = STATIC_FUNCTION(({ value }) => {
+const isInt = STATIC_FUNCTION(({ value }): Runtime.Boolean => {
   const isInteger = Number.isInteger(value as number);
 
   return MK.BOOL(isInteger);
@@ -331,7 +331,7 @@ export const STATIC_NUMBER_FUNCTIONS = { isInt };
 // -----------------------------------------------
 
 /**@desc adds one or more elements to the `end` of an array and returns updated array's length (time-complexity: O(1))*/
-const push = STATIC_FUNCTION((runtimeArray, ...elements) => {
+const push = STATIC_FUNCTION((runtimeArray, ...elements): Runtime.Number => {
   const array = (runtimeArray as Runtime.Array).value;
 
   const newLength = array.push(...(elements as Runtime.Value[]));
@@ -340,7 +340,7 @@ const push = STATIC_FUNCTION((runtimeArray, ...elements) => {
 });
 
 /**@desc removes the `last` element from an array and returns that removed element (time-complexity: O(1))*/
-const pop = STATIC_FUNCTION(runtimeArray => {
+const pop = STATIC_FUNCTION((runtimeArray): Runtime.Value => {
   const array = (runtimeArray as Runtime.Array).value;
 
   const removedElement = array.pop();
@@ -349,7 +349,7 @@ const pop = STATIC_FUNCTION(runtimeArray => {
 });
 
 /**@desc adds one or more elements to the `beginning` of an array and returns updated array's length (time-complexity: O(n))*/
-const unshift = STATIC_FUNCTION((runtimeArray, ...elements) => {
+const unshift = STATIC_FUNCTION((runtimeArray, ...elements): Runtime.Number => {
   const array = (runtimeArray as Runtime.Array).value;
 
   const newLength = array.unshift(...(elements as Runtime.Value[]));
@@ -357,7 +357,7 @@ const unshift = STATIC_FUNCTION((runtimeArray, ...elements) => {
 });
 
 /**@desc removes the `first` element from an array and returns that removed element (time-complexity: O(n))*/
-const shift = STATIC_FUNCTION(runtimeArray => {
+const shift = STATIC_FUNCTION((runtimeArray): Runtime.Value => {
   const array = (runtimeArray as Runtime.Array).value;
 
   const removedElement = array.shift();
@@ -370,46 +370,49 @@ const shift = STATIC_FUNCTION(runtimeArray => {
 @param deleteCount (optional) number of elements that should be removed, beginning from `startIndex`
 @param ...elements (optional) elements to add to the array, beginning from `startIndex`
 @return array containing deleted elements*/
-const splice = STATIC_FUNCTION((runtimeArray, runtimeStartIndex, runtimeDeleteCount, ...runtimeElements) => {
-  if (runtimeStartIndex === undefined)
-    throw new Err(`Missing startIndex argument at 'splice()' static function invocation`, "interpreter");
+const splice = STATIC_FUNCTION(
+  (runtimeArray, runtimeStartIndex, runtimeDeleteCount, ...runtimeElements): Runtime.Array => {
+    if (runtimeStartIndex === undefined)
+      throw new Err(`Missing startIndex argument at 'splice()' static function invocation`, "interpreter");
 
-  if (runtimeStartIndex.type !== "number")
-    throw new Err(
-      `Invalid startIndex argument type: '${runtimeStartIndex.type}' passed to 'splice()' static function`,
-      "interpreter"
+    if (runtimeStartIndex.type !== "number")
+      throw new Err(
+        `Invalid startIndex argument type: '${runtimeStartIndex.type}' passed to 'splice()' static function`,
+        "interpreter"
+      );
+
+    if (runtimeDeleteCount === undefined)
+      throw new Err(`Missing deleteCount argument at 'splice()' static function invocation`, "interpreter");
+
+    if (runtimeDeleteCount.type !== "number")
+      throw new Err(
+        `Invalid deleteCount argument type: '${runtimeDeleteCount.type}' passed to 'splice()' static function`,
+        "interpreter"
+      );
+
+    const startIndex = (runtimeStartIndex as Runtime.Number).value;
+    const deleteCount = (runtimeDeleteCount as Runtime.Number).value;
+    const deletedElements = (runtimeArray as Runtime.Array).value.splice(
+      startIndex,
+      deleteCount,
+      ...(runtimeElements as Runtime.Value[])
     );
 
-  if (runtimeDeleteCount === undefined)
-    throw new Err(`Missing deleteCount argument at 'splice()' static function invocation`, "interpreter");
-
-  if (runtimeDeleteCount.type !== "number")
-    throw new Err(
-      `Invalid deleteCount argument type: '${runtimeDeleteCount.type}' passed to 'splice()' static function`,
-      "interpreter"
-    );
-
-  const startIndex = (runtimeStartIndex as Runtime.Number).value;
-  const deleteCount = (runtimeDeleteCount as Runtime.Number).value;
-  const deletedElements = (runtimeArray as Runtime.Array).value.splice(
-    startIndex,
-    deleteCount,
-    ...(runtimeElements as Runtime.Value[])
-  );
-
-  return MK.ARRAY(deletedElements);
-});
+    return MK.ARRAY(deletedElements);
+  }
+);
 
 /**@desc reverses array in place (modifies original array), returns reference to modified array*/
-const reverse = STATIC_FUNCTION(runtimeArray => {
-  (runtimeArray as Runtime.Array).value.reverse();
+const reverse = STATIC_FUNCTION((runtimeArray): Runtime.Array => {
+  const array = runtimeArray as Runtime.Array;
+  array.value.reverse();
 
-  return runtimeArray;
+  return array;
 });
 
 /**@desc creates and returns a new string by concatenating all of the elements in an array, separated by `delimiter`
 @param delimiter string used as a seperator/delimiter*/
-const join = STATIC_FUNCTION((runtimeArray, runtimeDelimiter) => {
+const join = STATIC_FUNCTION((runtimeArray, runtimeDelimiter): Runtime.String => {
   if (runtimeDelimiter === undefined)
     throw new Err(`Missing delimiter argument at 'join()' static function invocation`, "interpreter");
 
@@ -427,7 +430,7 @@ const join = STATIC_FUNCTION((runtimeArray, runtimeDelimiter) => {
 });
 
 /**@desc creates and returns new array, by merging two or more arrays together (doesn't modify the original)*/
-const concat = STATIC_FUNCTION((runtimeArray, ...runtimeValues) => {
+const concat = STATIC_FUNCTION((runtimeArray, ...runtimeValues): Runtime.Array => {
   const arraysToMerge = runtimeValues.flatMap(runtimeValue => {
     if (runtimeValue?.type !== "array")
       throw new Err(
@@ -445,7 +448,7 @@ const concat = STATIC_FUNCTION((runtimeArray, ...runtimeValues) => {
 });
 
 /**@desc returns the `first` index at which a given element can be found in the array, or -1 if it's not present*/
-const arrayIndexOf = STATIC_FUNCTION((runtimeArray, runtimeSearchElement) => {
+const arrayIndexOf = STATIC_FUNCTION((runtimeArray, runtimeSearchElement): Runtime.Number => {
   if (runtimeSearchElement === undefined) return MK.NUMBER(-1);
 
   const array = (runtimeArray as Runtime.Array).value;
@@ -458,7 +461,7 @@ const arrayIndexOf = STATIC_FUNCTION((runtimeArray, runtimeSearchElement) => {
 });
 
 /**@desc returns the `last` index at which a given element can be found in the array, or -1 if it's not present*/
-const arrayLastIndexOf = STATIC_FUNCTION((runtimeArray, runtimeSearchElement) => {
+const arrayLastIndexOf = STATIC_FUNCTION((runtimeArray, runtimeSearchElement): Runtime.Number => {
   if (runtimeSearchElement === undefined) return MK.NUMBER(-1);
 
   const array = (runtimeArray as Runtime.Array).value;
@@ -471,7 +474,7 @@ const arrayLastIndexOf = STATIC_FUNCTION((runtimeArray, runtimeSearchElement) =>
 });
 
 /**@desc determine whether array includes/contains `searchValue` among its entries*/
-const arrayIncludes = STATIC_FUNCTION((searchTarget, searchRuntimeValue) => {
+const arrayIncludes = STATIC_FUNCTION((searchTarget, searchRuntimeValue): Runtime.Boolean => {
   if (searchRuntimeValue === undefined)
     throw new Err(`Missing searchValue argument at 'includes()' static function invocation`, "interpreter");
 
@@ -485,7 +488,7 @@ const arrayIncludes = STATIC_FUNCTION((searchTarget, searchRuntimeValue) => {
 });
 
 /**@desc replaces all array elements with a `value`. Returns modified array*/
-const fill = STATIC_FUNCTION((runtimeArray, runtimeValue) => {
+const fill = STATIC_FUNCTION((runtimeArray, runtimeValue): Runtime.Array => {
   if (runtimeValue === undefined)
     throw new Err(`Missing value argument at 'fill()' static function invocation`, "interpreter");
 
@@ -493,7 +496,7 @@ const fill = STATIC_FUNCTION((runtimeArray, runtimeValue) => {
 
   array.fill(runtimeValue);
 
-  return runtimeArray;
+  return runtimeArray as Runtime.Array;
 });
 
 /**@desc `array.flat()` helper function*/
@@ -520,7 +523,7 @@ function flattenArrayRecursively(runtimeArray: Runtime.Array, depth: number): Ru
 
 /**@desc creates a new array with all sub-array elements concatenated into it recursively up to the specified `depth`
 @param depth specifies how deep a nested array structure should be flattened (if omitted, defaults to 1)*/
-const flat = STATIC_FUNCTION((runtimeArray, runtimeDepth) => {
+const flat = STATIC_FUNCTION((runtimeArray, runtimeDepth): Runtime.Array => {
   if (runtimeDepth && runtimeDepth.type !== "number")
     throw new Err(
       `Invalid depth argument type: '${runtimeDepth.type}' passed to 'flat()' static function`,
@@ -614,7 +617,7 @@ export const STATIC_ARRAY_FUNCTIONS = {
 // -----------------------------------------------
 
 /**@desc determine whether given `key` is defined directly on object / is object's own property (doesn't come from prototype-chain)*/
-const hasOwn = STATIC_FUNCTION((runtimeObject, runtimeKey) => {
+const hasOwn = STATIC_FUNCTION((runtimeObject, runtimeKey): Runtime.Boolean => {
   if (runtimeKey === undefined)
     throw new Err(`Missing key argument at 'hasOwn()' static function invocation`, "interpreter");
 
@@ -631,7 +634,7 @@ const hasOwn = STATIC_FUNCTION((runtimeObject, runtimeKey) => {
 });
 
 /**@desc returns an array of given object's `key-value` pairs*/
-const getEntries = STATIC_FUNCTION(({ value }) => {
+const getEntries = STATIC_FUNCTION(({ value }): Runtime.Array => {
   const valueEntries = Object.entries(value as object);
 
   const runtimeEntries = [];
@@ -649,14 +652,14 @@ const getEntries = STATIC_FUNCTION(({ value }) => {
 });
 
 /**@desc returns an array of given object's `values`*/
-const getValues = STATIC_FUNCTION(({ value }) => {
+const getValues = STATIC_FUNCTION(({ value }): Runtime.Array => {
   const runtimeValues = Object.values(value as object);
 
   return MK.ARRAY(runtimeValues);
 });
 
 /**@desc returns an array of given object's `keys`*/
-const getKeys = STATIC_FUNCTION(({ value }) => {
+const getKeys = STATIC_FUNCTION(({ value }): Runtime.Array => {
   const keys = Object.keys(value as object);
   const runtimeKeys = keys.map(key => MK.STRING(key));
 
@@ -666,7 +669,7 @@ const getKeys = STATIC_FUNCTION(({ value }) => {
 /**@desc modifies object by copying all properties from one or more source objects into it
 @param ...sourceObjects objects to copy properties from
 @return reference to modified object*/
-const assign = STATIC_FUNCTION((runtimeObject, ...runtimeSources) => {
+const assign = STATIC_FUNCTION((runtimeObject, ...runtimeSources): Runtime.Object => {
   const sourceObjects = runtimeSources.map(runtimeValue => {
     if (runtimeValue?.type !== "object")
       throw new Err(
@@ -680,7 +683,7 @@ const assign = STATIC_FUNCTION((runtimeObject, ...runtimeSources) => {
   const targetObj = (runtimeObject as Runtime.Object).value;
   Object.assign(targetObj, ...sourceObjects);
 
-  return runtimeObject;
+  return runtimeObject as Runtime.Object;
 });
 
 export const STATIC_OBJECT_FUNCTIONS = { hasOwn, getEntries, getValues, getKeys, assign };
