@@ -548,7 +548,7 @@ const some = STATIC_FUNCTION((runtimeArray, runtimeCallback): Runtime.Boolean =>
   const array = (runtimeArray as Runtime.Array).value;
   const callback = runtimeCallback as Runtime.Function;
 
-  const someOutputBoolean = array.some((element, index) => {
+  const outputBoolean = array.some((element, index) => {
     const callbackOutput = interpreter.evalRuntimeFuncCall(callback, [
       element,
       MK.NUMBER(index),
@@ -558,7 +558,35 @@ const some = STATIC_FUNCTION((runtimeArray, runtimeCallback): Runtime.Boolean =>
     return getBooleanValue(callbackOutput.value);
   });
 
-  return MK.BOOL(someOutputBoolean);
+  return MK.BOOL(outputBoolean);
+});
+
+/**@desc determines whether `every` element in the array passes through test implemented in the `callback` function. Returns corresponding boolean
+@param callback function executed for each element in the array (invoked with: `element`, `index`, `array` arguments). It should return `truthy` value to indicate that element passed the test*/
+const every = STATIC_FUNCTION((runtimeArray, runtimeCallback): Runtime.Boolean => {
+  if (runtimeCallback === undefined)
+    throw new Err(`Missing callback argument at 'every()' static function invocation`, "interpreter");
+
+  if (runtimeCallback.type !== "function")
+    throw new Err(
+      `Invalid callback argument type: '${runtimeCallback.type}' passed to 'every()' static function`,
+      "interpreter"
+    );
+
+  const array = (runtimeArray as Runtime.Array).value;
+  const callback = runtimeCallback as Runtime.Function;
+
+  const outputBoolean = array.every((element, index) => {
+    const callbackOutput = interpreter.evalRuntimeFuncCall(callback, [
+      element,
+      MK.NUMBER(index),
+      runtimeArray,
+    ]);
+
+    return getBooleanValue(callbackOutput.value);
+  });
+
+  return MK.BOOL(outputBoolean);
 });
 
 export const STATIC_ARRAY_FUNCTIONS = {
@@ -578,6 +606,7 @@ export const STATIC_ARRAY_FUNCTIONS = {
   fill,
   flat,
   some,
+  every,
 };
 
 // -----------------------------------------------
