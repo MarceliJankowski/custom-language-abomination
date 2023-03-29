@@ -667,6 +667,28 @@ const forEach = STATIC_FUNCTION((runtimeArray, runtimeCallback): Runtime.Undefin
   return MK.UNDEFINED();
 });
 
+/**@desc creates and returns new array populated with `callback` return values
+@param callback function executed for each element in the array (invoked with: `element`, `index`, `array` arguments) its return value is pushed into new array*/
+const map = STATIC_FUNCTION((runtimeArray, runtimeCallback): Runtime.Array => {
+  if (runtimeCallback === undefined)
+    throw new Err(`Missing callback argument at 'map()' static function invocation`, "interpreter");
+
+  if (runtimeCallback.type !== "function")
+    throw new Err(
+      `Invalid callback argument type: '${runtimeCallback.type}' passed to 'map()' static function`,
+      "interpreter"
+    );
+
+  const array = (runtimeArray as Runtime.Array).value;
+  const callback = runtimeCallback as Runtime.Function;
+
+  const outputArray = array.map((element, index) =>
+    interpreter.evalRuntimeFuncCall(callback, [element, MK.NUMBER(index), runtimeArray])
+  );
+
+  return MK.ARRAY(outputArray);
+});
+
 export const STATIC_ARRAY_FUNCTIONS = {
   getLength,
   push,
@@ -689,6 +711,7 @@ export const STATIC_ARRAY_FUNCTIONS = {
   find,
   findIndex,
   forEach,
+  map,
 };
 
 // -----------------------------------------------
