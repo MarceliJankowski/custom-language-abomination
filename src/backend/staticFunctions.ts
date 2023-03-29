@@ -689,6 +689,37 @@ const map = STATIC_FUNCTION((runtimeArray, runtimeCallback): Runtime.Array => {
   return MK.ARRAY(outputArray);
 });
 
+/**@desc sorts elements in the array based on `compareFunc` (modifies original array), returns reference to sorted array
+@param compareFunc specifies the sorting order (invoked with: `a` and `b` elements)
+It's expected to return `0` when both elements are equal, `1` when element `a` is greater than element `b`, and `-1` in the opposite case*/
+const sort = STATIC_FUNCTION((runtimeArray, runtimeCallback): Runtime.Array => {
+  if (runtimeCallback === undefined)
+    throw new Err(`Missing compareFn argument at 'sort()' static function invocation`, "interpreter");
+
+  if (runtimeCallback.type !== "function")
+    throw new Err(
+      `Invalid compareFn argument type: '${runtimeCallback.type}' passed to 'sort()' static function`,
+      "interpreter"
+    );
+
+  const array = (runtimeArray as Runtime.Array).value;
+  const callback = runtimeCallback as Runtime.Function;
+
+  const outputArray = array.sort((a, b) => {
+    const compareFuncOutput = interpreter.evalRuntimeFuncCall(callback, [a, b]);
+
+    if (compareFuncOutput.type !== "number")
+      throw new Err(
+        `Invalid compareFn return value type: '${compareFuncOutput.type}' at 'sort()' static function invocation`,
+        "interpreter"
+      );
+
+    return compareFuncOutput.value as number;
+  });
+
+  return MK.ARRAY(outputArray);
+});
+
 export const STATIC_ARRAY_FUNCTIONS = {
   getLength,
   push,
@@ -712,6 +743,7 @@ export const STATIC_ARRAY_FUNCTIONS = {
   findIndex,
   forEach,
   map,
+  sort,
 };
 
 // -----------------------------------------------
