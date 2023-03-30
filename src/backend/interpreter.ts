@@ -75,6 +75,9 @@ export class Interpreter {
       case "FunctionDeclaration":
         return this.evalFuncDeclaration(astNode as AST_FunctionDeclaration, env);
 
+      case "FunctionExpression":
+        return this.evalFuncExpression(astNode as AST_FunctionExpression, env);
+
       case "AssignmentExp":
         return this.evalAssignmentExp(astNode as AST_AssignmentExp, env);
 
@@ -160,6 +163,12 @@ export class Interpreter {
 
     // treat function declaration as a statement, hence return undefined
     return MK.UNDEFINED();
+  }
+
+  private evalFuncExpression(funcExpression: AST_FunctionExpression, env: VariableEnv): Runtime.Function {
+    const { name, parameters, body } = funcExpression;
+
+    return MK.FUNCTION(name ?? "(anonymous)", parameters, body, env);
   }
 
   private evalReturnStatement(returnStatement: AST_ReturnStatement, env: VariableEnv): never {

@@ -11,6 +11,7 @@ import { Err } from "../utils";
 // -----------------------------------------------
 //                    PARSER
 // -----------------------------------------------
+// recursive descent parser implementation
 
 export class Parser {
   private programBody: AST_Program["body"] = [];
@@ -123,7 +124,7 @@ export class Parser {
   }
 
   private parseExpression(): AST_Expression {
-    return this.parseAssignmentExp();
+    return this.parseFuncExpression();
   }
 
   private parseVarDeclaration(): AST_Statement {
@@ -474,6 +475,46 @@ export class Parser {
     return continueStatement;
   }
 
+  private parseFuncExpression(): AST_Expression {
+    if (this.at().type !== TokenType.FUNC) return this.parseAssignmentExp();
+
+    const funcStart = this.eat().start; // advance past 'func' keyword
+
+    // HANDLE NAME
+    let name: AST_FunctionExpression["name"] = null;
+
+    if (this.at().type === TokenType.IDENTIFIER) name = this.eat().value;
+
+    // HANDLE PARAMETERS
+    const { argumentList } = this.parseArgumentList();
+
+    // make sure that each parameter is an identifier
+    argumentList.forEach(arg => {
+      if (arg.kind !== "Identifier")
+        throw new Err(
+          `Invalid function expression. Invalid parameter: '${arg.kind}' (only identifiers are valid) at position: ${arg.start}`,
+          "parser"
+        );
+    });
+
+    const parameters = argumentList as AST_Identifier[];
+
+    // HANDLE BODY
+    const blockStatement = this.parseBlockStatement();
+
+    // BUILD FUNC
+    const func: AST_FunctionExpression = {
+      kind: "FunctionExpression",
+      body: blockStatement,
+      name,
+      parameters,
+      start: funcStart,
+      end: blockStatement.end,
+    };
+
+    return func;
+  }
+
   private parseAssignmentExp(): AST_Expression {
     const left = this.parseTernaryExp();
     const assignmentStart = left.start;
@@ -808,7 +849,7 @@ export class Parser {
     // handle case when there are arguments
     if (this.at().type !== TokenType.CLOSE_PAREN) {
       const handleArgument = () => {
-        const arg = this.parseAssignmentExp();
+        const arg = this.parseExpression();
         argumentList.push(arg);
       };
 

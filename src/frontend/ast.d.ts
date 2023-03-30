@@ -23,6 +23,7 @@ type AST_Node =
   | "TernaryExp"
   | "MemberExp"
   | "CallExp"
+  | "FunctionExpression"
 
   // LITERALS
   | "NumericLiteral"
@@ -186,4 +187,11 @@ interface AST_CallExp extends AST_Expression {
   kind: "CallExp";
   arguments: AST_Expression[];
   callee: AST_Expression;
+}
+
+interface AST_FunctionExpression extends AST_Expression {
+  kind: "FunctionExpression";
+  name: null | string;
+  parameters: AST_Identifier[];
+  body: AST_BlockStatement;
 }
