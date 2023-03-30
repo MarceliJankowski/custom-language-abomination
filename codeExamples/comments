@@ -1,8 +1,0 @@
-# comments should NOT be evaluated by interpreter
-# comment starts with '#' and continius until new-line is reached
-
-0
-
-1 # comment ('1' should be evaluted because it comes before comment)
-
-# here '2' should not be evaluated because it's internal part of the comment: 2

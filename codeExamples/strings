@@ -1,9 +1,0 @@
-"double" # string with double quotes
-'single' # string with single quotes
-"123" # string with numbers
-
-# strings with escape sequences:
-"backslash escape: \\"
-'it\'s a string!'
-"\n"
-"another:\tstring!"
