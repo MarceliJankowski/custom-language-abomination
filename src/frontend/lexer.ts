@@ -173,13 +173,21 @@ export class Lexer {
 
         // HANDLE MULTI-CHARACTER TOKENS
         default: {
-          // INT
-          if (this.isInt(char)) {
+          // NUMBER
+          if (this.isDigit(char)) {
             const startPosition = this.position;
             let value = this.eat();
 
-            // BUILD `intStr`
-            while (this.isSrcNotEmpty() && this.isInt(this.at())) value += this.eat();
+            // BUILD NUMBER
+            while (this.isSrcNotEmpty() && this.isDigit(this.at())) value += this.eat();
+
+            // HANDLE DECIMAL POINT
+            if (this.at() === "." && this.isDigit(this.peek())) {
+              value += this.eat(); // append decimal point
+
+              // BUILD DECIMAL
+              while (this.isSrcNotEmpty() && this.isDigit(this.at())) value += this.eat();
+            }
 
             this.addToken(TokenType.NUMBER, value, startPosition, this.position);
           }
@@ -266,7 +274,7 @@ export class Lexer {
             // check whether string was ended
             if (!isStrEnded) {
               throw new Err(
-                `String: '${value}' lacks ending: ${strSign} at position: ${this.position}`,
+                `Invalid string literal. String: '${value}' lacks ending: (${strSign}) at position: ${this.position}`,
                 "lexer"
               );
             }
@@ -387,6 +395,11 @@ export class Lexer {
     return this.src[0];
   }
 
+  /**@desc lookahead and return `next` character (in relation to currently processed one)*/
+  private peek(): string {
+    return this.src[1];
+  }
+
   /**@desc shift current character from `src` and return it*/
   private eat(): string {
     if (!this.isSrcNotEmpty())
@@ -407,8 +420,8 @@ export class Lexer {
     return [this.line, this.column];
   }
 
-  /**@desc determine whether `char` is an int*/
-  private isInt(char: string): boolean {
+  /**@desc determine whether `char` is a digit*/
+  private isDigit(char: string): boolean {
     return /\d/.test(char);
   }
 
