@@ -990,15 +990,15 @@ export class Parser {
     return this.at().type === TokenType.DOT || this.at().type === TokenType.OPEN_BRACKET;
   }
 
-  /**@desc determine whether currentToken is following preceding `Token/Node` (both are on the same line, and currentToken starts after preceding `Token/Node` ends)*/
+  /**@desc determine whether currentToken is following preceding `Token/Node` (both are on the same line, and currentToken starts at least at preceding `Token/Node` end)*/
   private isCurrentTokenFollowing(preceding: Token | AST_Expression) {
     const precedingTokenEnd = preceding.end;
     const currentTokenStart = this.at().start;
 
     const areOnTheSameLine = precedingTokenEnd[0] === currentTokenStart[0];
-    const doesCurrentTokenStartAfterPrecedingTokenEnds = currentTokenStart[1] > precedingTokenEnd[1];
+    const doesCurrentStartAtLeastAtPrecedingEnd = currentTokenStart[1] >= precedingTokenEnd[1];
 
-    return areOnTheSameLine && doesCurrentTokenStartAfterPrecedingTokenEnds;
+    return areOnTheSameLine && doesCurrentStartAtLeastAtPrecedingEnd;
   }
 
   /**@desc helper function for parsing binary-expressions. It generates and returns `AST Binary Expression` node*/

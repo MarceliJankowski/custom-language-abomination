@@ -118,57 +118,68 @@ export class Lexer {
         // HANDLE SINGLE-CHARACTER TOKENS
 
         case ";": {
-          this.addToken(TokenType.SEMICOLON, this.advance(), this.position);
+          const startPosition = this.position;
+          this.addToken(TokenType.SEMICOLON, this.advance(), startPosition);
           break;
         }
 
         case ":": {
-          this.addToken(TokenType.COLON, this.advance(), this.position);
+          const startPosition = this.position;
+          this.addToken(TokenType.COLON, this.advance(), startPosition);
           break;
         }
 
         case ",": {
-          this.addToken(TokenType.COMMA, this.advance(), this.position);
+          const startPosition = this.position;
+          this.addToken(TokenType.COMMA, this.advance(), startPosition);
           break;
         }
 
         case "?": {
-          this.addToken(TokenType.TERNARY_OPERATOR, this.advance(), this.position);
+          const startPosition = this.position;
+          this.addToken(TokenType.TERNARY_OPERATOR, this.advance(), startPosition);
           break;
         }
 
         case ".": {
-          this.addToken(TokenType.DOT, this.advance(), this.position);
+          const startPosition = this.position;
+          this.addToken(TokenType.DOT, this.advance(), startPosition);
           break;
         }
 
         case "(": {
-          this.addToken(TokenType.OPEN_PAREN, this.advance(), this.position);
+          const startPosition = this.position;
+          this.addToken(TokenType.OPEN_PAREN, this.advance(), startPosition);
           break;
         }
 
         case ")": {
-          this.addToken(TokenType.CLOSE_PAREN, this.advance(), this.position);
+          const startPosition = this.position;
+          this.addToken(TokenType.CLOSE_PAREN, this.advance(), startPosition);
           break;
         }
 
         case "{": {
-          this.addToken(TokenType.OPEN_CURLY_BRACE, this.advance(), this.position);
+          const startPosition = this.position;
+          this.addToken(TokenType.OPEN_CURLY_BRACE, this.advance(), startPosition);
           break;
         }
 
         case "}": {
-          this.addToken(TokenType.CLOSE_CURLY_BRACE, this.advance(), this.position);
+          const startPosition = this.position;
+          this.addToken(TokenType.CLOSE_CURLY_BRACE, this.advance(), startPosition);
           break;
         }
 
         case "[": {
-          this.addToken(TokenType.OPEN_BRACKET, this.advance(), this.position);
+          const startPosition = this.position;
+          this.addToken(TokenType.OPEN_BRACKET, this.advance(), startPosition);
           break;
         }
 
         case "]": {
-          this.addToken(TokenType.CLOSE_BRACKET, this.advance(), this.position);
+          const startPosition = this.position;
+          this.addToken(TokenType.CLOSE_BRACKET, this.advance(), startPosition);
           break;
         }
 
@@ -376,7 +387,7 @@ export class Lexer {
       }
     }
 
-    this.addToken(TokenType.EOF, "EndOfFile", this.position);
+    this.addToken(TokenType.EOF, "EndOfFile", this.position, this.position);
 
     return this.tokens;
   }
@@ -385,10 +396,10 @@ export class Lexer {
   //                  UTILITIES
   // -----------------------------------------------
 
-  /**@desc append Token to `tokens` array
-  @param end is optional, if not provided it defaults to `start`, easing single-character token creation*/
-  private addToken(type: TokenType, value: string, start: CharPosition, end = start): void {
-    this.tokens.push(new Token(type, value, start, end));
+  /**@desc create new `token` and append it to `tokens` array
+  @param end can be omitted in case `token` is one character wide*/
+  private addToken(type: TokenType, value: string, start: CharPosition, end?: CharPosition): void {
+    this.tokens.push(new Token(type, value, start, end ?? [start[0], start[1] + 1]));
   }
 
   /**@return currently processed character*/
