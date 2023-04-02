@@ -1,12 +1,12 @@
 // PROJECT MODULES
 import { Token, TokenType } from "./lexer";
 import {
+  Err,
   isRelationalOperator,
   isEqualityOperator,
   isAdditiveOperator,
   isMultiplicativeOperator,
 } from "../utils";
-import { Err } from "../utils";
 
 // -----------------------------------------------
 //                    PARSER
@@ -15,6 +15,9 @@ import { Err } from "../utils";
 
 export class Parser {
   private programBody: AST_Program["body"] = [];
+
+  /**@desc `index` of currently processed token*/
+  private current: number = 0;
 
   constructor(private tokens: Token[]) {}
 
@@ -26,7 +29,7 @@ export class Parser {
       const statement = this.parseStatement();
 
       // HANDLE OPTIONAL SEMICOLON
-      if (this.at().type === TokenType.SEMICOLON) this.eat();
+      if (this.at().type === TokenType.SEMICOLON) this.advance();
 
       this.programBody.push(statement);
     }
@@ -128,18 +131,18 @@ export class Parser {
   }
 
   private parseVarDeclaration(): AST_Statement {
-    const varDeclarationKeyword = this.eat();
+    const varDeclarationKeyword = this.advance();
     const varDeclarationStart = varDeclarationKeyword.start;
     const isConstant = varDeclarationKeyword.type === TokenType.CONST;
 
-    const identifier = this.eatAndExpect(
+    const identifier = this.advanceAndExpect(
       TokenType.IDENTIFIER,
       `Invalid variable declaration. Missing identifier following: '${varDeclarationKeyword.value}'`
     ).value;
 
     // HANDLE UNINITIALIZED VARIABLE DECLARATION (like: 'var x')
     if (this.at().type === TokenType.SEMICOLON) {
-      const uninitializedVarDeclarationEnd = this.eat().end;
+      const uninitializedVarDeclarationEnd = this.advance().end;
 
       if (isConstant)
         throw new Err(
@@ -160,7 +163,7 @@ export class Parser {
 
     // HANDLE INITIALIZED VARIABLE DECLARATION (like: 'var x = 10')
 
-    const operator = this.eatAndExpect(
+    const operator = this.advanceAndExpect(
       TokenType.ASSIGNMENT_OPERATOR,
       `Invalid variable declaration. Identifier is not followed by assignment operator`
     ).value;
@@ -181,7 +184,7 @@ export class Parser {
   }
 
   private parseBlockStatement(): AST_BlockStatement {
-    const start = this.eatAndExpect(
+    const start = this.advanceAndExpect(
       TokenType.OPEN_CURLY_BRACE,
       "Invalid block statement. Missing openining curly-brace ('{')"
     ).start;
@@ -191,7 +194,7 @@ export class Parser {
     // BUILD body
     while (this.notEOF() && this.at().type !== TokenType.CLOSE_CURLY_BRACE) body.push(this.parseStatement());
 
-    const end = this.eatAndExpect(
+    const end = this.advanceAndExpect(
       TokenType.CLOSE_CURLY_BRACE,
       "Invalid block statement. Missing closing curly-brace ('}')"
     ).end;
@@ -207,9 +210,9 @@ export class Parser {
   }
 
   private parseFuncDeclaration(): AST_FunctionDeclaration {
-    const funcStart = this.eat().start; // advance past 'func' keyword
+    const funcStart = this.advance().start; // advance past 'func' keyword
 
-    const name = this.eatAndExpect(
+    const name = this.advanceAndExpect(
       TokenType.IDENTIFIER,
       "Invalid function declaration. Missing function name following func keyword"
     ).value;
@@ -245,7 +248,7 @@ export class Parser {
   }
 
   private parseReturnStatement(): AST_ReturnStatement {
-    const returnKeyword = this.eat();
+    const returnKeyword = this.advance();
 
     let argument;
 
@@ -264,17 +267,17 @@ export class Parser {
   }
 
   private parseIfStatement(): AST_IfStatement {
-    const start = this.eat().start; // advance past 'if' keyword
+    const start = this.advance().start; // advance past 'if' keyword
 
     // HANDLE TEST
-    this.eatAndExpect(
+    this.advanceAndExpect(
       TokenType.OPEN_PAREN,
       "Invalid if statement. Missing opening parentheses ('(') following 'if' keyword"
     );
 
     const test = this.parseExpression();
 
-    this.eatAndExpect(
+    this.advanceAndExpect(
       TokenType.CLOSE_PAREN,
       "Invalid if statement. Missing closing parentheses (')') following test"
     );
@@ -289,7 +292,7 @@ export class Parser {
     let alternate;
 
     if (this.at().type === TokenType.ELSE) {
-      this.eat(); // advance past 'else' keyword
+      this.advance(); // advance past 'else' keyword
 
       if (this.at().type === TokenType.OPEN_CURLY_BRACE) alternate = this.parseBlockStatement();
       else alternate = this.parseStatement(); // enable one-liners
@@ -309,17 +312,17 @@ export class Parser {
   }
 
   private parseWhileStatement(): AST_WhileStatement {
-    const start = this.eat().start; // advance past 'while' keyword
+    const start = this.advance().start; // advance past 'while' keyword
 
     // HANDLE TEST
-    this.eatAndExpect(
+    this.advanceAndExpect(
       TokenType.OPEN_PAREN,
       "Invalid while statement. Missing opening parentheses ('(') following 'while' keyword"
     );
 
     const test = this.parseExpression();
 
-    this.eatAndExpect(
+    this.advanceAndExpect(
       TokenType.CLOSE_PAREN,
       "Invalid while statement. Missing closing parentheses (')') following test"
     );
@@ -343,9 +346,9 @@ export class Parser {
   }
 
   private parseForStatement(): AST_Statement {
-    const forKeyword = this.eat();
+    const forKeyword = this.advance();
 
-    this.eatAndExpect(
+    this.advanceAndExpect(
       TokenType.OPEN_PAREN,
       "Invalid for statement. Missing opening parentheses ('(') following 'for' keyword"
     );
@@ -366,7 +369,7 @@ export class Parser {
     // initializer as expression
     else initializer = this.parseExpression();
 
-    this.eatAndExpect(
+    this.advanceAndExpect(
       TokenType.SEMICOLON,
       "Invalid for statement. Missing semicolon (';') delimiter following initializer"
     );
@@ -377,7 +380,7 @@ export class Parser {
     // allow test omission
     if (this.at().type !== TokenType.SEMICOLON) test = this.parseExpression();
 
-    this.eatAndExpect(
+    this.advanceAndExpect(
       TokenType.SEMICOLON,
       "Invalid for statement. Missing semicolon (';') delimiter following test"
     );
@@ -388,7 +391,7 @@ export class Parser {
     // allow update omission
     if (this.at().type !== TokenType.CLOSE_PAREN) update = this.parseExpression();
 
-    this.eatAndExpect(
+    this.advanceAndExpect(
       TokenType.CLOSE_PAREN,
       "Invalid for statement. Missing closing parentheses (')') following update"
     );
@@ -450,7 +453,7 @@ export class Parser {
   }
 
   private parseBreakStatement(): AST_BreakStatement {
-    const breakKeyword = this.eat();
+    const breakKeyword = this.advance();
 
     // BUILD breakStatement
     const breakStatement: AST_BreakStatement = {
@@ -463,7 +466,7 @@ export class Parser {
   }
 
   private parseContinueStatement(): AST_ContinueStatement {
-    const continueKeyword = this.eat();
+    const continueKeyword = this.advance();
 
     // BUILD continueStatement
     const continueStatement: AST_ContinueStatement = {
@@ -478,12 +481,12 @@ export class Parser {
   private parseFuncExpression(): AST_Expression {
     if (this.at().type !== TokenType.FUNC) return this.parseAssignmentExp();
 
-    const funcStart = this.eat().start; // advance past 'func' keyword
+    const funcStart = this.advance().start; // advance past 'func' keyword
 
     // HANDLE NAME
     let name: AST_FunctionExpression["name"] = null;
 
-    if (this.at().type === TokenType.IDENTIFIER) name = this.eat().value;
+    if (this.at().type === TokenType.IDENTIFIER) name = this.advance().value;
 
     // HANDLE PARAMETERS
     const { argumentList } = this.parseArgumentList();
@@ -520,7 +523,7 @@ export class Parser {
     const assignmentStart = left.start;
 
     if (this.at().type === TokenType.ASSIGNMENT_OPERATOR) {
-      const operator = this.eat().value;
+      const operator = this.advance().value;
 
       const value = this.parseTernaryExp();
 
@@ -543,11 +546,11 @@ export class Parser {
     let test = this.parseObjectExp();
 
     while (this.at().type === TokenType.TERNARY_OPERATOR) {
-      this.eat(); // advance past ternary-operator
+      this.advance(); // advance past ternary-operator
 
       const consequent = this.parseExpression();
 
-      this.eatAndExpect(TokenType.COLON, "Missing ':' following consequent in ternary expression");
+      this.advanceAndExpect(TokenType.COLON, "Missing ':' following consequent in ternary expression");
 
       const alternate = this.parseExpression();
 
@@ -569,12 +572,12 @@ export class Parser {
   private parseObjectExp(): AST_Expression {
     if (this.at().type !== TokenType.OPEN_CURLY_BRACE) return this.parseArrayExp();
 
-    const objectStart = this.eat().start; // advance past OPEN_CURLY_BRACE
+    const objectStart = this.advance().start; // advance past OPEN_CURLY_BRACE
     const properties = new Array<AST_ObjectProperty>();
 
     // iterate as long as we're inside the object
     while (this.notEOF() && this.at().type !== TokenType.CLOSE_CURLY_BRACE) {
-      const key = this.eatAndExpect(TokenType.IDENTIFIER, "Missing key inside object-literal");
+      const key = this.advanceAndExpect(TokenType.IDENTIFIER, "Missing key inside object-literal");
 
       // HANDLE SHORTHANDS
 
@@ -589,7 +592,7 @@ export class Parser {
         };
 
         properties.push(uninitializedProperty);
-        this.eat(); // advance past comma
+        this.advance(); // advance past comma
         continue;
       }
 
@@ -609,13 +612,13 @@ export class Parser {
 
       // HANDLE DEFINED PROPERTY
 
-      this.eatAndExpect(TokenType.COLON, "Missing ':' following identifier in object-literal"); // advance past COLON
+      this.advanceAndExpect(TokenType.COLON, "Missing ':' following identifier in object-literal"); // advance past COLON
 
       const value = this.parseExpression();
 
       // if it's not object-literal end, expect a comma for another property
       if (this.at().type !== TokenType.CLOSE_CURLY_BRACE)
-        this.eatAndExpect(
+        this.advanceAndExpect(
           TokenType.COMMA,
           "Object-literal missing: closing curly-brace ('}') or comma (','), following property-value"
         );
@@ -633,7 +636,7 @@ export class Parser {
 
     // HANDLE OBJECT
 
-    const objectEnd = this.eatAndExpect(
+    const objectEnd = this.advanceAndExpect(
       TokenType.CLOSE_CURLY_BRACE,
       "Missing closing curly-brace ('}') inside object-literal"
     ).end;
@@ -655,17 +658,17 @@ export class Parser {
     if (this.at().type !== TokenType.OPEN_BRACKET) return this.parseLogicalExpOR();
 
     const elements = new Array<AST_Expression>();
-    const arrayStart = this.eat().start; // advance past OPEN_BRACKET
+    const arrayStart = this.advance().start; // advance past OPEN_BRACKET
 
     while (this.notEOF() && this.at().type !== TokenType.CLOSE_BRACKET) {
       const element = this.parseExpression();
 
-      if (this.at().type === TokenType.COMMA) this.eat(); // advance past comma
+      if (this.at().type === TokenType.COMMA) this.advance(); // advance past comma
 
       elements.push(element);
     }
 
-    const arrayEnd = this.eatAndExpect(
+    const arrayEnd = this.advanceAndExpect(
       TokenType.CLOSE_BRACKET,
       "Missing closing bracket (']') following element in array-literal"
     ).end;
@@ -688,7 +691,7 @@ export class Parser {
     let left = this.parseLogicalExpAND();
 
     while (this.at().value === "||") {
-      const operator = this.eat().value;
+      const operator = this.advance().value;
       const right = this.parseLogicalExpAND();
 
       const binaryExp = this.generateASTBinaryExpNode(left, operator, right);
@@ -703,7 +706,7 @@ export class Parser {
     let left = this.parseEqualityExp();
 
     while (this.at().value === "&&") {
-      const operator = this.eat().value;
+      const operator = this.advance().value;
       const right = this.parseEqualityExp();
 
       const binaryExp = this.generateASTBinaryExpNode(left, operator, right);
@@ -718,7 +721,7 @@ export class Parser {
     let left = this.parseRelationalExp();
 
     while (isEqualityOperator(this.at().value)) {
-      const operator = this.eat().value;
+      const operator = this.advance().value;
       const right = this.parseRelationalExp();
 
       const binaryExp = this.generateASTBinaryExpNode(left, operator, right);
@@ -733,7 +736,7 @@ export class Parser {
     let left = this.parseAdditiveExp();
 
     while (isRelationalOperator(this.at().value)) {
-      const operator = this.eat().value;
+      const operator = this.advance().value;
       const right = this.parseAdditiveExp();
 
       const binaryExp = this.generateASTBinaryExpNode(left, operator, right);
@@ -749,7 +752,7 @@ export class Parser {
 
     // here's the problem
     while (isAdditiveOperator(this.at().value)) {
-      const operator = this.eat().value;
+      const operator = this.advance().value;
       const right = this.parseMultiplicativeExp();
 
       const binaryExp = this.generateASTBinaryExpNode(left, operator, right);
@@ -764,7 +767,7 @@ export class Parser {
     let left = this.parsePrefixUnaryExp();
 
     while (isMultiplicativeOperator(this.at().value)) {
-      const operator = this.eat().value;
+      const operator = this.advance().value;
       const right = this.parsePrefixUnaryExp();
 
       const binaryExp = this.generateASTBinaryExpNode(left, operator, right);
@@ -777,7 +780,7 @@ export class Parser {
   /**@desc parse `prefix` unary expressions (like: ++var)*/
   private parsePrefixUnaryExp(): AST_Expression {
     while (this.at().type === TokenType.UNARY_OPERATOR) {
-      const operator = this.eat();
+      const operator = this.advance();
       const operand = operator.value === "typeof" ? this.parseExpression() : this.parsePostfixUnaryExp();
 
       const unaryExp: AST_PrefixUnaryExp = {
@@ -799,7 +802,7 @@ export class Parser {
     const left = this.parseCallExp();
 
     while (this.at().type === TokenType.UNARY_OPERATOR) {
-      const operator = this.eat();
+      const operator = this.advance();
 
       const unaryExp: AST_PostfixUnaryExp = {
         kind: "PostfixUnaryExp",
@@ -842,7 +845,7 @@ export class Parser {
   }
 
   private parseArgumentList() {
-    this.eatAndExpect(TokenType.OPEN_PAREN, "Invalid argument list. Missing opening parentheses ('(')");
+    this.advanceAndExpect(TokenType.OPEN_PAREN, "Invalid argument list. Missing opening parentheses ('(')");
 
     const argumentList: AST_Expression[] = [];
 
@@ -858,12 +861,12 @@ export class Parser {
 
       // handle next arguments
       while (this.at().type === TokenType.COMMA) {
-        this.eat(); // advance past comma
+        this.advance(); // advance past comma
         handleArgument();
       }
     }
 
-    const argumentListEnd = this.eatAndExpect(
+    const argumentListEnd = this.advanceAndExpect(
       TokenType.CLOSE_PAREN,
       "Invalid argument list. Missing closing parentheses (')')"
     ).end;
@@ -881,7 +884,7 @@ export class Parser {
     else object = this.parsePrimaryExp();
 
     while (this.isCurrentTokenAccessingProperty() && this.isCurrentTokenFollowing(object)) {
-      const operator = this.eat(); // '.' or '[' for computed expressions
+      const operator = this.advance(); // '.' or '[' for computed expressions
 
       let property: AST_Expression;
       let computed = false;
@@ -901,7 +904,7 @@ export class Parser {
       else if (operator.type === TokenType.OPEN_BRACKET) {
         computed = true;
         property = this.parseExpression(); // not checking property kind as there are many expression that could evaluate to valid identifier
-        this.eatAndExpect(
+        this.advanceAndExpect(
           TokenType.CLOSE_BRACKET,
           "Missing closing bracket (']') inside computed member-expression"
         );
@@ -938,29 +941,32 @@ export class Parser {
 
     switch (tokenType) {
       case TokenType.STRING: {
-        const { value, start, end } = this.eat();
+        const { value, start, end } = this.advance();
         const stringNode: AST_StringLiteral = { kind: "StringLiteral", value, start, end };
         return stringNode;
       }
 
       case TokenType.IDENTIFIER: {
-        const { value, start, end } = this.eat();
+        const { value, start, end } = this.advance();
         const identifierNode: AST_Identifier = { kind: "Identifier", value, start, end };
         return identifierNode;
       }
 
       case TokenType.NUMBER: {
-        const { value, start, end } = this.eat();
+        const { value, start, end } = this.advance();
         const numberNode: AST_NumericLiteral = { kind: "NumericLiteral", value: Number(value), start, end };
         return numberNode;
       }
 
       case TokenType.OPEN_PAREN: {
-        this.eat(); // advance past open-paren
+        this.advance(); // advance past open-paren
 
         const value = this.parseExpression();
 
-        this.eatAndExpect(TokenType.CLOSE_PAREN, "Unexpected token found inside parenthesised expression");
+        this.advanceAndExpect(
+          TokenType.CLOSE_PAREN,
+          "Unexpected token found inside parenthesised expression"
+        );
 
         return value;
       }
@@ -1013,24 +1019,31 @@ export class Parser {
     return astBinaryExp;
   }
 
-  /**@desc determine whether EOF (End Of File) token is reached*/
+  /**@desc determine whether current token is in bounds (`EOF` token hasn't been reached)*/
   private notEOF(): boolean {
     return this.at().type !== TokenType.EOF;
   }
 
-  /**@desc return current `token`*/
+  /**@desc determine whether `EOF` token is reached*/
+  private isEOF(): boolean {
+    return this.at().type === TokenType.EOF;
+  }
+
+  /**@return current `token`*/
   private at(): Token {
-    return this.tokens[0];
+    return this.tokens[this.current];
   }
 
-  /**@desc advances `token` list (shifts current token) and returns previous (shifted) token*/
-  private eat(): Token {
-    return this.tokens.shift()!;
+  /**@desc advance `current` and return previous (skipped over) token*/
+  private advance(): Token {
+    if (this.isEOF()) return this.at();
+
+    return this.tokens[this.current++];
   }
 
-  /**@desc extended `eat()` method with added token type-check and token presence-check*/
-  private eatAndExpect(type: TokenType, err: string): Token | never {
-    const token = this.eat();
+  /**@desc extended `advance()` method with added token type-check and token presence-check*/
+  private advanceAndExpect(type: TokenType, err: string): Token | never {
+    const token = this.advance();
 
     if (!token || token.type !== type)
       throw new Err(

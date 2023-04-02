@@ -90,84 +90,85 @@ KEYWORDS.set("for", TokenType.FOR);
 // -----------------------------------------------
 
 export class Lexer {
-  /**@desc `sourceCode` character array*/
   private src: string[];
-
   private tokens: Token[];
 
-  /**@desc tracks current-character line*/
+  /**@desc tracks current character line*/
   private line: number;
-  /**@desc tracks current-character column*/
-  private column: number;
+
+  /**@desc tracks current character column*/
+  private column: number = 0;
+
+  /**@desc `index` of currently processed character*/
+  private current: number = 0;
 
   constructor(sourceCode: string) {
     this.src = sourceCode.split("");
     this.tokens = new Array<Token>();
 
-    this.line = this.isSrcNotEmpty() ? 1 : 0;
-    this.column = 0;
+    this.line = this.isEOF() ? 0 : 1;
   }
 
   /**@desc parses `sourceCode` into Token[]*/
   public tokenize(): Token[] {
-    while (this.isSrcNotEmpty()) {
+    while (this.notEOF()) {
       const char = this.at();
 
       switch (char) {
         // HANDLE SINGLE-CHARACTER TOKENS
 
         case ";": {
-          this.addToken(TokenType.SEMICOLON, this.eat(), this.position);
+          this.addToken(TokenType.SEMICOLON, this.advance(), this.position);
           break;
         }
 
         case ":": {
-          this.addToken(TokenType.COLON, this.eat(), this.position);
+          this.addToken(TokenType.COLON, this.advance(), this.position);
           break;
         }
 
         case ",": {
-          this.addToken(TokenType.COMMA, this.eat(), this.position);
+          this.addToken(TokenType.COMMA, this.advance(), this.position);
           break;
         }
 
         case "?": {
-          this.addToken(TokenType.TERNARY_OPERATOR, this.eat(), this.position);
+          this.addToken(TokenType.TERNARY_OPERATOR, this.advance(), this.position);
           break;
         }
 
         case ".": {
-          this.addToken(TokenType.DOT, this.eat(), this.position);
+          this.addToken(TokenType.DOT, this.advance(), this.position);
           break;
         }
 
         case "(": {
-          this.addToken(TokenType.OPEN_PAREN, this.eat(), this.position);
+          this.addToken(TokenType.OPEN_PAREN, this.advance(), this.position);
           break;
         }
 
         case ")": {
-          this.addToken(TokenType.CLOSE_PAREN, this.eat(), this.position);
+          this.addToken(TokenType.CLOSE_PAREN, this.advance(), this.position);
           break;
         }
 
         case "{": {
-          this.addToken(TokenType.OPEN_CURLY_BRACE, this.eat(), this.position);
+          this.addToken(TokenType.OPEN_CURLY_BRACE, this.advance(), this.position);
           break;
         }
 
         case "}": {
-          this.addToken(TokenType.CLOSE_CURLY_BRACE, this.eat(), this.position);
+          this.addToken(TokenType.CLOSE_CURLY_BRACE, this.advance(), this.position);
           break;
         }
 
         case "[": {
-          this.addToken(TokenType.OPEN_BRACKET, this.eat(), this.position);
+          this.addToken(TokenType.OPEN_BRACKET, this.advance(), this.position);
           break;
         }
 
         case "]": {
-          this.addToken(TokenType.CLOSE_BRACKET, this.eat(), this.position);
+          this.addToken(TokenType.CLOSE_BRACKET, this.advance(), this.position);
           break;
         }
 
@@ -176,17 +177,17 @@ export class Lexer {
           // NUMBER
           if (this.isDigit(char)) {
             const startPosition = this.position;
-            let value = this.eat();
+            let value = this.advance();
 
             // BUILD NUMBER
-            while (this.isSrcNotEmpty() && this.isDigit(this.at())) value += this.eat();
+            while (this.notEOF() && this.isDigit(this.at())) value += this.advance();
 
             // HANDLE DECIMAL POINT
             if (this.at() === "." && this.isDigit(this.peek())) {
-              value += this.eat(); // append decimal point
+              value += this.advance(); // append decimal point
 
               // BUILD DECIMAL
-              while (this.isSrcNotEmpty() && this.isDigit(this.at())) value += this.eat();
+              while (this.notEOF() && this.isDigit(this.at())) value += this.advance();
             }
 
             this.addToken(TokenType.NUMBER, value, startPosition, this.position);
@@ -195,15 +196,15 @@ export class Lexer {
           // STRING
           else if (this.isStringSign(char)) {
             const startPosition = this.position;
-            const strSign = this.eat(); // get string-sign which was used for creating this string literal
+            const strSign = this.advance(); // get string-sign which was used for creating this string literal
 
             let value = "";
             let isEscaped = false; // track whether next character is escaped
             let isStrEnded = false; // track whether string ends with strSign
 
             // BUILD `str`
-            while (this.isSrcNotEmpty()) {
-              let char = this.eat();
+            while (this.notEOF()) {
+              let char = this.advance();
 
               // handle escape-sign (allow for double escape-sign, like '\\' with: !isEscaped)
               if (char === Sign.ESCAPE && !isEscaped) {
@@ -285,10 +286,10 @@ export class Lexer {
           // IDENTIFIER
           else if (this.isAlpha(char)) {
             const startPosition = this.position;
-            let identifier = this.eat();
+            let identifier = this.advance();
 
             // BUILD identifier
-            while (this.isSrcNotEmpty() && this.isAlpha(this.at())) identifier += this.eat();
+            while (this.notEOF() && this.isAlpha(this.at())) identifier += this.advance();
 
             // handle reserved keywords
             const keywordType = KEYWORDS.get(identifier);
@@ -304,17 +305,17 @@ export class Lexer {
             this.isPartiallyAssignmentOperator(char)
           ) {
             const startPosition = this.position;
-            let operator = this.eat();
+            let operator = this.advance();
 
             // iterate for as long as current-char could be a part of a unary/binary/assignment operator
             while (
-              this.isSrcNotEmpty() &&
+              this.notEOF() &&
               (this.isPartiallyUnaryOperator(this.at()) ||
                 this.isPartiallyBinaryOperator(this.at()) ||
                 this.isPartiallyAssignmentOperator(this.at()))
             ) {
               // BUILD operator
-              operator += this.eat();
+              operator += this.advance();
             }
 
             switch (operator) {
@@ -352,12 +353,12 @@ export class Lexer {
           // COMMENT
           else if (char === Sign.COMMENT) {
             // eat away whole comment until '\n'
-            while (this.isSrcNotEmpty() && !this.isNewLine(this.at())) this.eat();
+            while (this.notEOF() && !this.isNewLine(this.at())) this.advance();
           }
 
           // WHITESPACE
           else if (this.isWhitespace(char)) {
-            this.eat(); // skip whitespace character
+            this.advance(); // skip whitespace character
 
             if (this.isNewLine(char)) {
               this.line++; // increment line counter
@@ -390,29 +391,31 @@ export class Lexer {
     this.tokens.push(new Token(type, value, start, end));
   }
 
-  /**@return currently processed `src` character*/
+  /**@return currently processed character*/
   private at(): string {
-    return this.src[0];
+    return this.src[this.current];
   }
 
   /**@desc lookahead and return `next` character (in relation to currently processed one)*/
   private peek(): string {
-    return this.src[1];
+    return this.src[this.current + 1];
   }
 
-  /**@desc shift current character from `src` and return it*/
-  private eat(): string {
-    if (!this.isSrcNotEmpty())
-      throw new Err("Lexer internal error: cannot eat when src is empty!", "internal");
+  /**@desc advance `current` and return previous (skipped over) character*/
+  private advance(): string {
+    this.column++; // increase column count due to new character being parsed
 
-    this.column++; // increase column count because new character is being parsed
-
-    return this.src.shift()!;
+    return this.src[this.current++];
   }
 
-  /**@desc determine whether `src` is empty*/
-  private isSrcNotEmpty(): boolean {
-    return this.src.length > 0;
+  /**@desc determine whether `current` is at `EOF`*/
+  private isEOF(): boolean {
+    return this.current >= this.src.length;
+  }
+
+  /**@desc determine whether `current` is within `source` bounds (not at `EOF`)*/
+  private notEOF(): boolean {
+    return this.current < this.src.length;
   }
 
   /**@desc position of currently processed character*/
