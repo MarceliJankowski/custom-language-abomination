@@ -3,27 +3,28 @@
 // -----------------------------------------------
 // prefacing everything with AST because these are globally accessible, this way I'm avoiding confusion and possibility of name collisions
 
-type AST_Node =
+type AST_NodeKind =
   // STATEMENTS
   | "Program"
   | "VarDeclaration"
-  | "BlockStatement"
+  | "BlockStmt"
+  | "ReturnStmt"
+  | "IfStmt"
+  | "WhileStmt"
+  | "BreakStmt"
+  | "ContinueStmt"
+  | "ContinueStmt"
   | "FunctionDeclaration"
-  | "ReturnStatement"
-  | "IfStatement"
-  | "WhileStatement"
-  | "BreakStatement"
-  | "ContinueStatement"
 
   // EXPRESSIONS
-  | "AssignmentExp"
-  | "PrefixUnaryExp"
-  | "PostfixUnaryExp"
-  | "BinaryExp"
-  | "TernaryExp"
-  | "MemberExp"
-  | "CallExp"
-  | "FunctionExpression"
+  | "AssignmentExpr"
+  | "PrefixUnaryExpr"
+  | "PostfixUnaryExpr"
+  | "BinaryExpr"
+  | "TernaryExpr"
+  | "MemberExpr"
+  | "CallExpr"
+  | "FunctionExpr"
 
   // LITERALS
   | "NumericLiteral"
@@ -33,165 +34,159 @@ type AST_Node =
   | "ObjectLiteral"
   | "ArrayLiteral";
 
-/**@desc doesn't return any value at run-time*/
-interface AST_Statement {
-  kind: AST_Node;
+/**@desc represents `AST` node*/
+type AST_Node = AST_Stmt | AST_Expr;
+
+// -----------------------------------------------
+//                  STATEMENTS
+// -----------------------------------------------
+
+interface AST_Stmt {
+  kind: AST_NodeKind;
   start: CharPosition;
   end: CharPosition;
 }
 
-// -----------------------------------------------
-//              EXTENDS STATEMENT
-// -----------------------------------------------
-
-/**@desc it's `AST` root node, represents whole program and contains all statements*/
-interface AST_Program extends AST_Statement {
+/**@desc it's `AST` root node, represents entirety of the program, and contains all nodes*/
+interface AST_Program extends AST_Stmt {
   kind: "Program";
-  body: AST_Statement[];
+  body: AST_Node[];
 }
 
-interface AST_VarDeclaration extends AST_Statement {
+interface AST_VarDeclaration extends AST_Stmt {
   kind: "VarDeclaration";
   identifier: string;
   operator?: string;
-  value?: AST_Expression;
+  value?: AST_Expr;
   constant: boolean;
 }
 
-interface AST_BlockStatement extends AST_Statement {
-  kind: "BlockStatement";
-  body: AST_Statement[];
+interface AST_BlockStmt extends AST_Stmt {
+  kind: "BlockStmt";
+  body: AST_Stmt[];
 }
 
-interface AST_ReturnStatement extends AST_Statement {
-  kind: "ReturnStatement";
-  argument?: AST_Statement;
+interface AST_ReturnStmt extends AST_Stmt {
+  kind: "ReturnStmt";
+  argument?: AST_Stmt;
 }
 
-interface AST_FunctionDeclaration extends AST_Statement {
+interface AST_FunctionDeclaration extends AST_Stmt {
   kind: "FunctionDeclaration";
   name: string;
   parameters: AST_Identifier[];
-  body: AST_BlockStatement;
+  body: AST_BlockStmt;
 }
 
-interface AST_IfStatement extends AST_Statement {
-  kind: "IfStatement";
-  test: AST_Expression;
-  consequent: AST_Statement;
-  alternate?: AST_Statement;
+interface AST_IfStmt extends AST_Stmt {
+  kind: "IfStmt";
+  test: AST_Expr;
+  consequent: AST_Stmt;
+  alternate?: AST_Stmt;
 }
 
-interface AST_WhileStatement extends AST_Statement {
-  kind: "WhileStatement";
-  test: AST_Expression;
-  body: AST_Statement;
+interface AST_WhileStmt extends AST_Stmt {
+  kind: "WhileStmt";
+  test: AST_Expr;
+  body: AST_Stmt;
 }
 
-interface AST_BreakStatement extends AST_Statement {
-  kind: "BreakStatement";
+interface AST_BreakStmt extends AST_Stmt {
+  kind: "BreakStmt";
 }
 
-interface AST_ContinueStatement extends AST_Statement {
-  kind: "ContinueStatement";
+interface AST_ContinueStmt extends AST_Stmt {
+  kind: "ContinueStmt";
 }
-
-/**@desc returns value at run-time*/
-interface AST_Expression extends AST_Statement {}
 
 // -----------------------------------------------
-//              EXTENDS EXPRESSION
+//                 EXPRESSIONS
 // -----------------------------------------------
 
-interface AST_AssignmentExp extends AST_Expression {
-  kind: "AssignmentExp";
-  assigne: AST_Expression; // assigne is an expression because I want to support member-expressions (like: obj.a = 'value', where 'obj.a' is a member-expression)
+interface AST_Expr extends AST_Stmt {}
+
+interface AST_AssignmentExpr extends AST_Expr {
+  kind: "AssignmentExpr";
+  assigne: AST_Expr; // assigne could be a member-expression
   operator: string;
-  value: AST_Expression;
+  value: AST_Expr;
 }
 
-interface AST_NumericLiteral extends AST_Expression {
+interface AST_NumericLiteral extends AST_Expr {
   kind: "NumericLiteral";
   value: number;
 }
 
-interface AST_StringLiteral extends AST_Expression {
+interface AST_StringLiteral extends AST_Expr {
   kind: "StringLiteral";
   value: string;
 }
 
-interface AST_Identifier extends AST_Expression {
+interface AST_Identifier extends AST_Expr {
   kind: "Identifier";
   value: string;
 }
 
-/**@desc consists of two `sides` (sides are expressions) seperated by `operator`*/
-interface AST_BinaryExp extends AST_Expression {
-  kind: "BinaryExp";
-  left: AST_Expression;
-  right: AST_Expression;
+interface AST_BinaryExpr extends AST_Expr {
+  kind: "BinaryExpr";
+  left: AST_Expr;
+  right: AST_Expr;
   operator: string;
 }
 
-/**@desc consists of `operand` (part manipulated/affected by the operator) and `operator` (character representing specific action)*/
-interface AST_UnaryExp extends AST_Expression {
-  kind: "PrefixUnaryExp" | "PostfixUnaryExp";
+interface AST_UnaryExpr extends AST_Expr {
+  kind: "PrefixUnaryExpr" | "PostfixUnaryExpr";
   operator: string;
-  operand: AST_Expression;
+  operand: AST_Expr;
 }
 
-/**@desc `operator` comes first and then `operand` (like that: ++var)*/
-interface AST_PrefixUnaryExp extends AST_UnaryExp {
-  kind: "PrefixUnaryExp";
+interface AST_PrefixUnaryExpr extends AST_UnaryExpr {
+  kind: "PrefixUnaryExpr";
 }
 
-/**@desc `operand` comes first and then `operator` (like that: var++)*/
-interface AST_PostfixUnaryExp extends AST_UnaryExp {
-  kind: "PostfixUnaryExp";
+interface AST_PostfixUnaryExpr extends AST_UnaryExpr {
+  kind: "PostfixUnaryExpr";
 }
 
-interface AST_TernaryExp extends AST_Expression {
-  kind: "TernaryExp";
-  test: AST_Expression;
-  consequent: AST_Expression;
-  alternate: AST_Expression;
+interface AST_TernaryExpr extends AST_Expr {
+  kind: "TernaryExpr";
+  test: AST_Expr;
+  consequent: AST_Expr;
+  alternate: AST_Expr;
 }
 
-/**@desc represents `object` property*/
-interface AST_ObjectProperty extends AST_Expression {
+interface AST_ObjectProperty extends AST_Expr {
   kind: "ObjectProperty";
   key: string;
-  value?: AST_Expression;
+  value?: AST_Expr;
 }
 
-interface AST_ObjectLiteral extends AST_Expression {
+interface AST_ObjectLiteral extends AST_Expr {
   kind: "ObjectLiteral";
   properties: AST_ObjectProperty[];
 }
 
-interface AST_ArrayLiteral extends AST_Expression {
+interface AST_ArrayLiteral extends AST_Expr {
   kind: "ArrayLiteral";
-  elements: AST_Expression[];
+  elements: AST_Expr[];
 }
 
-/**@desc represents object/property relationship, used for accessing object properties (for instance: `obj.property`)
-@computed determines whether it's a computed member-expression (like: `obj["key"]`)*/
-interface AST_MemberExp extends AST_Expression {
-  kind: "MemberExp";
-  object: AST_Expression;
-  property: AST_Expression;
+interface AST_MemberExpr extends AST_Expr {
+  kind: "MemberExpr";
+  object: AST_Expr;
+  property: AST_Expr;
   computed: boolean;
 }
 
-interface AST_CallExp extends AST_Expression {
-  kind: "CallExp";
-  arguments: AST_Expression[];
-  callee: AST_Expression;
+interface AST_CallExpr extends AST_Expr {
+  kind: "CallExpr";
+  arguments: AST_Expr[];
+  callee: AST_Expr;
 }
 
-interface AST_FunctionExpression extends AST_Expression {
-  kind: "FunctionExpression";
+interface AST_FunctionExpr extends AST_Expr {
+  kind: "FunctionExpr";
   name: null | string;
   parameters: AST_Identifier[];
-  body: AST_BlockStatement;
+  body: AST_BlockStmt;
 }

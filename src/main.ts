@@ -240,19 +240,20 @@ class InterpreterInterface {
   private evaluateSrc(src: string): EvaluateSrcOutput {
     const lexerOutput = new Lexer(src).tokenize();
 
-    let AST: AST_Program | undefined;
+    let parserOutput: AST_Program | undefined;
     let interpreterOutput: Runtime.Value | undefined;
 
     // HANDLE evaluateUpTo OPTION
     if (this.evaluateUpTo === "parser" || this.evaluateUpTo === "interpreter") {
-      AST = new Parser([...lexerOutput]).buildAST(); // passing shallow-copy of lexerOutput because parser modifies it and I need original for the verboseOutput
+      parserOutput = new Parser([...lexerOutput]).buildAST(); // passing shallow-copy of lexerOutput because parser modifies it and I need original for the verboseOutput
 
-      if (this.evaluateUpTo === "interpreter") interpreterOutput = interpreter.evaluate(AST, this.globalEnv);
+      if (this.evaluateUpTo === "interpreter")
+        interpreterOutput = interpreter.evaluate(parserOutput, this.globalEnv);
     }
 
     return {
       lexer: lexerOutput,
-      parser: AST,
+      parser: parserOutput,
       interpreter: interpreterOutput,
     };
   }

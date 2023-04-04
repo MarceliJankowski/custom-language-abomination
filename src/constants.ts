@@ -19,6 +19,7 @@ export enum ErrorCode {
 // -----------------------------------------------
 
 export const RELATIONAL_OPERATORS = [">", ">=", "<", "<="];
+
 export const EQUALITY_OPERATORS = ["!=", "=="];
 
 export const LOGICAL_OPERATORS = ["||", "&&"];
@@ -42,7 +43,7 @@ export const ASSIGNMENT_OPERATORS = ["=", "+=", "-=", "*=", "/=", "%=", "||=", "
 //        VALID MEMBER-EXPRESSION TYPES
 // -----------------------------------------------
 
-export const VALID_MEMBER_EXP_RUNTIME_TYPES: Runtime.ValueType[] = [
+export const VALID_MEMBER_EXPR_RUNTIME_TYPES: Runtime.ValueType[] = [
   "number",
   "string",
   "boolean",

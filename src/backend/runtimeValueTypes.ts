@@ -76,7 +76,7 @@ export interface Function extends ProtoValue {
   type: "function";
   name: string;
   parameters: AST_Identifier[];
-  body: AST_BlockStatement;
+  body: AST_BlockStmt;
   declarationEnv: VariableEnv;
 }
 

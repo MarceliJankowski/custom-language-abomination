@@ -1,12 +1,14 @@
 // PROJECT MODULES
-import { Token, TokenType } from "./lexer";
+import { Token, TokenType } from "./";
+import { Err } from "../utils";
 import {
-  Err,
-  isRelationalOperator,
-  isEqualityOperator,
-  isAdditiveOperator,
-  isMultiplicativeOperator,
-} from "../utils";
+  EQUALITY_OPERATORS,
+  RELATIONAL_OPERATORS,
+  ADDITIVE_OPERATORS,
+  MULTIPLICATIVE_OPERATORS,
+  ASSIGNMENT_OPERATORS,
+  UNARY_OPERATORS,
+} from "../constants";
 
 // -----------------------------------------------
 //                    PARSER
@@ -29,7 +31,7 @@ export class Parser {
       const statement = this.parseStatement();
 
       // HANDLE OPTIONAL SEMICOLON
-      if (this.at().type === TokenType.SEMICOLON) this.advance();
+      if (this.is(TokenType.SEMICOLON)) this.advance();
 
       this.programBody.push(statement);
     }
@@ -52,28 +54,28 @@ export class Parser {
   // helpful web page: https://en.cppreference.com/w/cpp/language/operator_precedence
 
   // statements - LEAST IMPORTANT / INVOKED FIRST
-  // assignmentExp
-  // ternaryExp
-  // objectExp
-  // arrayExp
-  // logicalExp (OR)
-  // logicalExp (AND)
-  // equalityExp
-  // relationalExp
-  // additiveExp
-  // multiplicativeExp
-  // prefixUnaryExp
-  // postfixUnaryExp
-  // CallExp
-  // MemberExp
-  // primaryExp - MOST IMPORTANT / INVOKED LAST
+  // assignmentExpr
+  // ternaryExpr
+  // objectExpr
+  // arrayExpr
+  // logicalExpr (OR)
+  // logicalExpr (AND)
+  // equalityExpr
+  // relationalExpr
+  // additiveExpr
+  // multiplicativeExpr
+  // prefixUnaryExpr
+  // postfixUnaryExpr
+  // CallExpr
+  // MemberExpr
+  // primaryExpr - MOST IMPORTANT / INVOKED LAST
 
   // -----------------------------------------------
   //                    PARSE
   // -----------------------------------------------
 
-  private parseStatement(): AST_Statement {
-    let parsedStatement: AST_Statement;
+  private parseStatement(): AST_Node {
+    let parsedStatement: AST_Stmt;
 
     switch (this.at().type) {
       // STATEMENTS
@@ -84,7 +86,7 @@ export class Parser {
       }
 
       case TokenType.FUNC: {
-        parsedStatement = this.parseFuncDeclaration();
+        parsedStatement = this.parseFunctionDeclaration();
         break;
       }
 
@@ -126,11 +128,11 @@ export class Parser {
     return parsedStatement;
   }
 
-  private parseExpression(): AST_Expression {
-    return this.parseFuncExpression();
+  private parseExpression(): AST_Expr {
+    return this.parseFunctionExpr();
   }
 
-  private parseVarDeclaration(): AST_Statement {
+  private parseVarDeclaration(): AST_Stmt {
     const varDeclarationKeyword = this.advance();
     const varDeclarationStart = varDeclarationKeyword.start;
     const isConstant = varDeclarationKeyword.type === TokenType.CONST;
@@ -141,7 +143,7 @@ export class Parser {
     ).value;
 
     // HANDLE UNINITIALIZED VARIABLE DECLARATION (like: 'var x')
-    if (this.at().type === TokenType.SEMICOLON) {
+    if (this.is(TokenType.SEMICOLON)) {
       const uninitializedVarDeclarationEnd = this.advance().end;
 
       if (isConstant)
@@ -163,17 +165,20 @@ export class Parser {
 
     // HANDLE INITIALIZED VARIABLE DECLARATION (like: 'var x = 10')
 
-    const operator = this.advanceAndExpect(
-      TokenType.ASSIGNMENT_OPERATOR,
-      `Invalid variable declaration. Identifier is not followed by assignment operator`
-    ).value;
+    const operator = this.advance();
+
+    if (!this.isAssignmentOperator(operator))
+      throw new Err(
+        `Invalid variable declaration. Identifier is not followed by assignment operator`,
+        "parser"
+      );
 
     const varDeclarationValue = this.parseExpression();
 
     const varDeclaration: AST_VarDeclaration = {
       kind: "VarDeclaration",
       identifier,
-      operator,
+      operator: operator.value,
       constant: isConstant,
       value: varDeclarationValue,
       start: varDeclarationStart,
@@ -183,24 +188,24 @@ export class Parser {
     return varDeclaration;
   }
 
-  private parseBlockStatement(): AST_BlockStatement {
+  private parseBlockStatement(): AST_BlockStmt {
     const start = this.advanceAndExpect(
       TokenType.OPEN_CURLY_BRACE,
       "Invalid block statement. Missing openining curly-brace ('{')"
     ).start;
 
-    const body: AST_Statement[] = [];
+    const body: AST_Stmt[] = [];
 
     // BUILD body
-    while (this.notEOF() && this.at().type !== TokenType.CLOSE_CURLY_BRACE) body.push(this.parseStatement());
+    while (this.notEOF() && !this.is(TokenType.CLOSE_CURLY_BRACE)) body.push(this.parseStatement());
 
     const end = this.advanceAndExpect(
       TokenType.CLOSE_CURLY_BRACE,
       "Invalid block statement. Missing closing curly-brace ('}')"
     ).end;
 
-    const blockStatement: AST_BlockStatement = {
-      kind: "BlockStatement",
+    const blockStatement: AST_BlockStmt = {
+      kind: "BlockStmt",
       body,
       start,
       end,
@@ -209,12 +214,12 @@ export class Parser {
     return blockStatement;
   }
 
-  private parseFuncDeclaration(): AST_FunctionDeclaration {
+  private parseFunctionDeclaration(): AST_FunctionDeclaration {
     const funcStart = this.advance().start; // advance past 'func' keyword
 
     const name = this.advanceAndExpect(
       TokenType.IDENTIFIER,
-      "Invalid function declaration. Missing function name following func keyword"
+      "Invalid function declaration. Missing function name following 'func' keyword"
     ).value;
 
     // HANDLE PARAMETERS
@@ -247,7 +252,7 @@ export class Parser {
     return func;
   }
 
-  private parseReturnStatement(): AST_ReturnStatement {
+  private parseReturnStatement(): AST_ReturnStmt {
     const returnKeyword = this.advance();
 
     let argument;
@@ -256,8 +261,8 @@ export class Parser {
     if (this.isCurrentTokenFollowing(returnKeyword)) argument = this.parseStatement();
 
     // BUILD returnStatement
-    const returnStatement: AST_ReturnStatement = {
-      kind: "ReturnStatement",
+    const returnStatement: AST_ReturnStmt = {
+      kind: "ReturnStmt",
       argument,
       start: returnKeyword.start,
       end: argument?.end ?? returnKeyword.end,
@@ -266,7 +271,7 @@ export class Parser {
     return returnStatement;
   }
 
-  private parseIfStatement(): AST_IfStatement {
+  private parseIfStatement(): AST_IfStmt {
     const start = this.advance().start; // advance past 'if' keyword
 
     // HANDLE TEST
@@ -285,22 +290,22 @@ export class Parser {
     // HANDLE CONSEQUENT
     let consequent;
 
-    if (this.at().type === TokenType.OPEN_CURLY_BRACE) consequent = this.parseBlockStatement();
+    if (this.is(TokenType.OPEN_CURLY_BRACE)) consequent = this.parseBlockStatement();
     else consequent = this.parseStatement(); // enable one-liners
 
     // HANDLE ALTERNATE
     let alternate;
 
-    if (this.at().type === TokenType.ELSE) {
+    if (this.is(TokenType.ELSE)) {
       this.advance(); // advance past 'else' keyword
 
-      if (this.at().type === TokenType.OPEN_CURLY_BRACE) alternate = this.parseBlockStatement();
+      if (this.is(TokenType.OPEN_CURLY_BRACE)) alternate = this.parseBlockStatement();
       else alternate = this.parseStatement(); // enable one-liners
     }
 
     // BUILD IfStatement
-    const ifStatement: AST_IfStatement = {
-      kind: "IfStatement",
+    const ifStatement: AST_IfStmt = {
+      kind: "IfStmt",
       test,
       consequent,
       alternate,
@@ -311,7 +316,7 @@ export class Parser {
     return ifStatement;
   }
 
-  private parseWhileStatement(): AST_WhileStatement {
+  private parseWhileStatement(): AST_WhileStmt {
     const start = this.advance().start; // advance past 'while' keyword
 
     // HANDLE TEST
@@ -330,12 +335,12 @@ export class Parser {
     // HANDLE BODY
     let body;
 
-    if (this.at().type === TokenType.OPEN_CURLY_BRACE) body = this.parseBlockStatement();
+    if (this.is(TokenType.OPEN_CURLY_BRACE)) body = this.parseBlockStatement();
     else body = this.parseStatement(); // enable one-liners
 
     // BUILD WhileStatement
-    const whileStatement: AST_WhileStatement = {
-      kind: "WhileStatement",
+    const whileStatement: AST_WhileStmt = {
+      kind: "WhileStmt",
       test,
       body,
       start,
@@ -345,7 +350,7 @@ export class Parser {
     return whileStatement;
   }
 
-  private parseForStatement(): AST_Statement {
+  private parseForStatement(): AST_Stmt {
     const forKeyword = this.advance();
 
     this.advanceAndExpect(
@@ -357,12 +362,12 @@ export class Parser {
     let initializer;
 
     // allow initializer omission
-    if (this.at().type === TokenType.SEMICOLON) {
+    if (this.is(TokenType.SEMICOLON)) {
       initializer = undefined;
     }
 
     // initializer as variable declaration
-    else if (this.at().type === TokenType.CONST || this.at().type === TokenType.VAR) {
+    else if (this.is(TokenType.CONST, TokenType.VAR)) {
       initializer = this.parseVarDeclaration();
     }
 
@@ -378,7 +383,7 @@ export class Parser {
     let test;
 
     // allow test omission
-    if (this.at().type !== TokenType.SEMICOLON) test = this.parseExpression();
+    if (!this.is(TokenType.SEMICOLON)) test = this.parseExpression();
 
     this.advanceAndExpect(
       TokenType.SEMICOLON,
@@ -389,7 +394,7 @@ export class Parser {
     let update;
 
     // allow update omission
-    if (this.at().type !== TokenType.CLOSE_PAREN) update = this.parseExpression();
+    if (!this.is(TokenType.CLOSE_PAREN)) update = this.parseExpression();
 
     this.advanceAndExpect(
       TokenType.CLOSE_PAREN,
@@ -399,16 +404,16 @@ export class Parser {
     // HANDLE BODY
     let body;
 
-    if (this.at().type === TokenType.OPEN_CURLY_BRACE) body = this.parseBlockStatement();
+    if (this.is(TokenType.OPEN_CURLY_BRACE)) body = this.parseBlockStatement();
     else body = this.parseStatement(); // enable one-liners
 
     // DESUGARING
-    // forStatement doesn't introduce any "new" capabilities to the language, it can be fully implemented with already defined AST_NODES
-    // therefore, I treat it as syntactic-sugar. Here I'm desugaring forStatement (breaking it up) into its primary components / AST_NODES
+    // forStatement doesn't introduce any "new" capabilities to the language, it can be fully implemented with already defined NODES
+    // therefore, I treat it as syntactic-sugar. Here I'm desugaring forStatement (breaking it up) into its primary components / NODES
 
     if (update) {
-      const bodyWithUpdate: AST_BlockStatement = {
-        kind: "BlockStatement",
+      const bodyWithUpdate: AST_BlockStmt = {
+        kind: "BlockStmt",
         body: [body, update],
         start: body.start,
         end: body.end,
@@ -428,8 +433,8 @@ export class Parser {
       test = defaultTestValue;
     }
 
-    const bodyWhileStatement: AST_WhileStatement = {
-      kind: "WhileStatement",
+    const bodyWhileStatement: AST_WhileStmt = {
+      kind: "WhileStmt",
       test,
       body,
       start: body.start,
@@ -439,8 +444,8 @@ export class Parser {
     body = bodyWhileStatement;
 
     if (initializer) {
-      const bodyWithInitializer: AST_BlockStatement = {
-        kind: "BlockStatement",
+      const bodyWithInitializer: AST_BlockStmt = {
+        kind: "BlockStmt",
         body: [initializer, body],
         start: body.start,
         end: body.end,
@@ -452,12 +457,12 @@ export class Parser {
     return body;
   }
 
-  private parseBreakStatement(): AST_BreakStatement {
+  private parseBreakStatement(): AST_BreakStmt {
     const breakKeyword = this.advance();
 
     // BUILD breakStatement
-    const breakStatement: AST_BreakStatement = {
-      kind: "BreakStatement",
+    const breakStatement: AST_BreakStmt = {
+      kind: "BreakStmt",
       start: breakKeyword.start,
       end: breakKeyword.end,
     };
@@ -465,12 +470,12 @@ export class Parser {
     return breakStatement;
   }
 
-  private parseContinueStatement(): AST_ContinueStatement {
+  private parseContinueStatement(): AST_ContinueStmt {
     const continueKeyword = this.advance();
 
     // BUILD continueStatement
-    const continueStatement: AST_ContinueStatement = {
-      kind: "ContinueStatement",
+    const continueStatement: AST_ContinueStmt = {
+      kind: "ContinueStmt",
       start: continueKeyword.start,
       end: continueKeyword.end,
     };
@@ -478,15 +483,15 @@ export class Parser {
     return continueStatement;
   }
 
-  private parseFuncExpression(): AST_Expression {
-    if (this.at().type !== TokenType.FUNC) return this.parseAssignmentExp();
+  private parseFunctionExpr(): AST_Expr {
+    if (this.at().type !== TokenType.FUNC) return this.parseAssignmentExpr();
 
     const funcStart = this.advance().start; // advance past 'func' keyword
 
     // HANDLE NAME
-    let name: AST_FunctionExpression["name"] = null;
+    let name: AST_FunctionExpr["name"] = null;
 
-    if (this.at().type === TokenType.IDENTIFIER) name = this.advance().value;
+    if (this.is(TokenType.IDENTIFIER)) name = this.advance().value;
 
     // HANDLE PARAMETERS
     const { argumentList } = this.parseArgumentList();
@@ -506,8 +511,8 @@ export class Parser {
     const blockStatement = this.parseBlockStatement();
 
     // BUILD FUNC
-    const func: AST_FunctionExpression = {
-      kind: "FunctionExpression",
+    const func: AST_FunctionExpr = {
+      kind: "FunctionExpr",
       body: blockStatement,
       name,
       parameters,
@@ -518,17 +523,17 @@ export class Parser {
     return func;
   }
 
-  private parseAssignmentExp(): AST_Expression {
-    const left = this.parseTernaryExp();
+  private parseAssignmentExpr(): AST_Expr {
+    const left = this.parseTernaryExpr();
     const assignmentStart = left.start;
 
-    if (this.at().type === TokenType.ASSIGNMENT_OPERATOR) {
+    if (this.isAssignmentOperator(this.at())) {
       const operator = this.advance().value;
 
-      const value = this.parseTernaryExp();
+      const value = this.parseTernaryExpr();
 
-      const assignmentExp: AST_AssignmentExp = {
-        kind: "AssignmentExp",
+      const assignmentExpr: AST_AssignmentExpr = {
+        kind: "AssignmentExpr",
         assigne: left,
         operator,
         value,
@@ -536,26 +541,29 @@ export class Parser {
         end: value.end,
       };
 
-      return assignmentExp;
+      return assignmentExpr;
     }
 
     return left;
   }
 
-  private parseTernaryExp(): AST_Expression {
-    let test = this.parseObjectExp();
+  private parseTernaryExpr(): AST_Expr {
+    let test = this.parseObjectExpr();
 
-    while (this.at().type === TokenType.TERNARY_OPERATOR) {
+    while (this.is(TokenType.QUESTION)) {
       this.advance(); // advance past ternary-operator
 
       const consequent = this.parseExpression();
 
-      this.advanceAndExpect(TokenType.COLON, "Missing ':' following consequent in ternary expression");
+      this.advanceAndExpect(
+        TokenType.COLON,
+        "Missing colon (':') following consequent in ternary expression"
+      );
 
       const alternate = this.parseExpression();
 
-      const ternaryExp: AST_TernaryExp = {
-        kind: "TernaryExp",
+      const ternaryExp: AST_TernaryExpr = {
+        kind: "TernaryExpr",
         test,
         consequent,
         alternate,
@@ -569,20 +577,20 @@ export class Parser {
     return test;
   }
 
-  private parseObjectExp(): AST_Expression {
-    if (this.at().type !== TokenType.OPEN_CURLY_BRACE) return this.parseArrayExp();
+  private parseObjectExpr(): AST_Expr {
+    if (!this.is(TokenType.OPEN_CURLY_BRACE)) return this.parseArrayExpr();
 
     const objectStart = this.advance().start; // advance past OPEN_CURLY_BRACE
     const properties = new Array<AST_ObjectProperty>();
 
     // iterate as long as we're inside the object
-    while (this.notEOF() && this.at().type !== TokenType.CLOSE_CURLY_BRACE) {
+    while (this.notEOF() && !this.is(TokenType.CLOSE_CURLY_BRACE)) {
       const key = this.advanceAndExpect(TokenType.IDENTIFIER, "Missing key inside object-literal");
 
       // HANDLE SHORTHANDS
 
       // shorthand: { key, }
-      if (this.at().type === TokenType.COMMA) {
+      if (this.is(TokenType.COMMA)) {
         const uninitializedProperty: AST_ObjectProperty = {
           kind: "ObjectProperty",
           key: key.value,
@@ -597,7 +605,7 @@ export class Parser {
       }
 
       // shorthand: { key }
-      else if (this.at().type === TokenType.CLOSE_CURLY_BRACE) {
+      else if (this.is(TokenType.CLOSE_CURLY_BRACE)) {
         const uninitializedProperty: AST_ObjectProperty = {
           kind: "ObjectProperty",
           key: key.value,
@@ -612,12 +620,12 @@ export class Parser {
 
       // HANDLE DEFINED PROPERTY
 
-      this.advanceAndExpect(TokenType.COLON, "Missing ':' following identifier in object-literal"); // advance past COLON
+      this.advanceAndExpect(TokenType.COLON, "Missing colon (':') following identifier in object-literal"); // advance past COLON
 
       const value = this.parseExpression();
 
       // if it's not object-literal end, expect a comma for another property
-      if (this.at().type !== TokenType.CLOSE_CURLY_BRACE)
+      if (!this.is(TokenType.CLOSE_CURLY_BRACE))
         this.advanceAndExpect(
           TokenType.COMMA,
           "Object-literal missing: closing curly-brace ('}') or comma (','), following property-value"
@@ -649,21 +657,21 @@ export class Parser {
     };
 
     // handle immediately following member-expression
-    if (this.isCurrentTokenAccessingProperty()) return this.parseMemberExp(objectLiteral);
+    if (this.isCurrentTokenAccessingProperty()) return this.parseMemberExpr(objectLiteral);
 
     return objectLiteral;
   }
 
-  private parseArrayExp(): AST_Expression {
-    if (this.at().type !== TokenType.OPEN_BRACKET) return this.parseLogicalExpOR();
+  private parseArrayExpr(): AST_Expr {
+    if (!this.is(TokenType.OPEN_BRACKET)) return this.parseLogicalExprOR();
 
-    const elements = new Array<AST_Expression>();
+    const elements = new Array<AST_Expr>();
     const arrayStart = this.advance().start; // advance past OPEN_BRACKET
 
-    while (this.notEOF() && this.at().type !== TokenType.CLOSE_BRACKET) {
+    while (this.notEOF() && !this.is(TokenType.CLOSE_BRACKET)) {
       const element = this.parseExpression();
 
-      if (this.at().type === TokenType.COMMA) this.advance(); // advance past comma
+      if (this.is(TokenType.COMMA)) this.advance(); // advance past comma
 
       elements.push(element);
     }
@@ -681,176 +689,170 @@ export class Parser {
     };
 
     // handle immediately following member-expression
-    if (this.isCurrentTokenAccessingProperty()) return this.parseMemberExp(arrayLiteral);
+    if (this.isCurrentTokenAccessingProperty()) return this.parseMemberExpr(arrayLiteral);
 
     return arrayLiteral;
   }
 
-  /**@desc parses logical `OR` operator*/
-  private parseLogicalExpOR(): AST_Expression {
-    let left = this.parseLogicalExpAND();
+  private parseLogicalExprOR(): AST_Expr {
+    let left = this.parseLogicalExprAND();
 
-    while (this.at().value === "||") {
+    while (this.is(TokenType.OR)) {
       const operator = this.advance().value;
-      const right = this.parseLogicalExpAND();
+      const right = this.parseLogicalExprAND();
 
-      const binaryExp = this.generateASTBinaryExpNode(left, operator, right);
-      left = binaryExp;
+      const binaryExpr = this.generateASTBinaryExprNode(left, operator, right);
+      left = binaryExpr;
     }
 
     return left;
   }
 
-  /**@desc parses logical `AND` operator*/
-  private parseLogicalExpAND(): AST_Expression {
-    let left = this.parseEqualityExp();
+  private parseLogicalExprAND(): AST_Expr {
+    let left = this.parseEqualityExpr();
 
-    while (this.at().value === "&&") {
+    while (this.is(TokenType.AND)) {
       const operator = this.advance().value;
-      const right = this.parseEqualityExp();
+      const right = this.parseEqualityExpr();
 
-      const binaryExp = this.generateASTBinaryExpNode(left, operator, right);
-      left = binaryExp;
+      const binaryExpr = this.generateASTBinaryExprNode(left, operator, right);
+      left = binaryExpr;
     }
 
     return left;
   }
 
-  /**@desc parses binary expression `equality` operators*/
-  private parseEqualityExp(): AST_Expression {
-    let left = this.parseRelationalExp();
+  private parseEqualityExpr(): AST_Expr {
+    let left = this.parseRelationalExpr();
 
-    while (isEqualityOperator(this.at().value)) {
+    while (this.isEqualityOperator(this.at())) {
       const operator = this.advance().value;
-      const right = this.parseRelationalExp();
+      const right = this.parseRelationalExpr();
 
-      const binaryExp = this.generateASTBinaryExpNode(left, operator, right);
-      left = binaryExp;
+      const binaryExpr = this.generateASTBinaryExprNode(left, operator, right);
+      left = binaryExpr;
     }
 
     return left;
   }
 
-  /**@desc parses binary expression `relational` operators*/
-  private parseRelationalExp(): AST_Expression {
-    let left = this.parseAdditiveExp();
+  private parseRelationalExpr(): AST_Expr {
+    let left = this.parseAdditiveExpr();
 
-    while (isRelationalOperator(this.at().value)) {
+    while (this.isRelationalOperator(this.at())) {
       const operator = this.advance().value;
-      const right = this.parseAdditiveExp();
+      const right = this.parseAdditiveExpr();
 
-      const binaryExp = this.generateASTBinaryExpNode(left, operator, right);
-      left = binaryExp;
+      const binaryExpr = this.generateASTBinaryExprNode(left, operator, right);
+      left = binaryExpr;
     }
 
     return left;
   }
 
-  /**@desc parses `addition` and `subtraction` operators*/
-  private parseAdditiveExp(): AST_Expression {
-    let left = this.parseMultiplicativeExp();
+  private parseAdditiveExpr(): AST_Expr {
+    let left = this.parseMultiplicativeExpr();
 
     // here's the problem
-    while (isAdditiveOperator(this.at().value)) {
+    while (this.isAdditiveOperator(this.at())) {
       const operator = this.advance().value;
-      const right = this.parseMultiplicativeExp();
+      const right = this.parseMultiplicativeExpr();
 
-      const binaryExp = this.generateASTBinaryExpNode(left, operator, right);
-      left = binaryExp;
+      const binaryExpr = this.generateASTBinaryExprNode(left, operator, right);
+      left = binaryExpr;
     }
 
     return left;
   }
 
-  /**@desc parses `multiplication`, `division` and `modulo` operators*/
-  private parseMultiplicativeExp(): AST_Expression {
-    let left = this.parsePrefixUnaryExp();
+  private parseMultiplicativeExpr(): AST_Expr {
+    let left = this.parsePrefixUnaryExpr();
 
-    while (isMultiplicativeOperator(this.at().value)) {
+    while (this.isMultiplicativeOperator(this.at())) {
       const operator = this.advance().value;
-      const right = this.parsePrefixUnaryExp();
+      const right = this.parsePrefixUnaryExpr();
 
-      const binaryExp = this.generateASTBinaryExpNode(left, operator, right);
-      left = binaryExp;
+      const binaryExpr = this.generateASTBinaryExprNode(left, operator, right);
+      left = binaryExpr;
     }
 
     return left;
   }
 
-  /**@desc parse `prefix` unary expressions (like: ++var)*/
-  private parsePrefixUnaryExp(): AST_Expression {
-    while (this.at().type === TokenType.UNARY_OPERATOR) {
+  private parsePrefixUnaryExpr(): AST_Expr {
+    while (this.isUnaryOperator(this.at())) {
       const operator = this.advance();
-      const operand = operator.value === "typeof" ? this.parseExpression() : this.parsePostfixUnaryExp();
+      const operand =
+        operator.type === TokenType.TYPEOF ? this.parseExpression() : this.parsePostfixUnaryExpr();
 
-      const unaryExp: AST_PrefixUnaryExp = {
-        kind: "PrefixUnaryExp",
+      const unaryExpr: AST_PrefixUnaryExpr = {
+        kind: "PrefixUnaryExpr",
         operand,
         operator: operator.value,
         start: operator.start,
         end: operand.end,
       };
 
-      return unaryExp;
+      return unaryExpr;
     }
 
-    return this.parsePostfixUnaryExp();
+    return this.parsePostfixUnaryExpr();
   }
 
   /**@desc parse `postfix` unary expressions (like: var++)*/
-  private parsePostfixUnaryExp(): AST_Expression {
-    const left = this.parseCallExp();
+  private parsePostfixUnaryExpr(): AST_Expr {
+    const left = this.parseCallExpr();
 
-    while (this.at().type === TokenType.UNARY_OPERATOR) {
-      const operator = this.advance();
+    while (this.isUnaryOperator(this.at())) {
+      const operator = this.advance().value;
 
-      const unaryExp: AST_PostfixUnaryExp = {
-        kind: "PostfixUnaryExp",
-        operator: operator.value,
+      const unaryExpr: AST_PostfixUnaryExpr = {
+        kind: "PostfixUnaryExpr",
+        operator,
         operand: left,
         start: left.start,
         end: left.end,
       };
 
-      return unaryExp;
+      return unaryExpr;
     }
 
     return left;
   }
 
-  private parseCallExp(prevCallee?: AST_CallExp["callee"]): AST_Expression {
-    const callee = prevCallee ?? this.parseMemberExp();
+  private parseCallExpr(prevCallee?: AST_CallExpr["callee"]): AST_Expr {
+    const callee = prevCallee ?? this.parseMemberExpr();
 
-    if (this.at().type !== TokenType.OPEN_PAREN) return callee;
+    if (!this.is(TokenType.OPEN_PAREN)) return callee;
 
     // HANDLE ARGUMENTS
     const { argumentList, argumentListEnd } = this.parseArgumentList();
 
     // BUILD CALL-EXP
-    let callExp: AST_CallExp = {
-      kind: "CallExp",
+    let callExpr: AST_CallExpr = {
+      kind: "CallExpr",
       callee,
       arguments: argumentList,
       start: callee.start,
       end: argumentListEnd,
     };
 
-    // handle another call-expression immediately following current callExp (example: 'func()()')
-    if (this.at().type === TokenType.OPEN_PAREN) callExp = this.parseCallExp(callExp) as AST_CallExp;
+    // handle another call-expression immediately following current callExpr (example: 'func()()')
+    if (this.is(TokenType.OPEN_PAREN)) callExpr = this.parseCallExpr(callExpr) as AST_CallExpr;
 
     // handle immediately following member-expression
-    if (this.isCurrentTokenAccessingProperty()) return this.parseMemberExp(callExp);
+    if (this.isCurrentTokenAccessingProperty()) return this.parseMemberExpr(callExpr);
 
-    return callExp;
+    return callExpr;
   }
 
   private parseArgumentList() {
     this.advanceAndExpect(TokenType.OPEN_PAREN, "Invalid argument list. Missing opening parentheses ('(')");
 
-    const argumentList: AST_Expression[] = [];
+    const argumentList: AST_Expr[] = [];
 
     // handle case when there are arguments
-    if (this.at().type !== TokenType.CLOSE_PAREN) {
+    if (!this.is(TokenType.CLOSE_PAREN)) {
       const handleArgument = () => {
         const arg = this.parseExpression();
         argumentList.push(arg);
@@ -877,21 +879,21 @@ export class Parser {
     };
   }
 
-  private parseMemberExp(expObject?: AST_ArrayLiteral | AST_ObjectLiteral | AST_CallExp): AST_Expression {
-    let object: AST_Expression;
+  private parseMemberExpr(exprObject?: AST_ArrayLiteral | AST_ObjectLiteral | AST_CallExpr): AST_Expr {
+    let object: AST_Expr;
 
-    if (expObject) object = expObject; // enable: '[1,2,3][0]', '{}.type' and so on
-    else object = this.parsePrimaryExp();
+    if (exprObject) object = exprObject; // enable: '[1,2,3][0]', '{}.type' and so on
+    else object = this.parsePrimaryExpr();
 
     while (this.isCurrentTokenAccessingProperty() && this.isCurrentTokenFollowing(object)) {
-      const operator = this.advance(); // '.' or '[' for computed expressions
+      const operator = this.advance(); // '.' or '['
 
-      let property: AST_Expression;
+      let property: AST_Expr;
       let computed = false;
 
       // NON-COMPUTED (obj.property)
       if (operator.type === TokenType.DOT) {
-        property = this.parsePrimaryExp();
+        property = this.parsePrimaryExpr();
 
         if (property.kind !== "Identifier")
           throw new Err(
@@ -917,8 +919,8 @@ export class Parser {
           "parser"
         );
 
-      const memberExp: AST_MemberExp = {
-        kind: "MemberExp",
+      const memberExpr: AST_MemberExpr = {
+        kind: "MemberExpr",
         object,
         property,
         computed,
@@ -926,35 +928,40 @@ export class Parser {
         end: property.end,
       };
 
-      object = memberExp;
+      object = memberExpr;
     }
 
     // handle immediately following call-expression
-    if (this.at().type === TokenType.OPEN_PAREN) return this.parseCallExp(object);
+    if (this.is(TokenType.OPEN_PAREN)) return this.parseCallExpr(object);
 
     return object;
   }
 
   /**@desc parses literal values and grouping expressions*/
-  private parsePrimaryExp(): AST_Expression {
+  private parsePrimaryExpr(): AST_Expr {
     const tokenType = this.at().type;
 
     switch (tokenType) {
       case TokenType.STRING: {
-        const { value, start, end } = this.advance();
+        const { value: value, start, end } = this.advance();
         const stringNode: AST_StringLiteral = { kind: "StringLiteral", value, start, end };
         return stringNode;
       }
 
       case TokenType.IDENTIFIER: {
-        const { value, start, end } = this.advance();
+        const { value: value, start, end } = this.advance();
         const identifierNode: AST_Identifier = { kind: "Identifier", value, start, end };
         return identifierNode;
       }
 
       case TokenType.NUMBER: {
-        const { value, start, end } = this.advance();
-        const numberNode: AST_NumericLiteral = { kind: "NumericLiteral", value: Number(value), start, end };
+        const { value: value, start, end } = this.advance();
+        const numberNode: AST_NumericLiteral = {
+          kind: "NumericLiteral",
+          value: Number(value),
+          start,
+          end,
+        };
         return numberNode;
       }
 
@@ -965,7 +972,7 @@ export class Parser {
 
         this.advanceAndExpect(
           TokenType.CLOSE_PAREN,
-          "Unexpected token found inside parenthesised expression"
+          "Invalid parenthesised expression. Missing closing parentheses"
         );
 
         return value;
@@ -974,7 +981,7 @@ export class Parser {
       // UNIDENTIFIED TOKENS AND INVALID CODE
       default:
         throw new Err(
-          `Unexpected token found during parsing, token: '${this.at().value}', at position: ${
+          `Unexpected token found during parsing, token: '${this.at().value}' at position: ${
             this.at().start
           }`,
           "parser"
@@ -985,13 +992,14 @@ export class Parser {
   // -----------------------------------------------
   //                  UTILITIES
   // -----------------------------------------------
+
   /**@desc determine whether current token is accessing property / whether current token is a: `'.'` or `'['`*/
   private isCurrentTokenAccessingProperty() {
     return this.at().type === TokenType.DOT || this.at().type === TokenType.OPEN_BRACKET;
   }
 
   /**@desc determine whether currentToken is following preceding `Token/Node` (both are on the same line, and currentToken starts at least at preceding `Token/Node` end)*/
-  private isCurrentTokenFollowing(preceding: Token | AST_Expression) {
+  private isCurrentTokenFollowing(preceding: Token | AST_Expr) {
     const precedingTokenEnd = preceding.end;
     const currentTokenStart = this.at().start;
 
@@ -1002,13 +1010,9 @@ export class Parser {
   }
 
   /**@desc helper function for parsing binary-expressions. It generates and returns `AST Binary Expression` node*/
-  private generateASTBinaryExpNode(
-    left: AST_Expression,
-    operator: string,
-    right: AST_Expression
-  ): AST_BinaryExp {
-    const astBinaryExp: AST_BinaryExp = {
-      kind: "BinaryExp",
+  private generateASTBinaryExprNode(left: AST_Expr, operator: string, right: AST_Expr): AST_BinaryExpr {
+    const astBinaryExpr: AST_BinaryExpr = {
+      kind: "BinaryExpr",
       left,
       operator,
       right,
@@ -1016,7 +1020,7 @@ export class Parser {
       end: right.end,
     };
 
-    return astBinaryExp;
+    return astBinaryExpr;
   }
 
   /**@desc determine whether current token is in bounds (`EOF` token hasn't been reached)*/
@@ -1027,6 +1031,13 @@ export class Parser {
   /**@desc determine whether `EOF` token is reached*/
   private isEOF(): boolean {
     return this.at().type === TokenType.EOF;
+  }
+
+  /**@desc determine whether current token is one of `types`*/
+  private is(...types: TokenType[]): boolean {
+    if (this.isEOF()) return false;
+
+    return types.some(type => this.at().type === type);
   }
 
   /**@return current `token`*/
@@ -1045,12 +1056,38 @@ export class Parser {
   private advanceAndExpect(type: TokenType, err: string): Token | never {
     const token = this.advance();
 
-    if (!token || token.type !== type)
+    if (token.type !== type)
       throw new Err(
         err + `\nToken: '${token.value}', expected: '${type}', at position: ${token.start}`,
         "parser"
       );
 
     return token;
+  }
+
+  // OPERATOR CHECKS
+
+  private isAssignmentOperator({ value }: Token): boolean {
+    return ASSIGNMENT_OPERATORS.some(validOperator => validOperator === value);
+  }
+
+  private isEqualityOperator({ value }: Token): boolean {
+    return EQUALITY_OPERATORS.some(validOperator => validOperator === value);
+  }
+
+  private isRelationalOperator({ value }: Token): boolean {
+    return RELATIONAL_OPERATORS.some(validOperator => validOperator === value);
+  }
+
+  private isAdditiveOperator({ value }: Token): boolean {
+    return ADDITIVE_OPERATORS.some(validOperator => validOperator === value);
+  }
+
+  private isMultiplicativeOperator({ value }: Token): boolean {
+    return MULTIPLICATIVE_OPERATORS.some(validOperator => validOperator === value);
+  }
+
+  private isUnaryOperator({ value }: Token): boolean {
+    return UNARY_OPERATORS.some(validOperator => validOperator === value);
   }
 }
