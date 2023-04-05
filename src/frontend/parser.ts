@@ -28,12 +28,9 @@ export class Parser {
 
     // BUILD AST
     while (this.notEOF()) {
-      const statement = this.parseStatement();
+      const newNode = this.parseStatement();
 
-      // HANDLE OPTIONAL SEMICOLON
-      if (this.is(TokenType.SEMICOLON)) this.advance();
-
-      this.programBody.push(statement);
+      this.programBody.push(newNode);
     }
 
     const program: AST_Program = {
@@ -125,11 +122,19 @@ export class Parser {
         return this.parseExpression();
     }
 
+    // HANDLE OPTIONAL SEMICOLON
+    if (this.is(TokenType.SEMICOLON)) this.advance();
+
     return parsedStatement;
   }
 
   private parseExpression(): AST_Expr {
-    return this.parseFunctionExpr();
+    const parsedExpression = this.parseFunctionExpr();
+
+    // HANDLE OPTIONAL SEMICOLON
+    if (this.is(TokenType.SEMICOLON)) this.advance();
+
+    return parsedExpression;
   }
 
   private parseVarDeclaration(): AST_Stmt {
@@ -374,10 +379,14 @@ export class Parser {
     // initializer as expression
     else initializer = this.parseExpression();
 
-    this.advanceAndExpect(
-      TokenType.SEMICOLON,
-      "Invalid for statement. Missing semicolon (';') delimiter following initializer"
-    );
+    // handle mandatory ';' delimiter
+    if (this.previous().type !== TokenType.SEMICOLON)
+      throw new Err(
+        `Invalid for statement. Missing semicolon (';') delimiter following initializer, at position ${
+          this.previous().start
+        }`,
+        "parser"
+      );
 
     // HANDLE TEST
     let test;
@@ -385,10 +394,14 @@ export class Parser {
     // allow test omission
     if (!this.is(TokenType.SEMICOLON)) test = this.parseExpression();
 
-    this.advanceAndExpect(
-      TokenType.SEMICOLON,
-      "Invalid for statement. Missing semicolon (';') delimiter following test"
-    );
+    // handle mandatory ';' delimiter
+    if (this.previous().type !== TokenType.SEMICOLON)
+      throw new Err(
+        `Invalid for statement. Missing semicolon (';') delimiter following test, at position ${
+          this.previous().start
+        }`,
+        "parser"
+      );
 
     // HANDLE UPDATE
     let update;
@@ -1043,6 +1056,11 @@ export class Parser {
   /**@return current `token`*/
   private at(): Token {
     return this.tokens[this.current];
+  }
+
+  /**@return the most recently advanced (skipped over) `token`*/
+  private previous(): Token {
+    return this.tokens[this.current - 1];
   }
 
   /**@desc advance `current` and return previous (skipped over) token*/
