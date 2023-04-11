@@ -341,18 +341,55 @@ export class Lexer {
 
           // COMMENT
           else if (char === "#") {
-            // eat away whole comment until '\n'
-            while (this.notEOF() && !this.isNewLine(this.at())) this.advance();
+            this.advance(); // advance past '#'
+
+            const isBlockComment = this.match("#");
+
+            // HANDLE SINGLE-LINE COMMENT
+            if (isBlockComment === false) {
+              // advance until newline ('\n') is encountered
+              while (this.notEOF() && !this.isNewLine(this.at())) this.advance();
+            }
+
+            // HANDLE BLOCK COMMENT
+            else {
+              let isBlockCommentEnded = false;
+
+              // advance until block comment end ('##') is encountered
+              while (this.notEOF()) {
+                // handle newline character
+                if (this.isNewLine(this.at())) {
+                  this.handleNewLine();
+                  continue;
+                }
+
+                this.advance();
+
+                // handle block comment end
+                if (this.previous() === "#" && this.match("#")) {
+                  isBlockCommentEnded = true;
+                  break;
+                }
+              }
+
+              // make sure that block comment ends
+              if (isBlockCommentEnded === false)
+                throw new Err(
+                  `Invalid block comment. Missing ending '##', at position ${this.position}`,
+                  "lexer"
+                );
+            }
           }
 
           // WHITESPACE
           else if (this.isWhitespace(char)) {
-            this.advance(); // skip whitespace character
-
-            if (this.isNewLine(char)) {
-              this.line++; // increment line counter
-              this.column = 0; // set column back to 0
+            // handle newline
+            if (this.isNewLine(this.at())) {
+              this.handleNewLine();
             }
+
+            // handle whitespace
+            else this.advance();
           }
 
           // UNRECOGNIZED
@@ -374,6 +411,14 @@ export class Lexer {
   //                  UTILITIES
   // -----------------------------------------------
 
+  /**@desc handles newline (`'\n'`) character*/
+  private handleNewLine(): void {
+    this.advance(); // advance past newline
+
+    this.line++;
+    this.column = 0;
+  }
+
   /**@desc determine whether `current` character equals `expectedChar`. In case it does, advance past `current` character. Returns corresponding boolean*/
   private match(expectedChar: string): boolean {
     if (this.isEOF() || this.at() !== expectedChar) return false;
@@ -392,6 +437,11 @@ export class Lexer {
   /**@desc altered `addToken()` method. Advances `current` and uses previous (skipped over) character as token value*/
   private addSingleCharToken(type: TokenType, start: CharPosition): ReturnType<Lexer["addToken"]> {
     return this.addToken(type, this.advance(), start);
+  }
+
+  /**@return the most recently advanced (skipped over) character*/
+  private previous(): string {
+    return this.src[this.current - 1];
   }
 
   /**@return currently processed character*/
