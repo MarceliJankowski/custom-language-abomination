@@ -35,7 +35,7 @@ export const BINARY_OPERATORS = [
   ...LOGICAL_OPERATORS,
 ];
 
-export const UNARY_OPERATORS = ["!", "++", "--"];
+export const UNARY_OPERATORS = ["!", "++", "--", "typeof"];
 
 export const ASSIGNMENT_OPERATORS = ["=", "+=", "-=", "*=", "/=", "%=", "||=", "&&="];
 
