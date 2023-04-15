@@ -184,6 +184,12 @@ export class Lexer {
         }
 
         case "-": {
+          // handle negative numbers
+          if (this.isDigit(this.peek())) {
+            this.handleNumber();
+            break;
+          }
+
           this.advance();
 
           if (this.match("=")) this.addToken(TokenType.MINUS_EQUAL, "-=", startPosition);
@@ -220,20 +226,7 @@ export class Lexer {
         default: {
           // NUMBER
           if (this.isDigit(char)) {
-            let number = this.advance();
-
-            // BUILD NUMBER
-            while (this.notEOF() && this.isDigit(this.at())) number += this.advance();
-
-            // HANDLE DECIMAL POINT
-            if (this.at() === "." && this.isDigit(this.peek())) {
-              number += this.advance(); // append decimal point
-
-              // BUILD DECIMAL
-              while (this.notEOF() && this.isDigit(this.at())) number += this.advance();
-            }
-
-            this.addToken(TokenType.NUMBER, number, startPosition);
+            this.handleNumber();
           }
 
           // STRING
@@ -405,6 +398,24 @@ export class Lexer {
     this.addToken(TokenType.EOF, "EndOfFile", this.position);
 
     return this.tokens;
+  }
+
+  private handleNumber() {
+    const startPosition = this.position;
+    let number = this.advance();
+
+    // BUILD NUMBER
+    while (this.notEOF() && this.isDigit(this.at())) number += this.advance();
+
+    // HANDLE DECIMAL POINT
+    if (this.at() === "." && this.isDigit(this.peek())) {
+      number += this.advance(); // append decimal point
+
+      // BUILD DECIMAL
+      while (this.notEOF() && this.isDigit(this.at())) number += this.advance();
+    }
+
+    this.addToken(TokenType.NUMBER, number, startPosition);
   }
 
   // -----------------------------------------------
