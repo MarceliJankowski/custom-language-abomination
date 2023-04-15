@@ -1,5 +1,6 @@
 // PROJECT MODULES
 import { MK, Runtime } from "./backend";
+import { TokenType } from "./frontend";
 
 // -----------------------------------------------
 //                  ERROR CODE
@@ -18,14 +19,19 @@ export enum ErrorCode {
 //                  OPERATORS
 // -----------------------------------------------
 
-export const RELATIONAL_OPERATORS = [">", ">=", "<", "<="];
+export const RELATIONAL_OPERATORS = [
+  TokenType.GREATER,
+  TokenType.GREATER_EQUAL,
+  TokenType.LESS,
+  TokenType.LESS_EQUAL,
+];
 
-export const EQUALITY_OPERATORS = ["!=", "=="];
+export const EQUALITY_OPERATORS = [TokenType.BANG_EQUAL, TokenType.EQUAL_EQUAL];
 
-export const LOGICAL_OPERATORS = ["||", "&&"];
+export const LOGICAL_OPERATORS = [TokenType.OR, TokenType.AND];
 
-export const ADDITIVE_OPERATORS = ["+", "-"];
-export const MULTIPLICATIVE_OPERATORS = ["*", "/", "%"];
+export const ADDITIVE_OPERATORS = [TokenType.PLUS, TokenType.MINUS];
+export const MULTIPLICATIVE_OPERATORS = [TokenType.STAR, TokenType.SLASH, TokenType.PERCENT];
 
 export const BINARY_OPERATORS = [
   ...ADDITIVE_OPERATORS,
@@ -35,9 +41,18 @@ export const BINARY_OPERATORS = [
   ...LOGICAL_OPERATORS,
 ];
 
-export const UNARY_OPERATORS = ["!", "++", "--", "typeof"];
+export const UNARY_OPERATORS = [TokenType.BANG, TokenType.PLUS_PLUS, TokenType.MINUS_MINUS, TokenType.TYPEOF];
 
-export const ASSIGNMENT_OPERATORS = ["=", "+=", "-=", "*=", "/=", "%=", "||=", "&&="];
+export const ASSIGNMENT_OPERATORS = [
+  TokenType.EQUAL,
+  TokenType.PLUS_EQUAL,
+  TokenType.MINUS_EQUAL,
+  TokenType.STAR_EQUAL,
+  TokenType.SLASH_EQUAL,
+  TokenType.PERCENT_EQUAL,
+  TokenType.OR_EQUAL,
+  TokenType.AND_EQUAL,
+];
 
 // -----------------------------------------------
 //        VALID MEMBER-EXPRESSION TYPES

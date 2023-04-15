@@ -1085,27 +1085,27 @@ export class Parser {
 
   // OPERATOR CHECKS
 
-  private isAssignmentOperator({ value }: Token): boolean {
-    return ASSIGNMENT_OPERATORS.some(validOperator => validOperator === value);
+  private isAssignmentOperator({ type }: Token): boolean {
+    return ASSIGNMENT_OPERATORS.some(validOperator => validOperator === type);
   }
 
-  private isEqualityOperator({ value }: Token): boolean {
-    return EQUALITY_OPERATORS.some(validOperator => validOperator === value);
+  private isEqualityOperator({ type }: Token): boolean {
+    return EQUALITY_OPERATORS.some(validOperator => validOperator === type);
   }
 
-  private isRelationalOperator({ value }: Token): boolean {
-    return RELATIONAL_OPERATORS.some(validOperator => validOperator === value);
+  private isRelationalOperator({ type }: Token): boolean {
+    return RELATIONAL_OPERATORS.some(validOperator => validOperator === type);
   }
 
-  private isAdditiveOperator({ value }: Token): boolean {
-    return ADDITIVE_OPERATORS.some(validOperator => validOperator === value);
+  private isAdditiveOperator({ type }: Token): boolean {
+    return ADDITIVE_OPERATORS.some(validOperator => validOperator === type);
   }
 
-  private isMultiplicativeOperator({ value }: Token): boolean {
-    return MULTIPLICATIVE_OPERATORS.some(validOperator => validOperator === value);
+  private isMultiplicativeOperator({ type }: Token): boolean {
+    return MULTIPLICATIVE_OPERATORS.some(validOperator => validOperator === type);
   }
 
-  private isUnaryOperator({ value }: Token): boolean {
-    return UNARY_OPERATORS.some(validOperator => validOperator === value);
+  private isUnaryOperator({ type }: Token): boolean {
+    return UNARY_OPERATORS.some(validOperator => validOperator === type);
   }
 }
