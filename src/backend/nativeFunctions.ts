@@ -65,8 +65,7 @@ export const exit = NATIVE_FUNCTION((runtimeExitCode): never => {
 export const bool = NATIVE_FUNCTION((runtimeValue): Runtime.Boolean => {
   if (runtimeValue === undefined) return MK.BOOL(false);
 
-  const value = runtimeValue.value;
-  const booleanValue = getBooleanValue(value);
+  const booleanValue = getBooleanValue(runtimeValue);
 
   return MK.BOOL(booleanValue);
 });

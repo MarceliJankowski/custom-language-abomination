@@ -72,8 +72,8 @@ function removePrototypeChain(runtimeValue: Runtime.Value): Runtime.Value {
   return runtimeValue;
 }
 
-/**@desc determine whether given `value` is 'falsy' or 'truthy' (returns corresponding boolean)*/
-export function getBooleanValue(value: unknown): boolean {
+/**@desc determine whether given `runtimeValue` is 'falsy' or 'truthy' (returns corresponding boolean)*/
+export function getBooleanValue({ value }: Runtime.Value): boolean {
   return RUNTIME_FALSY_VALUES.every(({ value: falsyValue }) => falsyValue !== value);
 }
 

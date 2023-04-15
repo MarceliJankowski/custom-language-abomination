@@ -566,7 +566,7 @@ export class Interpreter {
 
         const runtimeOperand = this.evaluate(operand, env);
 
-        const operandBooleanValue = getBooleanValue(runtimeOperand.value);
+        const operandBooleanValue = getBooleanValue(runtimeOperand);
         const operandBooleanRuntimeValue = MK.BOOL(!operandBooleanValue);
 
         return operandBooleanRuntimeValue;
@@ -621,7 +621,7 @@ export class Interpreter {
   }
 
   private evalTernaryExpr(expr: AST_TernaryExpr, env: VariableEnv): Runtime.Value {
-    const testValue = this.evaluate(expr.test, env).value;
+    const testValue = this.evaluate(expr.test, env);
     const testBoolean = getBooleanValue(testValue);
 
     // TEST IS: 'truthy'
@@ -636,7 +636,7 @@ export class Interpreter {
   }
 
   private evalIfStatement(ifStatement: AST_IfStmt, env: VariableEnv): Runtime.Undefined {
-    const testValue = this.evaluate(ifStatement.test, env).value;
+    const testValue = this.evaluate(ifStatement.test, env);
     const testBoolean = getBooleanValue(testValue);
 
     // TEST IS: 'truthy'
@@ -657,7 +657,7 @@ export class Interpreter {
 
   private evalWhileStatement(whileStatement: AST_WhileStmt, env: VariableEnv): Runtime.Undefined {
     const isTestTruthy = () => {
-      const testValue = this.evaluate(whileStatement.test, env).value;
+      const testValue = this.evaluate(whileStatement.test, env);
       const testBoolean = getBooleanValue(testValue);
       return testBoolean;
     };
@@ -804,15 +804,12 @@ export class Interpreter {
     right: U,
     start: CharPosition
   ): T | U | Runtime.Boolean {
-    const lhsValue: unknown = (left as any).value;
-    const rhsValue: unknown = (right as any).value;
-
     switch (operator) {
       case "==":
-        return MK.BOOL(lhsValue === rhsValue);
+        return MK.BOOL(left.value === right.value);
 
       case "!=":
-        return MK.BOOL(lhsValue !== rhsValue);
+        return MK.BOOL(left.value !== right.value);
 
       // custom AND/OR logic
 
@@ -821,8 +818,8 @@ export class Interpreter {
         // - at least one operand is "falsy" -> return first "falsy" operand
         // - both operands are "truthy" -> return last "truthy" operand
 
-        if (!getBooleanValue(lhsValue)) return left;
-        if (!getBooleanValue(rhsValue)) return right;
+        if (!getBooleanValue(left)) return left;
+        if (!getBooleanValue(right)) return right;
 
         // BOTH ARE 'truthy'
         return right;
@@ -833,8 +830,8 @@ export class Interpreter {
         // - at least one operand is "truthy" -> return first "truthy" operand
         // - both operands are "falsy" -> return last "falsy" operand
 
-        if (getBooleanValue(lhsValue)) return left;
-        if (getBooleanValue(rhsValue)) return right;
+        if (getBooleanValue(left)) return left;
+        if (getBooleanValue(right)) return right;
 
         // BOTH ARE 'falsy'
         return right;

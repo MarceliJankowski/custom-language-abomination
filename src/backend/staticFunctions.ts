@@ -295,7 +295,7 @@ const replaceAll = STATIC_FUNCTION(({ value }, runtimePattern, runtimeReplacemen
 });
 
 export const STATIC_STRING_FUNCTIONS = {
-  getLength,
+  length: getLength,
   includes: stringIncludes,
   trimStart,
   trimEnd,
@@ -721,7 +721,7 @@ const sort = STATIC_FUNCTION((runtimeArray, runtimeCallback): Runtime.Array => {
 });
 
 export const STATIC_ARRAY_FUNCTIONS = {
-  getLength,
+  length: getLength,
   push,
   pop,
   unshift,
@@ -759,7 +759,7 @@ function evalCallbackAndReturnItsBooleanValue(
 ): boolean {
   const callbackOutput = interpreter.evalRuntimeFuncCall(callback, [element, MK.NUMBER(index), array]);
 
-  return getBooleanValue(callbackOutput.value);
+  return getBooleanValue(callbackOutput);
 }
 
 // -----------------------------------------------
