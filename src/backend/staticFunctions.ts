@@ -230,7 +230,7 @@ const repeat = STATIC_FUNCTION(({ value }, runtimeCount): Runtime.String => {
       "interpreter"
     );
 
-  const count = (runtimeCount as Runtime.Number).value + 1;
+  const count = (runtimeCount as Runtime.Number).value;
   const repeatedStr = (value as string).repeat(count);
 
   return MK.STRING(repeatedStr);
