@@ -4,7 +4,7 @@ import { VariableEnv } from "./variableEnv";
 import { VALID_MEMBER_EXPR_RUNTIME_TYPES } from "../constants";
 import { traversePrototypeChain } from "./prototypeChain";
 import { STATIC_FUNCTION } from "./staticFunctions";
-import { MK, Runtime } from "./";
+import { MK, Runtime, RuntimeException } from "./";
 
 // -----------------------------------------------
 //                    TYPES
@@ -111,6 +111,12 @@ export class Interpreter {
       case "ContinueStmt":
         return this.evalContinueStatement();
 
+      case "ThrowStmt":
+        return this.evalThrowStatement(astNode as AST_ThrowStmt, env);
+
+      case "TryCatchStmt":
+        return this.evalTryCatchStatement(astNode as AST_TryCatchStmt, env);
+
       default:
         throw new Err(
           `This AST node kind has not yet been setup for interpretation.\nNode kind: '${astNode.kind}' at position: ${astNode.start}`,
@@ -186,6 +192,31 @@ export class Interpreter {
 
   private evalContinueStatement(): never {
     throw new Continue();
+  }
+
+  private evalThrowStatement(throwStmt: AST_ThrowStmt, env: VariableEnv): never {
+    const error = this.evaluate(throwStmt.error, env);
+
+    throw new RuntimeException(error, throwStmt.start);
+  }
+
+  private evalTryCatchStatement(
+    { tryBlock, catchParam, catchBlock }: AST_TryCatchStmt,
+    env: VariableEnv
+  ): Runtime.Value | never {
+    try {
+      return this.evaluate(tryBlock, env);
+    } catch (error) {
+      if (error instanceof RuntimeException) {
+        const catchEnv = new VariableEnv(env);
+        catchEnv.declareVar(catchParam.value, error.value, { position: catchParam.start });
+
+        return this.evaluate(catchBlock, catchEnv);
+      }
+
+      // propagate any other exception type
+      throw error;
+    }
   }
 
   private evalAssignmentExpr(assignmentExpr: AST_AssignmentExpr, env: VariableEnv): Runtime.Value {

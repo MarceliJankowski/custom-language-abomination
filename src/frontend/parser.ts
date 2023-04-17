@@ -117,6 +117,16 @@ export class Parser {
         break;
       }
 
+      case TokenType.THROW: {
+        parsedStatement = this.parseThrowStatement();
+        break;
+      }
+
+      case TokenType.TRY: {
+        parsedStatement = this.parseTryCatchStatement();
+        break;
+      }
+
       // EXPRESSIONS
       default:
         return this.parseExpression();
@@ -494,6 +504,64 @@ export class Parser {
     };
 
     return continueStatement;
+  }
+
+  private parseThrowStatement(): AST_ThrowStmt {
+    const start = this.advance().start; // advance past 'throw' keyword
+
+    const error = this.parseExpression();
+
+    // BUILD throwStatement
+    const throwStatement: AST_ThrowStmt = {
+      kind: "ThrowStmt",
+      error,
+      start,
+      end: error.end,
+    };
+
+    return throwStatement;
+  }
+
+  private parseTryCatchStatement(): AST_TryCatchStmt {
+    const start = this.advance().start; // advance past 'try' keyword
+
+    const tryBlock = this.parseBlockStatement();
+
+    this.advanceAndExpect(
+      TokenType.CATCH,
+      "Invalid try-catch statement. Missing 'catch' keyword following try clause"
+    );
+
+    this.advanceAndExpect(
+      TokenType.OPEN_PAREN,
+      "Invalid try-catch statement. Missing opening parentheses ('(') following 'catch' keyword"
+    );
+
+    const catchParam = this.parseExpression();
+    if (catchParam.kind !== "Identifier")
+      throw new Err(
+        `Invalid try-catch statement. Invalid parameter: '${catchParam.kind}' passed to catch parameter list, at position: ${catchParam.start}`,
+        "parser"
+      );
+
+    this.advanceAndExpect(
+      TokenType.CLOSE_PAREN,
+      "Invalid try-catch statement. Missing closing parentheses (')') following catch parameter list"
+    );
+
+    const catchBlock = this.parseBlockStatement();
+
+    // BUILD tryCatchStatement
+    const tryCatchStatement: AST_TryCatchStmt = {
+      kind: "TryCatchStmt",
+      tryBlock,
+      catchParam: catchParam as AST_Identifier,
+      catchBlock,
+      start,
+      end: catchBlock.end,
+    };
+
+    return tryCatchStatement;
   }
 
   private parseFunctionExpr(): AST_Expr {

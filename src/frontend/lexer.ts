@@ -19,6 +19,9 @@ KEYWORDS.set("while", TokenType.WHILE);
 KEYWORDS.set("break", TokenType.BREAK);
 KEYWORDS.set("continue", TokenType.CONTINUE);
 KEYWORDS.set("for", TokenType.FOR);
+KEYWORDS.set("throw", TokenType.THROW);
+KEYWORDS.set("try", TokenType.TRY);
+KEYWORDS.set("catch", TokenType.CATCH);
 
 // -----------------------------------------------
 //                    LEXER

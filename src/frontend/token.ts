@@ -16,6 +16,9 @@ export enum TokenType {
   CONTINUE = "CONTINUE",
   FOR = "FOR",
   TYPEOF = "TYPEOF",
+  THROW = "THROW",
+  TRY = "TRY",
+  CATCH = "CATCH",
 
   // OPERATORS
   EQUAL = "EQUAL",

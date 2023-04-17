@@ -15,6 +15,8 @@ type AST_NodeKind =
   | "ContinueStmt"
   | "ContinueStmt"
   | "FunctionDeclaration"
+  | "ThrowStmt"
+  | "TryCatchStmt"
 
   // EXPRESSIONS
   | "AssignmentExpr"
@@ -97,6 +99,18 @@ interface AST_BreakStmt extends AST_Stmt {
 
 interface AST_ContinueStmt extends AST_Stmt {
   kind: "ContinueStmt";
+}
+
+interface AST_ThrowStmt extends AST_Stmt {
+  kind: "ThrowStmt";
+  error: AST_Expr;
+}
+
+interface AST_TryCatchStmt extends AST_Stmt {
+  kind: "TryCatchStmt";
+  tryBlock: AST_BlockStmt;
+  catchParam: AST_Identifier;
+  catchBlock: AST_BlockStmt;
 }
 
 // -----------------------------------------------

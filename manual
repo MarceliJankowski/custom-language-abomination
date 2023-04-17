@@ -40,7 +40,7 @@ EXIT CODES
 
       0  Interpreter succeeded, no exceptions were raised
 
-      1  Required argument is missing (like 'filePath' after -f)
+      1  Required argument is missing (like 'filePath' after '-f' flag)
 
       2  Provided argument is invalid
 
@@ -49,5 +49,7 @@ EXIT CODES
       4  Parser failed, exception was raised during AST build process
 
       5  Interpretation process failed, an exception was raised during AST evaluation
+
+      6  Uncaught runtime exception
 
       255  Internal interpreter error / developer fu**ed up!

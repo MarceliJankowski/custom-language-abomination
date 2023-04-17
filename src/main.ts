@@ -8,7 +8,7 @@ const prompt = promptSync();
 import { ErrorCode } from "./constants";
 import { Err, parseForLogging, stringifyPretty, removePrototypeChainRecursively } from "./utils";
 import { Lexer, Parser } from "./frontend";
-import { Interpreter, createGlobalEnv, Runtime } from "./backend";
+import { Interpreter, createGlobalEnv, Runtime, RuntimeException } from "./backend";
 
 // -----------------------------------------------
 //                    TYPES
@@ -311,7 +311,7 @@ class InterpreterInterface {
 
     let stringifyMaxLength = 60; // default value
 
-    if (outputSrc === "lexer") stringifyMaxLength = 45; // decrease length to prevent wrapping (lexer tokens are shorter, hence they get line-wrapped more easilly)
+    if (outputSrc === "lexer") stringifyMaxLength = 45; // decrease length to prevent wrapping (lexer tokens are shorter, hence they get line-wrapped more often)
 
     const prettyOutput = stringifyPretty(output, { indent: 4, maxLength: stringifyMaxLength });
 
@@ -330,10 +330,20 @@ class InterpreterInterface {
     let exitCode: number;
     let errorOutput: unknown;
 
+    // handle exceptions purposefully raised by interpreter
     if (err instanceof Err) {
       errorOutput = this.verboseMode ? err.verboseMessage : err.message;
       exitCode = err.exitCode;
-    } else {
+    }
+
+    // handle RuntimeExceptions (thrown within the input program)
+    else if (err instanceof RuntimeException) {
+      exitCode = 6; // from manual
+      errorOutput = `Uncaught runtime exception:\nat position: ${err.position}\ntype: ${err.value.type}\nvalue: ${err.value.value}`;
+    }
+
+    // handle unexpected internal errors
+    else {
       errorOutput = err;
       exitCode = ErrorCode.INTERNAL;
     }
