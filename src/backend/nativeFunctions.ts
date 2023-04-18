@@ -3,14 +3,8 @@ import promptSyncPackage from "prompt-sync";
 const promptSync = promptSyncPackage();
 
 // PROJECT MODULES
-import {
-  Err,
-  parseForLogging,
-  getBooleanValue,
-  stringifyPretty,
-  removePrototypeChainRecursively,
-} from "../utils";
-import { Runtime, MK } from "./";
+import { parseForLogging, getBooleanValue, stringifyPretty, removePrototypeChainRecursively } from "../utils";
+import { Runtime, MK, RuntimeAPIException } from "./";
 
 // -----------------------------------------------
 //           NATIVE FUNCTION FACTORY
@@ -30,7 +24,7 @@ function NATIVE_FUNCTION(implementation: Runtime.NativeFuncImplementation): Runt
 // -----------------------------------------------
 
 /**@desc echo `arguments` to std output*/
-export const echo = NATIVE_FUNCTION((...args): Runtime.Undefined => {
+export const echo = NATIVE_FUNCTION((_, ...args): Runtime.Undefined => {
   const parsedArgs = args.map(arg => arg && parseForLogging(arg));
 
   console.log(...parsedArgs);
@@ -40,18 +34,16 @@ export const echo = NATIVE_FUNCTION((...args): Runtime.Undefined => {
 
 /**@desc terminate process with `exitCode` 
 @param exitCode integer in range of `0-255`*/
-export const exit = NATIVE_FUNCTION((runtimeExitCode): never => {
+export const exit = NATIVE_FUNCTION((position, runtimeExitCode): never => {
   if (runtimeExitCode !== undefined) {
     if (runtimeExitCode.type !== "number")
-      throw new Err(
-        `Invalid exitCode type: '${runtimeExitCode.type}' passed to 'exit()' native function`,
-        "interpreter"
-      );
+      throw new RuntimeAPIException("exit()", `Invalid exitCode type: '${runtimeExitCode.type}'`, position);
 
     if (!isValidExitCode(runtimeExitCode.value as number))
-      throw new Err(
-        `Invalid exitCode argument: '${runtimeExitCode.value}' (valid range: 0-255) passed to 'exit()' native function`,
-        "interpreter"
+      throw new RuntimeAPIException(
+        "exit()",
+        `Invalid 'exitCode' argument: '${runtimeExitCode.value}' (valid range: 0-255)`,
+        position
       );
   }
 
@@ -62,7 +54,7 @@ export const exit = NATIVE_FUNCTION((runtimeExitCode): never => {
 
 /**@desc determine whether given `value` is 'falsy' or 'truthy' (returns corresponding boolean)
 @param value in case it isn't provided, it defaults to 'false'*/
-export const bool = NATIVE_FUNCTION((runtimeValue): Runtime.Boolean => {
+export const bool = NATIVE_FUNCTION((_, runtimeValue): Runtime.Boolean => {
   if (runtimeValue === undefined) return MK.BOOL(false);
 
   const booleanValue = getBooleanValue(runtimeValue);
@@ -72,7 +64,7 @@ export const bool = NATIVE_FUNCTION((runtimeValue): Runtime.Boolean => {
 
 /**@desc coerce `value` to `string` data-type
 @param value all data-types are valid. In case it isn't provided, it defaults to empty string*/
-export const string = NATIVE_FUNCTION((runtimeValue): Runtime.String => {
+export const string = NATIVE_FUNCTION((_, runtimeValue): Runtime.String => {
   let value: unknown = "";
 
   if (runtimeValue) value = parseForLogging(runtimeValue);
@@ -84,7 +76,7 @@ export const string = NATIVE_FUNCTION((runtimeValue): Runtime.String => {
 
 /**@desc coerce `value` to `number` data-type (returns `null` in case `value` is incoercible)
 @param value only numbers and number-coercible strings are valid. In case value isn't provided, it defaults to zero*/
-export const number = NATIVE_FUNCTION((runtimeValue): Runtime.Null | Runtime.Number => {
+export const number = NATIVE_FUNCTION((position, runtimeValue): Runtime.Null | Runtime.Number => {
   let value: number = 0;
 
   if (runtimeValue) {
@@ -104,9 +96,10 @@ export const number = NATIVE_FUNCTION((runtimeValue): Runtime.Null | Runtime.Num
       }
 
       default:
-        throw new Err(
-          `Invalid value argument type: '${runtimeValue.type}' passed to 'Number()' native function`,
-          "interpreter"
+        throw new RuntimeAPIException(
+          "Number()",
+          `Invalid 'value' argument type: '${runtimeValue.type}'`,
+          position
         );
     }
   }
@@ -159,7 +152,7 @@ export const time = NATIVE_FUNCTION((): Runtime.Number => {
 // -----------------------------------------------
 
 /**@desc log `arguments` to std output*/
-const log = NATIVE_FUNCTION((...args): Runtime.Undefined => {
+const log = NATIVE_FUNCTION((_, ...args): Runtime.Undefined => {
   const parsedArgs = args.map(arg => arg && parseForLogging(arg));
 
   console.log(...parsedArgs);
@@ -168,7 +161,7 @@ const log = NATIVE_FUNCTION((...args): Runtime.Undefined => {
 });
 
 /**@desc log `arguments` to std output in a `verbose` way*/
-const logVerbose = NATIVE_FUNCTION((...args): Runtime.Undefined => {
+const logVerbose = NATIVE_FUNCTION((_, ...args): Runtime.Undefined => {
   const parsedArgs = args.map(arg => removePrototypeChainRecursively(arg!));
 
   console.log(...parsedArgs);
@@ -177,14 +170,14 @@ const logVerbose = NATIVE_FUNCTION((...args): Runtime.Undefined => {
 });
 
 /**@desc log `arguments` to std output in an `ULTRA_VERBOSE` way (including prototype-chain)*/
-const logUltraVerbose = NATIVE_FUNCTION((...args): Runtime.Undefined => {
+const logUltraVerbose = NATIVE_FUNCTION((_, ...args): Runtime.Undefined => {
   console.log(...args);
 
   return MK.UNDEFINED();
 });
 
 /**@desc log `arguments` to std error*/
-const error = NATIVE_FUNCTION((...args): Runtime.Undefined => {
+const error = NATIVE_FUNCTION((_, ...args): Runtime.Undefined => {
   const parsedArgs = args.map(arg => arg && parseForLogging(arg));
 
   console.error(...parsedArgs);
@@ -201,11 +194,12 @@ const clear = NATIVE_FUNCTION((): Runtime.Undefined => {
 
 /**@desc prompt user for input
 @param message string preceding input prompt. If message isn't provided, it defaults to empty string*/
-const prompt = NATIVE_FUNCTION((runtimeMessage): Runtime.Value => {
+const prompt = NATIVE_FUNCTION((position, runtimeMessage): Runtime.Value => {
   if (runtimeMessage && runtimeMessage.type !== "string")
-    throw new Err(
-      `Invalid message argument type: '${runtimeMessage.type}' passed to 'console.prompt()' native function`,
-      "interpreter"
+    throw new RuntimeAPIException(
+      "console.prompt()",
+      `Invalid 'message' argument type: '${runtimeMessage.type}'`,
+      position
     );
 
   const message = (runtimeMessage?.value as string) ?? "";
@@ -234,17 +228,19 @@ const randomFloat = NATIVE_FUNCTION((): Runtime.Number => MK.NUMBER(Math.random(
 /**@desc returns pseudo-random generated `integer`. In range of: `min` (inclusive) to `max` (exclusive)
 @param min specifies integer lower limit (inclusive). If omitted it defaults to `0`
 @param max specifies integer upper limit (exclusive). If omitted it defaults to `100`*/
-const randomInt = NATIVE_FUNCTION((runtimeMin, runtimeMax): Runtime.Number => {
+const randomInt = NATIVE_FUNCTION((position, runtimeMin, runtimeMax): Runtime.Number => {
   if (runtimeMin && runtimeMin.type !== "number")
-    throw new Err(
-      `Invalid min argument type: '${runtimeMin.type}' passed to 'Math.randomInt()' native function`,
-      "interpreter"
+    throw new RuntimeAPIException(
+      "Math.randomInt()",
+      `Invalid 'min' argument type: '${runtimeMin.type}'`,
+      position
     );
 
   if (runtimeMax && runtimeMax.type !== "number")
-    throw new Err(
-      `Invalid max argument type: '${runtimeMax.type}' passed to 'Math.randomInt()' native function`,
-      "interpreter"
+    throw new RuntimeAPIException(
+      "Math.randomInt()",
+      `Invalid 'max' argument type: '${runtimeMax.type}'`,
+      position
     );
 
   const min = (runtimeMin?.value ?? 0) as number;
@@ -255,16 +251,12 @@ const randomInt = NATIVE_FUNCTION((runtimeMin, runtimeMax): Runtime.Number => {
 });
 
 /**@desc returns smallest number argument*/
-const min = NATIVE_FUNCTION((...args): Runtime.Number => {
-  if (args.length === 0)
-    throw new Err(`Invalid 'Math.min()' native function invocation, no arguments were passed`, "interpreter");
+const min = NATIVE_FUNCTION((position, ...args): Runtime.Number => {
+  if (args.length === 0) throw new RuntimeAPIException("Math.min()", `No arguments were passed`, position);
 
   args.forEach(arg => {
     if (arg?.type !== "number")
-      throw new Err(
-        `Invalid argument type: '${arg?.type}' passed to 'Math.min()' native function`,
-        "interpreter"
-      );
+      throw new RuntimeAPIException("Math.min()", `Invalid argument type: '${arg?.type}'`, position);
   });
 
   const numbers = args.map(runtimeValue => runtimeValue!.value as number);
@@ -274,16 +266,12 @@ const min = NATIVE_FUNCTION((...args): Runtime.Number => {
 });
 
 /**@desc returns largest number argument*/
-const max = NATIVE_FUNCTION((...args): Runtime.Number => {
-  if (args.length === 0)
-    throw new Err(`Invalid 'Math.max()' native function invocation, no arguments were passed`, "interpreter");
+const max = NATIVE_FUNCTION((position, ...args): Runtime.Number => {
+  if (args.length === 0) throw new RuntimeAPIException("Math.max()", `No arguments were passed`, position);
 
   args.forEach(arg => {
     if (arg?.type !== "number")
-      throw new Err(
-        `Invalid argument type: '${arg?.type}' passed to 'Math.max()' native function`,
-        "interpreter"
-      );
+      throw new RuntimeAPIException("Math.max()", `Invalid argument type: '${arg?.type}'`, position);
   });
 
   const numbers = args.map(runtimeValue => runtimeValue!.value as number);
@@ -293,14 +281,15 @@ const max = NATIVE_FUNCTION((...args): Runtime.Number => {
 });
 
 /**@desc returns `number` rounded down to the largest integer less than or equal to `number`*/
-const floor = NATIVE_FUNCTION((runtimeNumber): Runtime.Number => {
+const floor = NATIVE_FUNCTION((position, runtimeNumber): Runtime.Number => {
   if (runtimeNumber === undefined)
-    throw new Err(`Missing number argument at 'Math.floor()' native function invocation`, "interpreter");
+    throw new RuntimeAPIException("Math.floor()", `Missing 'number' argument`, position);
 
   if (runtimeNumber.type !== "number")
-    throw new Err(
-      `Invalid number argument type: '${runtimeNumber.type}' passed to 'Math.floor()' native function`,
-      "interpreter"
+    throw new RuntimeAPIException(
+      "Math.floor()",
+      `Invalid 'number' argument type: '${runtimeNumber.type}'`,
+      position
     );
 
   const number = (runtimeNumber as Runtime.Number).value;
@@ -310,14 +299,15 @@ const floor = NATIVE_FUNCTION((runtimeNumber): Runtime.Number => {
 });
 
 /**@desc returns `number` rounded up to the smallest integer greater than or equal to `number`*/
-const ceil = NATIVE_FUNCTION((runtimeNumber): Runtime.Number => {
+const ceil = NATIVE_FUNCTION((position, runtimeNumber): Runtime.Number => {
   if (runtimeNumber === undefined)
-    throw new Err(`Missing number argument at 'Math.ceil()' native function invocation`, "interpreter");
+    throw new RuntimeAPIException("Math.ceil()", `Missing 'number' argument`, position);
 
   if (runtimeNumber.type !== "number")
-    throw new Err(
-      `Invalid number argument type: '${runtimeNumber.type}' passed to 'Math.ceil()' native function`,
-      "interpreter"
+    throw new RuntimeAPIException(
+      "Math.ceil()",
+      `Invalid 'number' argument type: '${runtimeNumber.type}'`,
+      position
     );
 
   const number = (runtimeNumber as Runtime.Number).value;
@@ -327,14 +317,15 @@ const ceil = NATIVE_FUNCTION((runtimeNumber): Runtime.Number => {
 });
 
 /**@desc returns `number` rounded to the nearest integer*/
-const round = NATIVE_FUNCTION((runtimeNumber): Runtime.Number => {
+const round = NATIVE_FUNCTION((position, runtimeNumber): Runtime.Number => {
   if (runtimeNumber === undefined)
-    throw new Err(`Missing number argument at 'Math.round()' native function invocation`, "interpreter");
+    throw new RuntimeAPIException("Math.round()", `Missing 'number' argument`, position);
 
   if (runtimeNumber.type !== "number")
-    throw new Err(
-      `Invalid number argument type: '${runtimeNumber.type}' passed to 'Math.round()' native function`,
-      "interpreter"
+    throw new RuntimeAPIException(
+      "Math.round()",
+      `Invalid 'number' argument type: '${runtimeNumber.type}'`,
+      position
     );
 
   const number = (runtimeNumber as Runtime.Number).value;

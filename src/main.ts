@@ -8,7 +8,7 @@ const prompt = promptSync();
 import { ErrorCode } from "./constants";
 import { Err, parseForLogging, stringifyPretty, removePrototypeChainRecursively } from "./utils";
 import { Lexer, Parser } from "./frontend";
-import { Interpreter, createGlobalEnv, Runtime, RuntimeException } from "./backend";
+import { Interpreter, createGlobalEnv, Runtime, RuntimeException, RuntimeAPIException } from "./backend";
 
 // -----------------------------------------------
 //                    TYPES
@@ -340,6 +340,12 @@ class InterpreterInterface {
     else if (err instanceof RuntimeException) {
       exitCode = 6; // from manual
       errorOutput = `Uncaught runtime exception:\nat position: ${err.position}\ntype: ${err.value.type}\nvalue: ${err.value.value}`;
+    }
+
+    // handle RuntimeAPIExceptions (thrown by basic-interpreter API (native/static functions))
+    else if (err instanceof RuntimeAPIException) {
+      exitCode = 7; // from manual
+      errorOutput = `Uncaught runtime API exception:\nat position: ${err.position}\nthrown by: ${err.thrownBy}\nmessage: ${err.message}`;
     }
 
     // handle unexpected internal errors

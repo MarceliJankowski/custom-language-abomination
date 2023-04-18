@@ -4,7 +4,7 @@ import { VariableEnv } from "./variableEnv";
 import { VALID_MEMBER_EXPR_RUNTIME_TYPES } from "../constants";
 import { traversePrototypeChain } from "./prototypeChain";
 import { STATIC_FUNCTION } from "./staticFunctions";
-import { MK, Runtime, RuntimeException } from "./";
+import { MK, Runtime, RuntimeAPIException, RuntimeException } from "./";
 
 // -----------------------------------------------
 //                    TYPES
@@ -207,7 +207,8 @@ export class Interpreter {
     try {
       return this.evaluate(tryBlock, env);
     } catch (error) {
-      if (error instanceof RuntimeException) {
+      // handle RuntimeException and RuntimeAPIException
+      if (error instanceof RuntimeException || error instanceof RuntimeAPIException) {
         const catchEnv = new VariableEnv(env);
         catchEnv.declareVar(catchParam.value, error.value, { position: catchParam.start });
 
@@ -512,7 +513,7 @@ export class Interpreter {
     switch (runtimeCallee.type) {
       case "nativeFunction": {
         const nativeFunc = runtimeCallee as Runtime.NativeFunction;
-        const output = nativeFunc.implementation(...runtimeArgs);
+        const output = nativeFunc.implementation(callExpr.start, ...runtimeArgs);
 
         return output;
       }
@@ -520,8 +521,8 @@ export class Interpreter {
       case "staticFunction": {
         const staticFunc = runtimeCallee as Runtime.StaticFunction;
 
-        // at this point static-function is already wrapped in wrapperFn
-        const output = (staticFunc.implementation as any)(...runtimeArgs);
+        // at this point static-function is already wrapped in wrapperFn, rendering 'value' param obsolete (I guess it's a dubious design choice...)
+        const output = staticFunc.implementation(undefined as any, callExpr.start, ...runtimeArgs);
 
         return output;
       }
@@ -817,9 +818,9 @@ export class Interpreter {
     const property = traversePrototypeChain(value.prototype, key);
 
     if (property.type === "staticFunction") {
-      // wrapperFn is used for passing property into staticFunction
-      const wrapperFn = STATIC_FUNCTION((...args) =>
-        (property as Runtime.NativeFunction).implementation(value, ...args)
+      // wrapperFn is used for passing property into staticFunction ('value' param is redundant as 'property' is used as value instead)
+      const wrapperFn = STATIC_FUNCTION((_, position, ...args) =>
+        (property as Runtime.StaticFunction).implementation(value, position, ...args)
       );
 
       return wrapperFn;

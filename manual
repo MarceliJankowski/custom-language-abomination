@@ -52,4 +52,6 @@ EXIT CODES
 
       6  Uncaught runtime exception
 
+      7  Uncaught runtime API exception
+
       255  Internal interpreter error / developer fu**ed up!
