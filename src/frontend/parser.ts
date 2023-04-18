@@ -28,7 +28,7 @@ export class Parser {
 
     // BUILD AST
     while (this.notEOF()) {
-      const newNode = this.parseStatement();
+      const newNode = this.parseStmt();
 
       this.programBody.push(newNode);
     }
@@ -71,90 +71,90 @@ export class Parser {
   //                    PARSE
   // -----------------------------------------------
 
-  private parseStatement(): AST_Node {
-    let parsedStatement: AST_Stmt;
+  private parseStmt(): AST_Node {
+    let parsedStmt: AST_Stmt;
 
     switch (this.at().type) {
       // STATEMENTS
       case TokenType.VAR:
       case TokenType.CONST: {
-        parsedStatement = this.parseVarDeclaration();
+        parsedStmt = this.parseVarDeclaration();
         break;
       }
 
       case TokenType.FUNC: {
-        parsedStatement = this.parseFunctionDeclaration();
+        parsedStmt = this.parseFunctionDeclaration();
         break;
       }
 
       case TokenType.RETURN: {
-        parsedStatement = this.parseReturnStatement();
+        parsedStmt = this.parseReturnStmt();
         break;
       }
 
       case TokenType.IF: {
-        parsedStatement = this.parseIfStatement();
+        parsedStmt = this.parseIfStmt();
         break;
       }
 
       case TokenType.WHILE: {
-        parsedStatement = this.parseWhileStatement();
+        parsedStmt = this.parseWhileStmt();
         break;
       }
 
       case TokenType.DO: {
-        parsedStatement = this.parseDoWhileStatement();
+        parsedStmt = this.parseDoWhileStmt();
         break;
       }
 
       case TokenType.BREAK: {
-        parsedStatement = this.parseBreakStatement();
+        parsedStmt = this.parseBreakStmt();
         break;
       }
 
       case TokenType.CONTINUE: {
-        parsedStatement = this.parseContinueStatement();
+        parsedStmt = this.parseContinueStmt();
         break;
       }
 
       case TokenType.FOR: {
-        parsedStatement = this.parseForStatement();
+        parsedStmt = this.parseForStmt();
         break;
       }
 
       case TokenType.THROW: {
-        parsedStatement = this.parseThrowStatement();
+        parsedStmt = this.parseThrowStmt();
         break;
       }
 
       case TokenType.TRY: {
-        parsedStatement = this.parseTryCatchStatement();
+        parsedStmt = this.parseTryCatchStmt();
         break;
       }
 
       case TokenType.SWITCH: {
-        parsedStatement = this.parseSwitchStatement();
+        parsedStmt = this.parseSwitchStmt();
         break;
       }
 
       // EXPRESSIONS
       default:
-        return this.parseExpression();
+        return this.parseExpr();
     }
 
     // HANDLE OPTIONAL SEMICOLON
     if (this.is(TokenType.SEMICOLON)) this.advance();
 
-    return parsedStatement;
+    return parsedStmt;
   }
 
-  private parseExpression(): AST_Expr {
-    const parsedExpression = this.parseFunctionExpr();
+  private parseExpr(): AST_Expr {
+    const parsedExpr = this.parseFunctionExpr();
 
     // HANDLE OPTIONAL SEMICOLON
     if (this.is(TokenType.SEMICOLON)) this.advance();
 
-    return parsedExpression;
+    return parsedExpr;
   }
 
   private parseVarDeclaration(): AST_Stmt {
@@ -198,7 +198,7 @@ export class Parser {
         "parser"
       );
 
-    const varDeclarationValue = this.parseExpression();
+    const varDeclarationValue = this.parseExpr();
 
     const varDeclaration: AST_VarDeclaration = {
       kind: "VarDeclaration",
@@ -213,7 +213,7 @@ export class Parser {
     return varDeclaration;
   }
 
-  private parseBlockStatement(): AST_BlockStmt {
+  private parseBlockStmt(): AST_BlockStmt {
     const start = this.advanceAndExpect(
       TokenType.OPEN_CURLY_BRACE,
       "Invalid block statement. Missing openining curly-brace ('{')"
@@ -222,14 +222,14 @@ export class Parser {
     const body: AST_Stmt[] = [];
 
     // BUILD body
-    while (this.notEOF() && !this.is(TokenType.CLOSE_CURLY_BRACE)) body.push(this.parseStatement());
+    while (this.notEOF() && !this.is(TokenType.CLOSE_CURLY_BRACE)) body.push(this.parseStmt());
 
     const end = this.advanceAndExpect(
       TokenType.CLOSE_CURLY_BRACE,
       "Invalid block statement. Missing closing curly-brace ('}')"
     ).end;
 
-    const blockStatement: AST_BlockStmt = {
+    const blockStmt: AST_BlockStmt = {
       kind: "BlockStmt",
       body,
       start,
@@ -239,7 +239,7 @@ export class Parser {
     // HANDLE OPTIONAL SEMICOLON
     if (this.is(TokenType.SEMICOLON)) this.advance();
 
-    return blockStatement;
+    return blockStmt;
   }
 
   private parseFunctionDeclaration(): AST_FunctionDeclaration {
@@ -265,41 +265,41 @@ export class Parser {
     const parameters = argumentList as AST_Identifier[];
 
     // HANDLE BODY
-    const blockStatement = this.parseBlockStatement();
+    const blockStmt = this.parseBlockStmt();
 
     // BUILD FUNC
     const func: AST_FunctionDeclaration = {
       kind: "FunctionDeclaration",
-      body: blockStatement,
+      body: blockStmt,
       name,
       parameters,
       start: funcStart,
-      end: blockStatement.end,
+      end: blockStmt.end,
     };
 
     return func;
   }
 
-  private parseReturnStatement(): AST_ReturnStmt {
+  private parseReturnStmt(): AST_ReturnStmt {
     const returnKeyword = this.advance();
 
     let argument;
 
     // handle case when there's a return value
-    if (this.isCurrentTokenFollowing(returnKeyword)) argument = this.parseStatement();
+    if (this.isCurrentTokenFollowing(returnKeyword)) argument = this.parseStmt();
 
-    // BUILD returnStatement
-    const returnStatement: AST_ReturnStmt = {
+    // BUILD returnStmt
+    const returnStmt: AST_ReturnStmt = {
       kind: "ReturnStmt",
       argument,
       start: returnKeyword.start,
       end: argument?.end ?? returnKeyword.end,
     };
 
-    return returnStatement;
+    return returnStmt;
   }
 
-  private parseIfStatement(): AST_IfStmt {
+  private parseIfStmt(): AST_IfStmt {
     const start = this.advance().start; // advance past 'if' keyword
 
     // HANDLE TEST
@@ -308,7 +308,7 @@ export class Parser {
       "Invalid if statement. Missing opening parentheses ('(') following 'if' keyword"
     );
 
-    const test = this.parseExpression();
+    const test = this.parseExpr();
 
     this.advanceAndExpect(
       TokenType.CLOSE_PAREN,
@@ -318,8 +318,8 @@ export class Parser {
     // HANDLE CONSEQUENT
     let consequent;
 
-    if (this.is(TokenType.OPEN_CURLY_BRACE)) consequent = this.parseBlockStatement();
-    else consequent = this.parseStatement(); // enable one-liners
+    if (this.is(TokenType.OPEN_CURLY_BRACE)) consequent = this.parseBlockStmt();
+    else consequent = this.parseStmt(); // enable one-liners
 
     // HANDLE ALTERNATE
     let alternate;
@@ -327,12 +327,12 @@ export class Parser {
     if (this.is(TokenType.ELSE)) {
       this.advance(); // advance past 'else' keyword
 
-      if (this.is(TokenType.OPEN_CURLY_BRACE)) alternate = this.parseBlockStatement();
-      else alternate = this.parseStatement(); // enable one-liners
+      if (this.is(TokenType.OPEN_CURLY_BRACE)) alternate = this.parseBlockStmt();
+      else alternate = this.parseStmt(); // enable one-liners
     }
 
-    // BUILD IfStatement
-    const ifStatement: AST_IfStmt = {
+    // BUILD IfStmt
+    const ifStmt: AST_IfStmt = {
       kind: "IfStmt",
       test,
       consequent,
@@ -341,17 +341,17 @@ export class Parser {
       end: alternate?.end ?? consequent.end,
     };
 
-    return ifStatement;
+    return ifStmt;
   }
 
-  private parseWhileStatement(): AST_WhileStmt {
+  private parseWhileStmt(): AST_WhileStmt {
     const start = this.advance().start; // advance past 'while' keyword
 
     const test = this.parseWhileStmtTest();
     const body = this.parseWhileStmtBody();
 
-    // BUILD WhileStatement
-    const whileStatement: AST_WhileStmt = {
+    // BUILD WhileStmt
+    const whileStmt: AST_WhileStmt = {
       kind: "WhileStmt",
       test,
       body,
@@ -359,15 +359,15 @@ export class Parser {
       end: body.end,
     };
 
-    return whileStatement;
+    return whileStmt;
   }
 
   /**@desc parses `while` and `doWhile` statements body*/
   private parseWhileStmtBody(): AST_Node {
     let body;
 
-    if (this.is(TokenType.OPEN_CURLY_BRACE)) body = this.parseBlockStatement();
-    else body = this.parseStatement(); // enable one-liners
+    if (this.is(TokenType.OPEN_CURLY_BRACE)) body = this.parseBlockStmt();
+    else body = this.parseStmt(); // enable one-liners
 
     return body;
   }
@@ -379,7 +379,7 @@ export class Parser {
       "Invalid while statement. Missing opening parentheses ('(') following 'while' keyword"
     );
 
-    const test = this.parseExpression();
+    const test = this.parseExpr();
 
     this.advanceAndExpect(
       TokenType.CLOSE_PAREN,
@@ -389,7 +389,7 @@ export class Parser {
     return test;
   }
 
-  private parseDoWhileStatement(): AST_DoWhileStmt {
+  private parseDoWhileStmt(): AST_DoWhileStmt {
     const start = this.advance().start; // advance past 'do' keyword
 
     const body = this.parseWhileStmtBody();
@@ -401,8 +401,8 @@ export class Parser {
 
     const test = this.parseWhileStmtTest();
 
-    // BUILD DoWhileStatement
-    const doWhileStatement: AST_DoWhileStmt = {
+    // BUILD DoWhileStmt
+    const doWhileStmt: AST_DoWhileStmt = {
       kind: "DoWhileStmt",
       test,
       body,
@@ -410,10 +410,10 @@ export class Parser {
       end: test.end,
     };
 
-    return doWhileStatement;
+    return doWhileStmt;
   }
 
-  private parseForStatement(): AST_Stmt {
+  private parseForStmt(): AST_Stmt {
     const forKeyword = this.advance();
 
     this.advanceAndExpect(
@@ -435,7 +435,7 @@ export class Parser {
     }
 
     // initializer as expression
-    else initializer = this.parseExpression();
+    else initializer = this.parseExpr();
 
     // handle mandatory ';' delimiter
     if (this.previous().type !== TokenType.SEMICOLON)
@@ -450,7 +450,7 @@ export class Parser {
     let test;
 
     // allow test omission
-    if (!this.is(TokenType.SEMICOLON)) test = this.parseExpression();
+    if (!this.is(TokenType.SEMICOLON)) test = this.parseExpr();
 
     // handle mandatory ';' delimiter
     if (this.previous().type !== TokenType.SEMICOLON)
@@ -465,7 +465,7 @@ export class Parser {
     let update;
 
     // allow update omission
-    if (!this.is(TokenType.CLOSE_PAREN)) update = this.parseExpression();
+    if (!this.is(TokenType.CLOSE_PAREN)) update = this.parseExpr();
 
     this.advanceAndExpect(
       TokenType.CLOSE_PAREN,
@@ -475,8 +475,8 @@ export class Parser {
     // HANDLE BODY
     let body;
 
-    if (this.is(TokenType.OPEN_CURLY_BRACE)) body = this.parseBlockStatement();
-    else body = this.parseStatement(); // enable one-liners
+    if (this.is(TokenType.OPEN_CURLY_BRACE)) body = this.parseBlockStmt();
+    else body = this.parseStmt(); // enable one-liners
 
     // DESUGARING
     // forStatement doesn't introduce any "new" capabilities to the language, it can be fully implemented with already defined NODES
@@ -504,7 +504,7 @@ export class Parser {
       test = defaultTestValue;
     }
 
-    const bodyWhileStatement: AST_WhileStmt = {
+    const bodyWhileStmt: AST_WhileStmt = {
       kind: "WhileStmt",
       test,
       body,
@@ -512,7 +512,7 @@ export class Parser {
       end: body.end,
     };
 
-    body = bodyWhileStatement;
+    body = bodyWhileStmt;
 
     if (initializer) {
       const bodyWithInitializer: AST_BlockStmt = {
@@ -528,52 +528,52 @@ export class Parser {
     return body;
   }
 
-  private parseBreakStatement(): AST_BreakStmt {
+  private parseBreakStmt(): AST_BreakStmt {
     const breakKeyword = this.advance();
 
-    // BUILD breakStatement
-    const breakStatement: AST_BreakStmt = {
+    // BUILD breakStmt
+    const breakStmt: AST_BreakStmt = {
       kind: "BreakStmt",
       start: breakKeyword.start,
       end: breakKeyword.end,
     };
 
-    return breakStatement;
+    return breakStmt;
   }
 
-  private parseContinueStatement(): AST_ContinueStmt {
+  private parseContinueStmt(): AST_ContinueStmt {
     const continueKeyword = this.advance();
 
-    // BUILD continueStatement
-    const continueStatement: AST_ContinueStmt = {
+    // BUILD continueStmt
+    const continueStmt: AST_ContinueStmt = {
       kind: "ContinueStmt",
       start: continueKeyword.start,
       end: continueKeyword.end,
     };
 
-    return continueStatement;
+    return continueStmt;
   }
 
-  private parseThrowStatement(): AST_ThrowStmt {
+  private parseThrowStmt(): AST_ThrowStmt {
     const start = this.advance().start; // advance past 'throw' keyword
 
-    const error = this.parseExpression();
+    const error = this.parseExpr();
 
-    // BUILD throwStatement
-    const throwStatement: AST_ThrowStmt = {
+    // BUILD throwStmt
+    const throwStmt: AST_ThrowStmt = {
       kind: "ThrowStmt",
       error,
       start,
       end: error.end,
     };
 
-    return throwStatement;
+    return throwStmt;
   }
 
-  private parseTryCatchStatement(): AST_TryCatchStmt {
+  private parseTryCatchStmt(): AST_TryCatchStmt {
     const start = this.advance().start; // advance past 'try' keyword
 
-    const tryBlock = this.parseBlockStatement();
+    const tryBlock = this.parseBlockStmt();
 
     this.advanceAndExpect(
       TokenType.CATCH,
@@ -585,7 +585,7 @@ export class Parser {
       "Invalid try-catch statement. Missing opening parentheses ('(') following 'catch' keyword"
     );
 
-    const catchParam = this.parseExpression();
+    const catchParam = this.parseExpr();
     if (catchParam.kind !== "Identifier")
       throw new Err(
         `Invalid try-catch statement. Invalid parameter: '${catchParam.kind}' passed to catch parameter list, at position: ${catchParam.start}`,
@@ -597,10 +597,10 @@ export class Parser {
       "Invalid try-catch statement. Missing closing parentheses (')') following catch parameter list"
     );
 
-    const catchBlock = this.parseBlockStatement();
+    const catchBlock = this.parseBlockStmt();
 
-    // BUILD tryCatchStatement
-    const tryCatchStatement: AST_TryCatchStmt = {
+    // BUILD tryCatchStmt
+    const tryCatchStmt: AST_TryCatchStmt = {
       kind: "TryCatchStmt",
       tryBlock,
       catchParam: catchParam as AST_Identifier,
@@ -609,10 +609,10 @@ export class Parser {
       end: catchBlock.end,
     };
 
-    return tryCatchStatement;
+    return tryCatchStmt;
   }
 
-  private parseSwitchStatement(): AST_SwitchStmt {
+  private parseSwitchStmt(): AST_SwitchStmt {
     const start = this.advance().start; // advance past 'switch' keyword
 
     // HANDLE discriminant
@@ -622,7 +622,7 @@ export class Parser {
       "Invalid switch statement. Missing opening parentheses ('(') following 'switch' keyword"
     );
 
-    const discriminant = this.parseExpression();
+    const discriminant = this.parseExpr();
 
     this.advanceAndExpect(
       TokenType.CLOSE_PAREN,
@@ -650,7 +650,7 @@ export class Parser {
         );
       }
 
-      const caseStmt = this.parseSwitchCaseStatement();
+      const caseStmt = this.parseSwitchCaseStmt();
       cases.push(caseStmt);
     }
 
@@ -659,8 +659,8 @@ export class Parser {
       "Invalid switch statement. Missing closing curly-brace ('}') following switch statement's body"
     ).end;
 
-    // BUILD switchStatement
-    const switchStatement: AST_SwitchStmt = {
+    // BUILD switchStmt
+    const switchStmt: AST_SwitchStmt = {
       kind: "SwitchStmt",
       discriminant,
       cases,
@@ -668,16 +668,16 @@ export class Parser {
       end,
     };
 
-    return switchStatement;
+    return switchStmt;
   }
 
-  private parseSwitchCaseStatement(): AST_SwitchCaseStmt {
+  private parseSwitchCaseStmt(): AST_SwitchCaseStmt {
     const caseKeyword = this.advance();
     const isDefaultCase = caseKeyword.type === TokenType.DEFAULT;
 
     // HANDLE test
     let test;
-    if (!isDefaultCase) test = this.parseExpression();
+    if (!isDefaultCase) test = this.parseExpr();
 
     this.advanceAndExpect(
       TokenType.COLON,
@@ -688,11 +688,11 @@ export class Parser {
 
     // HANDLE consequent
     let consequent;
-    if (this.is(TokenType.OPEN_CURLY_BRACE)) consequent = this.parseBlockStatement();
-    else consequent = this.parseStatement(); // enable one-liners
+    if (this.is(TokenType.OPEN_CURLY_BRACE)) consequent = this.parseBlockStmt();
+    else consequent = this.parseStmt(); // enable one-liners
 
-    // BUILD switchCaseStatement
-    const switchCaseStatement: AST_SwitchCaseStmt = {
+    // BUILD switchCaseStmt
+    const switchCaseStmt: AST_SwitchCaseStmt = {
       kind: "SwitchCaseStmt",
       test,
       consequent,
@@ -700,7 +700,7 @@ export class Parser {
       end: consequent.end,
     };
 
-    return switchCaseStatement;
+    return switchCaseStmt;
   }
 
   private parseFunctionExpr(): AST_Expr {
@@ -728,16 +728,16 @@ export class Parser {
     const parameters = argumentList as AST_Identifier[];
 
     // HANDLE BODY
-    const blockStatement = this.parseBlockStatement();
+    const blockStmt = this.parseBlockStmt();
 
     // BUILD FUNC
     const func: AST_FunctionExpr = {
       kind: "FunctionExpr",
-      body: blockStatement,
+      body: blockStmt,
       name,
       parameters,
       start: funcStart,
-      end: blockStatement.end,
+      end: blockStmt.end,
     };
 
     return func;
@@ -773,14 +773,14 @@ export class Parser {
     while (this.is(TokenType.QUESTION)) {
       this.advance(); // advance past ternary-operator
 
-      const consequent = this.parseExpression();
+      const consequent = this.parseExpr();
 
       this.advanceAndExpect(
         TokenType.COLON,
         "Missing colon (':') following consequent in ternary expression"
       );
 
-      const alternate = this.parseExpression();
+      const alternate = this.parseExpr();
 
       const ternaryExp: AST_TernaryExpr = {
         kind: "TernaryExpr",
@@ -842,7 +842,7 @@ export class Parser {
 
       this.advanceAndExpect(TokenType.COLON, "Missing colon (':') following identifier in object-literal"); // advance past COLON
 
-      const value = this.parseExpression();
+      const value = this.parseExpr();
 
       // if it's not object-literal end, expect a comma for another property
       if (!this.is(TokenType.CLOSE_CURLY_BRACE))
@@ -889,7 +889,7 @@ export class Parser {
     const arrayStart = this.advance().start; // advance past OPEN_BRACKET
 
     while (this.notEOF() && !this.is(TokenType.CLOSE_BRACKET)) {
-      const element = this.parseExpression();
+      const element = this.parseExpr();
 
       if (this.is(TokenType.COMMA)) this.advance(); // advance past comma
 
@@ -1002,8 +1002,7 @@ export class Parser {
   private parsePrefixUnaryExpr(): AST_Expr {
     while (this.isUnaryOperator(this.at())) {
       const operator = this.advance();
-      const operand =
-        operator.type === TokenType.TYPEOF ? this.parseExpression() : this.parsePostfixUnaryExpr();
+      const operand = operator.type === TokenType.TYPEOF ? this.parseExpr() : this.parsePostfixUnaryExpr();
 
       const unaryExpr: AST_PrefixUnaryExpr = {
         kind: "PrefixUnaryExpr",
@@ -1019,7 +1018,7 @@ export class Parser {
     return this.parsePostfixUnaryExpr();
   }
 
-  /**@desc parse `postfix` unary expressions (like: var++)*/
+  /**@desc parse `postfix` unary-expressions (like: var++)*/
   private parsePostfixUnaryExpr(): AST_Expr {
     const left = this.parseCallExpr();
 
@@ -1074,7 +1073,7 @@ export class Parser {
     // handle case when there are arguments
     if (!this.is(TokenType.CLOSE_PAREN)) {
       const handleArgument = () => {
-        const arg = this.parseExpression();
+        const arg = this.parseExpr();
         argumentList.push(arg);
       };
 
@@ -1125,7 +1124,7 @@ export class Parser {
       // COMPUTED (obj["key"])
       else if (operator.type === TokenType.OPEN_BRACKET) {
         computed = true;
-        property = this.parseExpression(); // not checking property kind as there are many expression that could evaluate to valid identifier
+        property = this.parseExpr(); // not checking property kind as there are many expression that could evaluate to valid identifier
         this.advanceAndExpect(
           TokenType.CLOSE_BRACKET,
           "Missing closing bracket (']') inside computed member-expression"
@@ -1188,7 +1187,7 @@ export class Parser {
       case TokenType.OPEN_PAREN: {
         this.advance(); // advance past open-paren
 
-        const value = this.parseExpression();
+        const value = this.parseExpr();
 
         this.advanceAndExpect(
           TokenType.CLOSE_PAREN,

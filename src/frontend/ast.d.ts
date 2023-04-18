@@ -68,12 +68,12 @@ interface AST_VarDeclaration extends AST_Stmt {
 
 interface AST_BlockStmt extends AST_Stmt {
   kind: "BlockStmt";
-  body: AST_Stmt[];
+  body: AST_Node[];
 }
 
 interface AST_ReturnStmt extends AST_Stmt {
   kind: "ReturnStmt";
-  argument?: AST_Stmt;
+  argument?: AST_Node;
 }
 
 interface AST_FunctionDeclaration extends AST_Stmt {
@@ -86,8 +86,8 @@ interface AST_FunctionDeclaration extends AST_Stmt {
 interface AST_IfStmt extends AST_Stmt {
   kind: "IfStmt";
   test: AST_Expr;
-  consequent: AST_Stmt;
-  alternate?: AST_Stmt;
+  consequent: AST_Node;
+  alternate?: AST_Node;
 }
 
 interface AST_WhileStmt extends AST_Stmt {

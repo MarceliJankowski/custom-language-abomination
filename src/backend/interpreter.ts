@@ -26,15 +26,15 @@ interface SharedUnaryExprOperatorsData {
 // -----------------------------------------------
 // Constructors used for propagating statements through call-stack with exceptions
 
-/**@decs Constructor used for propagating `returnStatement`*/
+/**@decs Constructor used for propagating `returnStmt`*/
 class Return {
   constructor(public readonly value: Runtime.Value) {}
 }
 
-/**@decs Constructor used for propagating `breakStatement`*/
+/**@decs Constructor used for propagating `breakStmt`*/
 class Break {}
 
-/**@decs Constructor used for propagating `continueStatement`*/
+/**@decs Constructor used for propagating `continueStmt`*/
 class Continue {}
 
 // -----------------------------------------------
@@ -94,34 +94,34 @@ export class Interpreter {
         return this.evalTernaryExpr(astNode as AST_TernaryExpr, env);
 
       case "IfStmt":
-        return this.evalIfStatement(astNode as AST_IfStmt, env);
+        return this.evalIfStmt(astNode as AST_IfStmt, env);
 
       case "WhileStmt":
-        return this.evalWhileStatement(astNode as AST_WhileStmt, env);
+        return this.evalWhileStmt(astNode as AST_WhileStmt, env);
 
       case "DoWhileStmt":
-        return this.evalDoWhileStatement(astNode as AST_DoWhileStmt, env);
+        return this.evalDoWhileStmt(astNode as AST_DoWhileStmt, env);
 
       case "BlockStmt":
-        return this.evalBlockStatement(astNode as AST_BlockStmt, env);
+        return this.evalBlockStmt(astNode as AST_BlockStmt, env);
 
       case "ReturnStmt":
-        return this.evalReturnStatement(astNode as AST_ReturnStmt, env);
+        return this.evalReturnStmt(astNode as AST_ReturnStmt, env);
 
       case "BreakStmt":
-        return this.evalBreakStatement();
+        return this.evalBreakStmt();
 
       case "ContinueStmt":
-        return this.evalContinueStatement();
+        return this.evalContinueStmt();
 
       case "ThrowStmt":
-        return this.evalThrowStatement(astNode as AST_ThrowStmt, env);
+        return this.evalThrowStmt(astNode as AST_ThrowStmt, env);
 
       case "TryCatchStmt":
-        return this.evalTryCatchStatement(astNode as AST_TryCatchStmt, env);
+        return this.evalTryCatchStmt(astNode as AST_TryCatchStmt, env);
 
       case "SwitchStmt":
-        return this.evalSwitchStatement(astNode as AST_SwitchStmt, env);
+        return this.evalSwitchStmt(astNode as AST_SwitchStmt, env);
 
       default:
         throw new Err(
@@ -177,36 +177,36 @@ export class Interpreter {
     return MK.UNDEFINED();
   }
 
-  private evalFunctionExpr(funcExpression: AST_FunctionExpr, env: VariableEnv): Runtime.Function {
-    const { name, parameters, body } = funcExpression;
+  private evalFunctionExpr(funcExpr: AST_FunctionExpr, env: VariableEnv): Runtime.Function {
+    const { name, parameters, body } = funcExpr;
 
     return MK.FUNCTION(name ?? "(anonymous)", parameters, body, env);
   }
 
-  private evalReturnStatement(returnStatement: AST_ReturnStmt, env: VariableEnv): never {
+  private evalReturnStmt(returnStmt: AST_ReturnStmt, env: VariableEnv): never {
     let returnValue: Runtime.Value;
 
-    if (returnStatement.argument) returnValue = this.evaluate(returnStatement.argument, env);
+    if (returnStmt.argument) returnValue = this.evaluate(returnStmt.argument, env);
     else returnValue = MK.UNDEFINED();
 
     throw new Return(returnValue);
   }
 
-  private evalBreakStatement(): never {
+  private evalBreakStmt(): never {
     throw new Break();
   }
 
-  private evalContinueStatement(): never {
+  private evalContinueStmt(): never {
     throw new Continue();
   }
 
-  private evalThrowStatement(throwStmt: AST_ThrowStmt, env: VariableEnv): never {
+  private evalThrowStmt(throwStmt: AST_ThrowStmt, env: VariableEnv): never {
     const error = this.evaluate(throwStmt.error, env);
 
     throw new RuntimeException(error, throwStmt.start);
   }
 
-  private evalTryCatchStatement(
+  private evalTryCatchStmt(
     { tryBlock, catchParam, catchBlock }: AST_TryCatchStmt,
     env: VariableEnv
   ): Runtime.Value | never {
@@ -226,7 +226,7 @@ export class Interpreter {
     }
   }
 
-  private evalSwitchStatement(switchStmt: AST_SwitchStmt, env: VariableEnv): Runtime.Undefined {
+  private evalSwitchStmt(switchStmt: AST_SwitchStmt, env: VariableEnv): Runtime.Undefined {
     const discriminant = this.evaluate(switchStmt.discriminant, env).value;
 
     try {
@@ -432,9 +432,9 @@ export class Interpreter {
     // make sure that 'expr.object' is a valid member-expression object
     const runtimeExprObject = this.evaluate(expr.object, env);
 
-    if (!this.isValidMemberExpressionObject(runtimeExprObject.type))
+    if (!this.isValidMemberExprObject(runtimeExprObject.type))
       throw new Err(
-        `Invalid member expression. Invalid object: '${runtimeExprObject.value}' ('${runtimeExprObject.value}' doesn't support member expressions), at position ${expr.object.start}`,
+        `Invalid member-expression. Invalid object: '${runtimeExprObject.value}' ('${runtimeExprObject.value}' doesn't support member-expressions), at position ${expr.object.start}`,
         "interpreter"
       );
 
@@ -463,7 +463,7 @@ export class Interpreter {
 
         default:
           throw new Err(
-            `Invalid member expression. Invalid computed property: '${evaluatedComputedProperty.value}', at position ${expr.property.start}`,
+            `Invalid member-expression. Invalid computed property: '${evaluatedComputedProperty.value}', at position ${expr.property.start}`,
             "interpreter"
           );
       }
@@ -519,7 +519,7 @@ export class Interpreter {
 
         default:
           throw new Err(
-            `Invalid computed member expression. Attempted index retrieval on type: '${runtimeObject.type}', at position ${expr.start}`,
+            `Invalid computed member-expression. Attempted index retrieval on type: '${runtimeObject.type}', at position ${expr.start}`,
             "interpreter"
           );
       }
@@ -582,7 +582,7 @@ export class Interpreter {
     let funcReturnValue: Runtime.Value = MK.UNDEFINED();
 
     try {
-      this.evalBlockStatement(func.body, funcInvocationEnv);
+      this.evalBlockStmt(func.body, funcInvocationEnv);
     } catch (err) {
       if (err instanceof Return) funcReturnValue = err.value; // support 'return' keyword
       else throw err; // propagate exception
@@ -591,12 +591,12 @@ export class Interpreter {
     return funcReturnValue;
   }
 
-  private evalBlockStatement(blockStatement: AST_BlockStmt, env: VariableEnv): Runtime.Undefined {
+  private evalBlockStmt(blockStmt: AST_BlockStmt, env: VariableEnv): Runtime.Undefined {
     // blocks have their own VariableEnv/scope
     const blockEnv = new VariableEnv(env);
 
-    // evaluate blockStatement body one statement at a time
-    for (const statement of blockStatement.body) this.evaluate(statement, blockEnv);
+    // evaluate blockStmt body one statement at a time
+    for (const statement of blockStmt.body) this.evaluate(statement, blockEnv);
 
     return MK.UNDEFINED();
   }
@@ -646,7 +646,7 @@ export class Interpreter {
 
       default:
         throw new Err(
-          `Invalid prefix unary expression. Unknown operator: '${operator}', at position ${start}`,
+          `Invalid prefix unary-expression. Unknown operator: '${operator}', at position ${start}`,
           "interpreter"
         );
     }
@@ -676,7 +676,7 @@ export class Interpreter {
 
       default:
         throw new Err(
-          `Invalid postfix unary expression. Unknown operator: '${operator}', at position ${start}`,
+          `Invalid postfix unary-expression. Unknown operator: '${operator}', at position ${start}`,
           "interpreter"
         );
     }
@@ -697,30 +697,30 @@ export class Interpreter {
     return runtimeAlternate;
   }
 
-  private evalIfStatement(ifStatement: AST_IfStmt, env: VariableEnv): Runtime.Undefined {
-    const testValue = this.evaluate(ifStatement.test, env);
+  private evalIfStmt(ifStmt: AST_IfStmt, env: VariableEnv): Runtime.Undefined {
+    const testValue = this.evaluate(ifStmt.test, env);
     const testBoolean = getBooleanValue(testValue);
 
     // TEST IS: 'truthy'
     testBooleanIf: if (testBoolean) {
-      this.evaluate(ifStatement.consequent, env);
+      this.evaluate(ifStmt.consequent, env);
     }
 
     // TEST IS: 'falsy'
     else {
       // handle alternate / 'else' keyword
-      if (ifStatement.alternate === undefined) break testBooleanIf;
+      if (ifStmt.alternate === undefined) break testBooleanIf;
 
-      this.evaluate(ifStatement.alternate, env);
+      this.evaluate(ifStmt.alternate, env);
     }
 
     return MK.UNDEFINED();
   }
 
-  private evalWhileStatement(whileStatement: AST_WhileStmt, env: VariableEnv): Runtime.Undefined {
-    while (this.isTestTruthy(whileStatement.test, env)) {
+  private evalWhileStmt(whileStmt: AST_WhileStmt, env: VariableEnv): Runtime.Undefined {
+    while (this.isTestTruthy(whileStmt.test, env)) {
       try {
-        this.evaluate(whileStatement.body, env);
+        this.evaluate(whileStmt.body, env);
       } catch (err) {
         if (err instanceof Break) break; // support 'break' keyword
         else if (err instanceof Continue) continue; // support 'continue' keyword
@@ -731,16 +731,16 @@ export class Interpreter {
     return MK.UNDEFINED();
   }
 
-  private evalDoWhileStatement(doWhileStatement: AST_DoWhileStmt, env: VariableEnv): Runtime.Undefined {
+  private evalDoWhileStmt(doWhileStmt: AST_DoWhileStmt, env: VariableEnv): Runtime.Undefined {
     do {
       try {
-        this.evaluate(doWhileStatement.body, env);
+        this.evaluate(doWhileStmt.body, env);
       } catch (err) {
         if (err instanceof Break) break; // support 'break' keyword
         else if (err instanceof Continue) continue; // support 'continue' keyword
         else throw err; // propagate exception
       }
-    } while (this.isTestTruthy(doWhileStatement.test, env));
+    } while (this.isTestTruthy(doWhileStmt.test, env));
 
     return MK.UNDEFINED();
   }
@@ -937,7 +937,7 @@ export class Interpreter {
       // make sure that memberExprProperty is an index (forbid users from defining/modifying properties on arrays)
       if (typeof memberExprProperty !== "number")
         throw new Err(
-          `Invalid member expression value assignment. Defining properties on arrays is forbidden. At position ${start}`,
+          `Invalid member-expression value assignment. Defining properties on arrays is forbidden. At position ${start}`,
           "interpreter"
         );
 
@@ -960,7 +960,7 @@ export class Interpreter {
     operand: AST_Expr,
     env: VariableEnv
   ): SharedUnaryExprOperatorsData {
-    const invalidOperandErrorMessage = `Invalid ${exprType} unary expression. Operator: '${operator}' can only be used with number identifier/member-expression\nInvalid operand: '${operand.kind}', at position: ${exprStart}`;
+    const invalidOperandErrorMessage = `Invalid ${exprType} unary-expression. Operator: '${operator}' can only be used with number identifier/member-expression\nInvalid operand: '${operand.kind}', at position: ${exprStart}`;
 
     // VARIABLE DECLARATIONS
     let evaluatedOperandValue: Runtime.Value;
@@ -980,7 +980,7 @@ export class Interpreter {
 
       if (object.type !== "object" && object.type !== "array")
         throw new Err(
-          `Invalid unary expression. Property modification on type: '${object.type}' is forbidden, at position: ${exprStart}`,
+          `Invalid unary-expression. Property modification on type: '${object.type}' is forbidden, at position: ${exprStart}`,
           "interpreter"
         );
 
@@ -1041,7 +1041,7 @@ export class Interpreter {
   }
 
   /**@desc determine whether `type` is a value member-expression `object`*/
-  private isValidMemberExpressionObject(type: Runtime.ValueType): boolean {
+  private isValidMemberExprObject(type: Runtime.ValueType): boolean {
     return VALID_MEMBER_EXPR_RUNTIME_TYPES.some(validType => validType === type);
   }
 
