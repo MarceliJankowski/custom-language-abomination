@@ -22,6 +22,9 @@ KEYWORDS.set("for", TokenType.FOR);
 KEYWORDS.set("throw", TokenType.THROW);
 KEYWORDS.set("try", TokenType.TRY);
 KEYWORDS.set("catch", TokenType.CATCH);
+KEYWORDS.set("switch", TokenType.SWITCH);
+KEYWORDS.set("case", TokenType.CASE);
+KEYWORDS.set("default", TokenType.DEFAULT);
 
 // -----------------------------------------------
 //                    LEXER

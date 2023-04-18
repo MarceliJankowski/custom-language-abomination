@@ -19,6 +19,9 @@ export enum TokenType {
   THROW = "THROW",
   TRY = "TRY",
   CATCH = "CATCH",
+  SWITCH = "SWITCH",
+  CASE = "CASE",
+  DEFAULT = "DEFAULT",
 
   // OPERATORS
   EQUAL = "EQUAL",

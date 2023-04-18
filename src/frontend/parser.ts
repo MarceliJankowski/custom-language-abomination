@@ -127,6 +127,11 @@ export class Parser {
         break;
       }
 
+      case TokenType.SWITCH: {
+        parsedStatement = this.parseSwitchStatement();
+        break;
+      }
+
       // EXPRESSIONS
       default:
         return this.parseExpression();
@@ -562,6 +567,97 @@ export class Parser {
     };
 
     return tryCatchStatement;
+  }
+
+  private parseSwitchStatement(): AST_SwitchStmt {
+    const start = this.advance().start; // advance past 'switch' keyword
+
+    // HANDLE discriminant
+
+    this.advanceAndExpect(
+      TokenType.OPEN_PAREN,
+      "Invalid switch statement. Missing opening parentheses ('(') following 'switch' keyword"
+    );
+
+    const discriminant = this.parseExpression();
+
+    this.advanceAndExpect(
+      TokenType.CLOSE_PAREN,
+      "Invalid switch statement. Missing closing parentheses (')') following discriminant"
+    );
+
+    // HANDLE cases
+
+    this.advanceAndExpect(
+      TokenType.OPEN_CURLY_BRACE,
+      "Invalid switch statement. Missing opening curly-brace ('{') denoting switch statement's body"
+    );
+
+    const cases: AST_SwitchStmt["cases"] = [];
+
+    // BUILD cases
+    while (this.notEOF() && !this.is(TokenType.CLOSE_CURLY_BRACE)) {
+      // handle invalid tokens
+      if (!this.is(TokenType.CASE, TokenType.DEFAULT)) {
+        throw new Err(
+          `Invalid switch statement. Invalid token: '${
+            this.at().value
+          }', expected: 'case-statement', at position: ${this.at().start}`,
+          "parser"
+        );
+      }
+
+      const caseStmt = this.parseSwitchCaseStatement();
+      cases.push(caseStmt);
+    }
+
+    const end = this.advanceAndExpect(
+      TokenType.CLOSE_CURLY_BRACE,
+      "Invalid switch statement. Missing closing curly-brace ('}') following switch statement's body"
+    ).end;
+
+    // BUILD switchStatement
+    const switchStatement: AST_SwitchStmt = {
+      kind: "SwitchStmt",
+      discriminant,
+      cases,
+      start,
+      end,
+    };
+
+    return switchStatement;
+  }
+
+  private parseSwitchCaseStatement(): AST_SwitchCaseStmt {
+    const caseKeyword = this.advance();
+    const isDefaultCase = caseKeyword.type === TokenType.DEFAULT;
+
+    // HANDLE test
+    let test;
+    if (!isDefaultCase) test = this.parseExpression();
+
+    this.advanceAndExpect(
+      TokenType.COLON,
+      `Invalid switch-case statement. Missing colon (':') following ${
+        isDefaultCase ? `'${caseKeyword.value}' keyword` : "test"
+      }`
+    );
+
+    // HANDLE consequent
+    let consequent;
+    if (this.is(TokenType.OPEN_CURLY_BRACE)) consequent = this.parseBlockStatement();
+    else consequent = this.parseStatement(); // enable one-liners
+
+    // BUILD switchCaseStatement
+    const switchCaseStatement: AST_SwitchCaseStmt = {
+      kind: "SwitchCaseStmt",
+      test,
+      consequent,
+      start: caseKeyword.start,
+      end: consequent.end,
+    };
+
+    return switchCaseStatement;
   }
 
   private parseFunctionExpr(): AST_Expr {

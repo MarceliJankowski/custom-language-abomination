@@ -17,6 +17,8 @@ type AST_NodeKind =
   | "FunctionDeclaration"
   | "ThrowStmt"
   | "TryCatchStmt"
+  | "SwitchStmt"
+  | "SwitchCaseStmt"
 
   // EXPRESSIONS
   | "AssignmentExpr"
@@ -111,6 +113,18 @@ interface AST_TryCatchStmt extends AST_Stmt {
   tryBlock: AST_BlockStmt;
   catchParam: AST_Identifier;
   catchBlock: AST_BlockStmt;
+}
+
+interface AST_SwitchStmt extends AST_Stmt {
+  kind: "SwitchStmt";
+  discriminant: AST_Expr;
+  cases: AST_SwitchCaseStmt[];
+}
+
+interface AST_SwitchCaseStmt extends AST_Stmt {
+  kind: "SwitchCaseStmt";
+  test?: AST_Expr;
+  consequent: AST_Node;
 }
 
 // -----------------------------------------------

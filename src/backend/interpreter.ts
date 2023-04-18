@@ -117,6 +117,9 @@ export class Interpreter {
       case "TryCatchStmt":
         return this.evalTryCatchStatement(astNode as AST_TryCatchStmt, env);
 
+      case "SwitchStmt":
+        return this.evalSwitchStatement(astNode as AST_SwitchStmt, env);
+
       default:
         throw new Err(
           `This AST node kind has not yet been setup for interpretation.\nNode kind: '${astNode.kind}' at position: ${astNode.start}`,
@@ -218,6 +221,30 @@ export class Interpreter {
       // propagate any other exception type
       throw error;
     }
+  }
+
+  private evalSwitchStatement(switchStmt: AST_SwitchStmt, env: VariableEnv): Runtime.Undefined {
+    const discriminant = this.evaluate(switchStmt.discriminant, env).value;
+
+    try {
+      // go through every caseStmt to check whether it matches
+      for (const caseStmt of switchStmt.cases) {
+        // handle default case
+        if (caseStmt.test === undefined) {
+          this.evaluate(caseStmt.consequent, env);
+          break; // break out of switchStmt after defaultCase is evaluated
+        }
+
+        const test = this.evaluate(caseStmt.test, env).value;
+
+        // handle case match
+        if (test === discriminant) this.evaluate(caseStmt.consequent, env);
+      }
+    } catch (err) {
+      if (!(err instanceof Break)) throw err; // support 'break' keyword
+    }
+
+    return MK.UNDEFINED();
   }
 
   private evalAssignmentExpr(assignmentExpr: AST_AssignmentExpr, env: VariableEnv): Runtime.Value {
