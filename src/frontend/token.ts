@@ -22,6 +22,7 @@ export enum TokenType {
   SWITCH = "SWITCH",
   CASE = "CASE",
   DEFAULT = "DEFAULT",
+  DO = "DO",
 
   // OPERATORS
   EQUAL = "EQUAL",

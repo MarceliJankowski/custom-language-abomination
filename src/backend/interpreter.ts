@@ -99,6 +99,9 @@ export class Interpreter {
       case "WhileStmt":
         return this.evalWhileStatement(astNode as AST_WhileStmt, env);
 
+      case "DoWhileStmt":
+        return this.evalDoWhileStatement(astNode as AST_DoWhileStmt, env);
+
       case "BlockStmt":
         return this.evalBlockStatement(astNode as AST_BlockStmt, env);
 
@@ -715,23 +718,29 @@ export class Interpreter {
   }
 
   private evalWhileStatement(whileStatement: AST_WhileStmt, env: VariableEnv): Runtime.Undefined {
-    const isTestTruthy = () => {
-      const testValue = this.evaluate(whileStatement.test, env);
-      const testBoolean = getBooleanValue(testValue);
-      return testBoolean;
-    };
-
-    while (isTestTruthy()) {
+    while (this.isTestTruthy(whileStatement.test, env)) {
       try {
         this.evaluate(whileStatement.body, env);
       } catch (err) {
-        // supported keywords:
-        if (err instanceof Break) break;
-        else if (err instanceof Continue) continue;
-        // propagate exception
-        else throw err;
+        if (err instanceof Break) break; // support 'break' keyword
+        else if (err instanceof Continue) continue; // support 'continue' keyword
+        else throw err; // propagate exception
       }
     }
+
+    return MK.UNDEFINED();
+  }
+
+  private evalDoWhileStatement(doWhileStatement: AST_DoWhileStmt, env: VariableEnv): Runtime.Undefined {
+    do {
+      try {
+        this.evaluate(doWhileStatement.body, env);
+      } catch (err) {
+        if (err instanceof Break) break; // support 'break' keyword
+        else if (err instanceof Continue) continue; // support 'continue' keyword
+        else throw err; // propagate exception
+      }
+    } while (this.isTestTruthy(doWhileStatement.test, env));
 
     return MK.UNDEFINED();
   }
@@ -1022,6 +1031,14 @@ export class Interpreter {
   // -----------------------------------------------
   //                  UTILITIES
   // -----------------------------------------------
+
+  /**@desc determine whether given `test` expression is truthy*/
+  private isTestTruthy(test: AST_Expr, env: VariableEnv): boolean {
+    const testValue = this.evaluate(test, env);
+    const testBoolean = getBooleanValue(testValue);
+
+    return testBoolean;
+  }
 
   /**@desc determine whether `type` is a value member-expression `object`*/
   private isValidMemberExpressionObject(type: Runtime.ValueType): boolean {

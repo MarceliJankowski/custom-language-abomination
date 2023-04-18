@@ -25,6 +25,7 @@ KEYWORDS.set("catch", TokenType.CATCH);
 KEYWORDS.set("switch", TokenType.SWITCH);
 KEYWORDS.set("case", TokenType.CASE);
 KEYWORDS.set("default", TokenType.DEFAULT);
+KEYWORDS.set("do", TokenType.DO);
 
 // -----------------------------------------------
 //                    LEXER

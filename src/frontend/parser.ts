@@ -102,6 +102,11 @@ export class Parser {
         break;
       }
 
+      case TokenType.DO: {
+        parsedStatement = this.parseDoWhileStatement();
+        break;
+      }
+
       case TokenType.BREAK: {
         parsedStatement = this.parseBreakStatement();
         break;
@@ -342,7 +347,33 @@ export class Parser {
   private parseWhileStatement(): AST_WhileStmt {
     const start = this.advance().start; // advance past 'while' keyword
 
-    // HANDLE TEST
+    const test = this.parseWhileStmtTest();
+    const body = this.parseWhileStmtBody();
+
+    // BUILD WhileStatement
+    const whileStatement: AST_WhileStmt = {
+      kind: "WhileStmt",
+      test,
+      body,
+      start,
+      end: body.end,
+    };
+
+    return whileStatement;
+  }
+
+  /**@desc parses `while` and `doWhile` statements body*/
+  private parseWhileStmtBody(): AST_Node {
+    let body;
+
+    if (this.is(TokenType.OPEN_CURLY_BRACE)) body = this.parseBlockStatement();
+    else body = this.parseStatement(); // enable one-liners
+
+    return body;
+  }
+
+  /**@desc parses `while` and `doWhile` statements test*/
+  private parseWhileStmtTest(): AST_Node {
     this.advanceAndExpect(
       TokenType.OPEN_PAREN,
       "Invalid while statement. Missing opening parentheses ('(') following 'while' keyword"
@@ -355,22 +386,31 @@ export class Parser {
       "Invalid while statement. Missing closing parentheses (')') following test"
     );
 
-    // HANDLE BODY
-    let body;
+    return test;
+  }
 
-    if (this.is(TokenType.OPEN_CURLY_BRACE)) body = this.parseBlockStatement();
-    else body = this.parseStatement(); // enable one-liners
+  private parseDoWhileStatement(): AST_DoWhileStmt {
+    const start = this.advance().start; // advance past 'do' keyword
 
-    // BUILD WhileStatement
-    const whileStatement: AST_WhileStmt = {
-      kind: "WhileStmt",
+    const body = this.parseWhileStmtBody();
+
+    this.advanceAndExpect(
+      TokenType.WHILE,
+      "Invalid do-while statement. Missing 'while' keyword following body"
+    );
+
+    const test = this.parseWhileStmtTest();
+
+    // BUILD DoWhileStatement
+    const doWhileStatement: AST_DoWhileStmt = {
+      kind: "DoWhileStmt",
       test,
       body,
       start,
-      end: body.end,
+      end: test.end,
     };
 
-    return whileStatement;
+    return doWhileStatement;
   }
 
   private parseForStatement(): AST_Stmt {
