@@ -231,6 +231,9 @@ export class Parser {
       end,
     };
 
+    // HANDLE OPTIONAL SEMICOLON
+    if (this.is(TokenType.SEMICOLON)) this.advance();
+
     return blockStatement;
   }
 
