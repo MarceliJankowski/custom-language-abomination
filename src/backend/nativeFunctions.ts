@@ -147,6 +147,28 @@ export const time = NATIVE_FUNCTION((): Runtime.Number => {
   return MK.NUMBER(milliseconds);
 });
 
+/**@desc builds and returns `Runtime.Object` representing exception
+@param message string describing error cause*/
+export const Error = NATIVE_FUNCTION((position, runtimeMessage): Runtime.Object => {
+  if (runtimeMessage === undefined)
+    throw new RuntimeAPIException("Error()", "Missing 'message' argument", position);
+
+  if (runtimeMessage.type !== "string")
+    throw new RuntimeAPIException(
+      "Error()",
+      `Invalid 'message' argument type: ${runtimeMessage.type}`,
+      position
+    );
+
+  const runtimePosition = MK.ARRAY([MK.NUMBER(position[0]), MK.NUMBER(position[1])]);
+
+  return MK.OBJECT({
+    position: runtimePosition,
+    message: runtimeMessage,
+    // omitting stacktrace cause I'm lazy
+  });
+});
+
 // -----------------------------------------------
 //           GLOBAL 'console' OBJECT
 // -----------------------------------------------
