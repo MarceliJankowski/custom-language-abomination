@@ -229,6 +229,7 @@ class InterpreterInterface {
 
   /**@desc print interpreter manual*/
   private printManual(): void {
+    // const manual = fs.readFileSync(path.join(__dirname, "../manual"), { encoding: "utf-8" });
     const manual = fs.readFileSync(path.join(process.cwd(), "./manual"), { encoding: "utf-8" });
 
     console.log(manual);

@@ -1,22 +1,24 @@
 {
-  "name": "interpreter",
+  "name": "basic-interpreter",
   "version": "1.0.0",
-  "description": "Basic Interpreter Written In TS",
+  "description": "Basic interpreter (name can be a bit misleading I guess..) for custom language abomination written in TS",
   "main": "./src/main.ts",
   "scripts": {
-    "start": "ts-node ./src/main.ts",
-    "test": "./test.sh",
-    "prepare": "husky install "
+    "start": "./scripts/start.sh",
+    "dev": "ts-node ./src/main.ts",
+    "test": "./scripts/test.sh",
+    "build": "./scripts/build.sh",
+    "prepare": "husky install"
   },
   "repository": {
     "type": "git",
     "url": "git+https://github.com/MarceliJankowski/basic-interpreter.git"
   },
   "keywords": [
-    "INTERPRETER"
+    "interpreter"
   ],
   "author": "Marceli Jankowski",
-  "license": "ISC",
+  "license": "MIT",
   "bugs": {
     "url": "https://github.com/MarceliJankowski/basic-interpreter/issues"
   },
@@ -25,11 +27,11 @@
     "@types/node": "^18.13.0",
     "@types/prompt-sync": "^4.2.0",
     "husky": "^8.0.3",
-    "ts-node": "^10.9.1",
-    "typescript": "^4.9.5"
+    "ts-node": "^10.9.1"
   },
   "dependencies": {
-    "json-stringify-pretty-compact": "^3.0.0",
-    "prompt-sync": "^4.2.0"
+    "json-stringify-pretty-compact": "~3.0.0",
+    "prompt-sync": "~4.2.0",
+    "typescript": "~5.0.4"
   }
 }
