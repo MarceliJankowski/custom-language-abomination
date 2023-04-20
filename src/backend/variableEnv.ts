@@ -114,6 +114,7 @@ export function createGlobalEnv() {
   env.declareVar("clock", NATIVE_FUNCTION.clock, options);
   env.declareVar("time", NATIVE_FUNCTION.time, options);
   env.declareVar("Error", NATIVE_FUNCTION.Error, options);
+  env.declareVar("assert", NATIVE_FUNCTION.assert, options);
 
   // GLOBAL OBJECTS
   env.declareVar("console", MK.OBJECT(NATIVE_FUNCTION.CONSOLE), options);

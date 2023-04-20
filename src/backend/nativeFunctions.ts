@@ -169,6 +169,25 @@ export const Error = NATIVE_FUNCTION((position, runtimeMessage): Runtime.Object 
   });
 });
 
+/**@desc utility meant for easing the pain of test writing. Runs through `values` to make sure that they're truthy, raises exception (with provided `message`) in case they're not*/
+export const assert = NATIVE_FUNCTION((position, message, ...runtimeValues): Runtime.Undefined | never => {
+  if (message === undefined)
+    throw new RuntimeAPIException("assert()", `Missing 'message' argument`, position);
+
+  if (message.type !== "string")
+    throw new RuntimeAPIException("assert()", `Invalid 'message' argument type: '${message.type}'`, position);
+
+  if (runtimeValues.length === 0)
+    throw new RuntimeAPIException("assert()", `Missing 'value' argument`, position);
+
+  const isEveryRuntimeValueTruthy = runtimeValues.every(value => getBooleanValue(value!));
+
+  if (isEveryRuntimeValueTruthy === false)
+    throw new RuntimeAPIException("assert()", (message as Runtime.String).value, position);
+
+  return MK.UNDEFINED();
+});
+
 // -----------------------------------------------
 //           GLOBAL 'console' OBJECT
 // -----------------------------------------------
