@@ -1,0 +1,34 @@
+'./tests' directory as the name implies contains various automated tests for basic-interpreter.
+
+I'm setting them up quite late in the development process.
+Requirements changed along the way, I wasn't sure what I wanted, hence I waited.
+At this stage, I've got all the major features implemented.
+I believe it's time to test them.
+
+After all, we don't live in a wonderland.
+Our programs don't always behave in the way we expect them to.
+Bugs creep in, and we need to account for that.
+I've yet to find a more effective way of doing so than testing (even if it comes at a cost of immense boredom).
+
+All that said, for this project, I've chosen a loose approach to testing.
+I'm going to rely purely on E2E tests, which in it itself is not bad.
+The "loose" part comes from my implementations.
+As I've stated, we don't live in a wonderland, yet this directory assumes so.
+I'm only testing against expected behavior, neglecting the real possibility of some internal parts being broken / misbehaving.
+In other words, I'm working with this pre-condition that all the main internal pieces work as expected.
+
+As you can imagine, this is a huge shortcoming.
+It makes them not very thorough, undermines their credibility, and takes away the assurance that they provide.
+
+Here's the reasoning behind me taking this tradeoff.
+Tradeoff indeed, as test writing always comes at a cost of time.
+I could spend another few hours, and improve test coverage.
+But I asked myself, what's the point?
+
+This is a side project after all.
+Without any practical use, it's just something that I'm developing on a side out of curiosity.
+And that's why I stopped here, with this incomplete pile of assertions.
+
+Just wanted to say, that I don't recommend this approach.
+It's very oblivious to assume that things just "work out", cause more often than not, they don't.
+Thorough testing is what gives you confidence in the software, not cherry-picking and avoiding edge cases.
