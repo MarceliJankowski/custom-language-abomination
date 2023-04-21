@@ -50,11 +50,9 @@ export class Parser {
   // -----------------------------------------------
   // helpful web page: https://en.cppreference.com/w/cpp/language/operator_precedence
 
-  // statements - LEAST IMPORTANT / INVOKED FIRST
+  // statements - LEAST IMPORTANT / INVOKED FIRST / EVALUATED LAST (typically)
   // assignmentExpr
   // ternaryExpr
-  // objectExpr
-  // arrayExpr
   // logicalExpr (OR)
   // logicalExpr (AND)
   // equalityExpr
@@ -63,9 +61,11 @@ export class Parser {
   // multiplicativeExpr
   // prefixUnaryExpr
   // postfixUnaryExpr
-  // CallExpr
-  // MemberExpr
-  // primaryExpr - MOST IMPORTANT / INVOKED LAST
+  // callExpr
+  // memberExpr
+  // objectExpr
+  // arrayExp
+  // primaryExpr - MOST IMPORTANT / INVOKED LAST / EVALUATED FIRST (typically)
 
   // -----------------------------------------------
   //                    PARSE
@@ -768,7 +768,7 @@ export class Parser {
   }
 
   private parseTernaryExpr(): AST_Expr {
-    let test = this.parseObjectExpr();
+    let test = this.parseLogicalExprOR();
 
     while (this.is(TokenType.QUESTION)) {
       this.advance(); // advance past ternary-operator
@@ -795,123 +795,6 @@ export class Parser {
     }
 
     return test;
-  }
-
-  private parseObjectExpr(): AST_Expr {
-    if (!this.is(TokenType.OPEN_CURLY_BRACE)) return this.parseArrayExpr();
-
-    const objectStart = this.advance().start; // advance past OPEN_CURLY_BRACE
-    const properties = new Array<AST_ObjectProperty>();
-
-    // iterate as long as we're inside the object
-    while (this.notEOF() && !this.is(TokenType.CLOSE_CURLY_BRACE)) {
-      const key = this.advanceAndExpect(TokenType.IDENTIFIER, "Missing key inside object-literal");
-
-      // HANDLE SHORTHANDS
-
-      // shorthand: { key, }
-      if (this.is(TokenType.COMMA)) {
-        const uninitializedProperty: AST_ObjectProperty = {
-          kind: "ObjectProperty",
-          key: key.value,
-          value: undefined,
-          start: key.start,
-          end: key.end,
-        };
-
-        properties.push(uninitializedProperty);
-        this.advance(); // advance past comma
-        continue;
-      }
-
-      // shorthand: { key }
-      else if (this.is(TokenType.CLOSE_CURLY_BRACE)) {
-        const uninitializedProperty: AST_ObjectProperty = {
-          kind: "ObjectProperty",
-          key: key.value,
-          value: undefined,
-          start: key.start,
-          end: key.end,
-        };
-
-        properties.push(uninitializedProperty);
-        continue;
-      }
-
-      // HANDLE DEFINED PROPERTY
-
-      this.advanceAndExpect(TokenType.COLON, "Missing colon (':') following identifier in object-literal"); // advance past COLON
-
-      const value = this.parseExpr();
-
-      // if it's not object-literal end, expect a comma for another property
-      if (!this.is(TokenType.CLOSE_CURLY_BRACE))
-        this.advanceAndExpect(
-          TokenType.COMMA,
-          "Object-literal missing: closing curly-brace ('}') or comma (','), following property-value"
-        );
-
-      const newProperty: AST_ObjectProperty = {
-        kind: "ObjectProperty",
-        key: key.value,
-        value,
-        start: key.start,
-        end: value.end,
-      };
-
-      properties.push(newProperty);
-    }
-
-    // HANDLE OBJECT
-
-    const objectEnd = this.advanceAndExpect(
-      TokenType.CLOSE_CURLY_BRACE,
-      "Missing closing curly-brace ('}') inside object-literal"
-    ).end;
-
-    const objectLiteral: AST_ObjectLiteral = {
-      kind: "ObjectLiteral",
-      properties,
-      start: objectStart,
-      end: objectEnd,
-    };
-
-    // handle immediately following member-expression
-    if (this.isCurrentTokenAccessingProperty()) return this.parseMemberExpr(objectLiteral);
-
-    return objectLiteral;
-  }
-
-  private parseArrayExpr(): AST_Expr {
-    if (!this.is(TokenType.OPEN_BRACKET)) return this.parseLogicalExprOR();
-
-    const elements = new Array<AST_Expr>();
-    const arrayStart = this.advance().start; // advance past OPEN_BRACKET
-
-    while (this.notEOF() && !this.is(TokenType.CLOSE_BRACKET)) {
-      const element = this.parseExpr();
-
-      if (this.is(TokenType.COMMA)) this.advance(); // advance past comma
-
-      elements.push(element);
-    }
-
-    const arrayEnd = this.advanceAndExpect(
-      TokenType.CLOSE_BRACKET,
-      "Missing closing bracket (']') following element in array-literal"
-    ).end;
-
-    const arrayLiteral: AST_ArrayLiteral = {
-      kind: "ArrayLiteral",
-      elements,
-      start: arrayStart,
-      end: arrayEnd,
-    };
-
-    // handle immediately following member-expression
-    if (this.isCurrentTokenAccessingProperty()) return this.parseMemberExpr(arrayLiteral);
-
-    return arrayLiteral;
   }
 
   private parseLogicalExprOR(): AST_Expr {
@@ -1098,11 +981,11 @@ export class Parser {
     };
   }
 
-  private parseMemberExpr(exprObject?: AST_ArrayLiteral | AST_ObjectLiteral | AST_CallExpr): AST_Expr {
+  private parseMemberExpr(callExpr?: AST_CallExpr): AST_Expr {
     let object: AST_Expr;
 
-    if (exprObject) object = exprObject; // enable: '[1,2,3][0]', '{}.type' and so on
-    else object = this.parsePrimaryExpr();
+    if (callExpr) object = callExpr; // enable member-expressions immediately following call-expression
+    else object = this.parseObjectExpr();
 
     while (this.isCurrentTokenAccessingProperty() && this.isCurrentTokenFollowing(object)) {
       const operator = this.advance(); // '.' or '['
@@ -1112,7 +995,7 @@ export class Parser {
 
       // NON-COMPUTED (obj.property)
       if (operator.type === TokenType.DOT) {
-        property = this.parsePrimaryExpr();
+        property = this.parseObjectExpr();
 
         if (property.kind !== "Identifier")
           throw new Err(
@@ -1150,13 +1033,120 @@ export class Parser {
       object = memberExpr;
     }
 
-    // handle immediately following call-expression
-    if (this.is(TokenType.OPEN_PAREN)) return this.parseCallExpr(object);
-
     return object;
   }
 
-  /**@desc parses literal values and grouping expressions*/
+  private parseObjectExpr(): AST_Expr {
+    if (!this.is(TokenType.OPEN_CURLY_BRACE)) return this.parseArrayExpr();
+
+    const objectStart = this.advance().start; // advance past OPEN_CURLY_BRACE
+    const properties = new Array<AST_ObjectProperty>();
+
+    // iterate as long as we're inside the object
+    while (this.notEOF() && !this.is(TokenType.CLOSE_CURLY_BRACE)) {
+      const key = this.advanceAndExpect(TokenType.IDENTIFIER, "Missing key inside object-literal");
+
+      // HANDLE SHORTHANDS
+
+      // shorthand: { key, }
+      if (this.is(TokenType.COMMA)) {
+        const uninitializedProperty: AST_ObjectProperty = {
+          kind: "ObjectProperty",
+          key: key.value,
+          value: undefined,
+          start: key.start,
+          end: key.end,
+        };
+
+        properties.push(uninitializedProperty);
+        this.advance(); // advance past comma
+        continue;
+      }
+
+      // shorthand: { key }
+      else if (this.is(TokenType.CLOSE_CURLY_BRACE)) {
+        const uninitializedProperty: AST_ObjectProperty = {
+          kind: "ObjectProperty",
+          key: key.value,
+          value: undefined,
+          start: key.start,
+          end: key.end,
+        };
+
+        properties.push(uninitializedProperty);
+        continue;
+      }
+
+      // HANDLE DEFINED PROPERTY
+
+      this.advanceAndExpect(TokenType.COLON, "Missing colon (':') following identifier in object-literal"); // advance past COLON
+
+      const value = this.parseExpr();
+
+      // if it's not object-literal end, expect a comma for another property
+      if (!this.is(TokenType.CLOSE_CURLY_BRACE))
+        this.advanceAndExpect(
+          TokenType.COMMA,
+          "Object-literal missing: closing curly-brace ('}') or comma (','), following property-value"
+        );
+
+      const newProperty: AST_ObjectProperty = {
+        kind: "ObjectProperty",
+        key: key.value,
+        value,
+        start: key.start,
+        end: value.end,
+      };
+
+      properties.push(newProperty);
+    }
+
+    // HANDLE OBJECT
+
+    const objectEnd = this.advanceAndExpect(
+      TokenType.CLOSE_CURLY_BRACE,
+      "Missing closing curly-brace ('}') inside object-literal"
+    ).end;
+
+    const objectLiteral: AST_ObjectLiteral = {
+      kind: "ObjectLiteral",
+      properties,
+      start: objectStart,
+      end: objectEnd,
+    };
+
+    return objectLiteral;
+  }
+
+  private parseArrayExpr(): AST_Expr {
+    if (!this.is(TokenType.OPEN_BRACKET)) return this.parsePrimaryExpr();
+
+    const elements = new Array<AST_Expr>();
+    const arrayStart = this.advance().start; // advance past OPEN_BRACKET
+
+    while (this.notEOF() && !this.is(TokenType.CLOSE_BRACKET)) {
+      const element = this.parseExpr();
+
+      if (this.is(TokenType.COMMA)) this.advance(); // advance past comma
+
+      elements.push(element);
+    }
+
+    const arrayEnd = this.advanceAndExpect(
+      TokenType.CLOSE_BRACKET,
+      "Missing closing bracket (']') following element in array-literal"
+    ).end;
+
+    const arrayLiteral: AST_ArrayLiteral = {
+      kind: "ArrayLiteral",
+      elements,
+      start: arrayStart,
+      end: arrayEnd,
+    };
+
+    return arrayLiteral;
+  }
+
   private parsePrimaryExpr(): AST_Expr {
     const tokenType = this.at().type;
 
