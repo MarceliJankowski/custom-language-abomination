@@ -1,0 +1,58 @@
+# CONST
+# I'm not even testing whether it's actually immutable, self imposed limitations...
+const c = 10;
+assert("constant variable declaration ('const')", c == 10);
+
+# VAR
+var x = 1;
+assert("variable declaration ('var')", x == 1);
+
+# ASSIGNMENT
+var a;
+
+# operator: '='
+a = "hello";
+assert("variable assignment ('=')", a == "hello");
+
+# operator: '+='
+a = 5;
+a += 1;
+assert("variable assignment ('+=')", a == 6);
+
+# operator: '-='
+a = 5;
+a -= 1;
+assert("variable assignment ('-=')", a == 4);
+
+# operator: '*='
+a = 5;
+a *= 2;
+assert("variable assignment ('*=')", a == 10);
+
+# operator: '/='
+a = 10;
+a /= 2;
+assert("variable assignment ('/=')", a == 5);
+
+# operator: '%='
+a = 10;
+a %= 3;
+assert("variable assignment ('%=')", a == 1);
+
+# operator: '||='
+a = false;
+a ||= true;
+assert("variable assignment ('||=')", a == true);
+
+a = 123;
+a ||= true;
+assert("variable assignment ('||=')", a == 123);
+
+# operator: '&&='
+a = 123;
+a &&= true;
+assert("variable assignment ('&&=')", a == true);
+
+a = 0;
+a &&= true;
+assert("variable assignment ('&&=')", a == 0);
