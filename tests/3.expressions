@@ -1,0 +1,56 @@
+# testing some arbitrarily chosen expressions
+var x;
+
+# UNARY PREFIX
+x = 1;
+assert("unary prefix: '--value'", --x == 0);
+
+x = 1;
+assert("unary prefix: '++value'", ++x == 2);
+
+# UNARY POSTFIX
+x = 1;
+assert("unary postfix: 'value--'", x-- == 1);
+assert("unary postfix: 'value--'", x == 0);
+
+x = 1;
+assert("unary postfix: 'value++'", x++ == 1);
+assert("unary postfix: 'value++'", x == 2);
+
+# ARITHMETIC
+
+# addition
+assert("integer addition", 1 + 1 == 2);
+assert("float addition", 1 + 1.2 == 2.2);
+assert("negative and positive number addition", 1 + -1 == 0);
+
+# subtraction
+assert("integer subtraction", 0 - 1 == -1);
+assert("float subtraction", 1.2 - 1 == 0.19999999999999996); # you gotta love floating math
+assert("negative and positive number subtraction", 6 - -2 == 8);
+
+# multiplication
+assert("integer multiplication", 3 * 2 == 6);
+assert("float multiplication", 2 * 2.2 == 4.4);
+assert("negative and positive number multiplication", 2 * -3 == -6);
+
+# division
+assert("integer division", 4 / 2 == 2);
+assert("float division", 4.4 / 2 == 2.2);
+assert("negative and positive number division", 8 / -2 == -4);
+
+# remainder/modulo
+assert("integer modulo", 10 % 3 == 1);
+assert("float modulo", 4.2 % 2 == 0.20000000000000018);
+assert("negative and positive number modulo", 8 % -2 == 0);
+
+# LOGICAL
+
+# logical 'or'
+assert("logical '||' operator", (1 || 2) == 1, (false || true) == true, (false || null || "a") == "a");
+
+# logical 'and'
+assert("logical '&&' operator", (1 && 2) == 2, (false && true) == false, (true && 1 && 0) == 0);
+
+# ternary
+assert("ternary operator", (true ? 1 : 0) == 1, (false ? 1 : 0) == 0, (1 == 0 ? 1 : false) == false);
