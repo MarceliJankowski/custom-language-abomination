@@ -1,0 +1,89 @@
+# GLOBAL VARIABLES
+var x;
+
+# FUNCTION DECLARATION
+
+func fn () {}
+assert("function declaration", typeof fn == "function");
+
+
+# FUNCTION EXPRESSION
+
+const fnExpr = func () {};
+assert("function expression", typeof fnExpr == "function");
+
+# FUNCTION INVOCATION
+
+func fnInvoke () {}
+assert("function invocation", fnInvoke() == undefined);
+
+# FUNCTION SCOPE
+x = true;
+func fnScope () {
+  var x = 10;
+}
+
+assert("functions don't have local scope", x == true);
+
+# FUNCTION RETURN STATEMENT
+
+x = true;
+func fnReturnStopBlock () {
+  return x;
+  x = false;
+}
+
+fnReturnStopBlock();
+
+assert("return statement didn't stop block evaluation", x == true);
+
+x = true;
+func fnReturnValue () {
+  return x;
+}
+
+assert("return statement didn't return correct value", fnReturnValue() == x);
+
+# FUNCTION PARAMETERS
+
+func fnUndefinedParam (param) {
+  return param;
+}
+
+assert("function parameters are not initialized correctly", fnUndefinedParam() == undefined);
+
+func fnArg (arg) {
+  return arg;
+}
+
+assert("function parameters are not populated with arguments", fnArg(123) == 123);
+
+func add (a, b) {
+  return a + b;
+}
+
+assert("function parameters are fu**ed up!", add(1, 2) == 3);
+
+# HIGHER ORDER FUNCTION
+
+func hofReturningFnExpr() {
+  return func() {}
+}
+
+assert("HOF isn't returning function expression", typeof hofReturningFnExpr() == "function");
+
+func hofTakingFuncExpr(cb) {
+  return cb();
+}
+
+assert("HOF isn't accepting function expression as argument", hofTakingFuncExpr(func () { return true; }) == true);
+
+func hof (cb) {
+  return cb;
+}
+
+func callback () {
+  return true;
+}
+
+assert("Higher Order Function doesn't behave as expected", hof(callback)() == true);
