@@ -1,0 +1,128 @@
+# GLOBAL VARIABLES
+var arr;
+
+# DEFINING ARRAY
+arr = [1,2,3];
+assert("defining array", typeof arr == arr);
+
+# INDEX RETRIEVAL
+arr = [1];
+assert("array index member-expression", arr[0] == 1 );
+
+# METHODS
+
+# .length()
+arr = [1, 2];
+assert("array.length()", arr.length() == 2 );
+
+# .push()
+arr = [1, 2];
+arr.push(3, 4, 5);
+assert("array.push()", arr.length() == 5, arr[4] == 5 );
+
+# .pop()
+arr = [1, 2, 3, 4, 5];
+const poppedElement = arr.pop();
+assert("array.pop()", poppedElement == 5, arr.length() == 4);
+
+# .unshift()
+arr = [1, 2, 3];
+arr.unshift(0);
+assert("array.unshift()", arr[0] == 0, arr.length() == 4 );
+
+# .shift()
+arr = [1, 2, 3];
+const shiftedElement = arr.shift();
+assert("array.pop()", shiftedElement == 1, arr.length() == 2 );
+
+# .map()
+arr = [1, 2, 3];
+const doubledArr = arr.map(func (element) { return element * 2 });
+assert("array.map()", doubledArr[2] == 6, arr[2] == 3 );
+
+# .fill()
+arr = [null, null, null];
+arr.fill("element");
+arr.forEach(func (element) { assert("array.fill()", element == "element") });
+
+# .includes()
+arr = [1, true, null];
+const includesTrue = arr.includes(true);
+const includesFalse = arr.includes(false);
+assert("array.includes()", includesTrue, !includesFalse);
+
+# .splice()
+arr = [1, 2, 3, 4, 5];
+arr.splice(1, 2, "hello", "world");
+assert("array.splice()", arr.length() == 5, arr[1] == "hello", (arr[2] == "world") );
+
+# .reverse()
+arr = [1, 2, 3];
+arr.reverse();
+assert("array.assert()", arr[0] == 3, arr[2] == 1 );
+
+# .join()
+arr = ["Hello", ",", " ", "World", "!"];
+const joinedArr = arr.join("");
+assert("array.join()", joinedArr == "Hello, World!");
+
+# .concat()
+arr = [1, 2];
+const concatenatedArr = arr.concat([3, 4, 5]);
+assert("array.concat()", concatenatedArr.length() == 5, concatenatedArr[2] == 3, concatenatedArr[4] == 5);
+
+# .indexOf()
+arr = [1, true, 0];
+const trueIndex = arr.indexOf(true);
+const falseIndex = arr.indexOf(false);
+assert("array.indexOf()", trueIndex == 1, falseIndex == -1 );
+
+# .lastIndexOf()
+arr = [1, true, 0, true];
+const trueLastIndex = arr.lastIndexOf(true);
+const falseLastIndex = arr.lastIndexOf(false);
+assert("array.lastIndexOf()", trueLastIndex == 3, falseLastIndex == -1 );
+
+# .flat()
+arr = [1, [2, 3], [4, [5]]];
+const flattenedArr = arr.flat(2);
+assert("array.flat()", flattenedArr.length() == 5, flattenedArr[4] == 5 );
+
+# .some()
+arr = [1, 2, 3, 4, 5]
+const isSomeGreaterThanThree = arr.some(func (element) { return element > 3 });
+const isSomeGreaterThanFive = arr.some(func (element) { return element > 5 });
+assert("array.some()", isSomeGreaterThanThree, !isSomeGreaterThanFive);
+
+# .every()
+arr = [1, 2, 3, 4, 5]
+const isEveryGreaterThanZero = arr.every(func (element) { return element > 0 });
+const isEveryGreaterThanFive = arr.every(func (element) { return element > 5 });
+assert("array.every()", isEveryGreaterThanZero , !isEveryGreaterThanFive);
+
+# .filter()
+arr = [1, 2, 3, 4, 5];
+const filteredArr = arr.filter(func (element) { return element >= 3 });
+assert("array.filter()", filteredArr.length() == 3, filteredArr[0] == 3 );
+
+# .find()
+arr = [1, 2, 3, 4, 5]
+const firstGreaterThanThree = arr.find(func (element) { return element > 3 });
+assert("array.find()", firstGreaterThanThree == 4);
+
+# .findIndex()
+arr = [1, 2, 3, 4, 5]
+const firstGreaterThanThreeIndex = arr.findIndex(func (element) { return element > 3 });
+assert("array.findIndex()", firstGreaterThanThreeIndex == 3);
+
+# .sort()
+arr = [2, 1, 3, 0, 4];
+arr.sort(func (a, b) { return a - b});
+arr.forEach(func (element, index) {
+  assert("array.sort()", element == index );
+});
+
+# .toString()
+arr = [1, 2, 3]
+const arrStr = arr.toString();
+assert("array.toString()", arrStr == "[1, 2, 3]");
