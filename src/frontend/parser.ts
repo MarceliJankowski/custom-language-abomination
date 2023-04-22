@@ -286,7 +286,7 @@ export class Parser {
     let argument;
 
     // handle case when there's a return value
-    if (this.isCurrentTokenFollowing(returnKeyword)) argument = this.parseStmt();
+    if (this.isCurrentTokenFollowing(returnKeyword)) argument = this.parseExpr();
 
     // BUILD returnStmt
     const returnStmt: AST_ReturnStmt = {

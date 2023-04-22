@@ -73,7 +73,7 @@ interface AST_BlockStmt extends AST_Stmt {
 
 interface AST_ReturnStmt extends AST_Stmt {
   kind: "ReturnStmt";
-  argument?: AST_Node;
+  argument?: AST_Expr;
 }
 
 interface AST_FunctionDeclaration extends AST_Stmt {
