@@ -1,0 +1,4 @@
+# two build-in ways for logging to std output
+
+echo("Hello, World!")
+console.log("Goodbye, World!")
