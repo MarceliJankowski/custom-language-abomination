@@ -1,0 +1,30 @@
+# try/catch prevents exceptions from propagating
+try { throw "try/catch statement didn't prevent throwStmt from propagating" } catch (err) {}
+
+# 'throw' keyword stops block execution
+try {
+  throw "err";
+  
+  # instructions after 'throw' shouldn't be evaluated
+  console.error("throw keyword didn't stop block execution")
+  exit(1); 
+} catch (err) {}
+
+# catch clause catches exception
+try {
+  throw 123;
+} catch (err) {
+    assert("catch clause didn't catch exception / catch VariableEnv isn't populated with exception", err == 123)
+};
+
+# try/catch blocks have their own variable environments
+var a = "global"; # defining global variable to avoid 'invalid identifier' interpreter exception
+
+try {
+  const a = "try";
+  throw a;
+} catch (_) {
+    var a = "catch";
+};
+
+assert("try/catch blocks don't have local scope", a == "global");
