@@ -1,0 +1,17 @@
+# some general data-type stuff
+
+# TYPEOF
+assert("typeof null", typeof null == "null");
+assert("typeof undefined", typeof undefined == "undefined");
+assert("typeof boolean", typeof false == "boolean", typeof true == "boolean");
+assert("typeof string", typeof 'hello' == "string");
+assert("typeof number", typeof 1.2 == "number");
+assert("typeof array", typeof [] == "array");
+assert("typeof object", typeof {} == "object");
+
+# FALSY VALUES
+assert("falsy value: 0", (0 || true) == true);
+assert("falsy value: null", (null || true) == true);
+assert("falsy value: undefined", (undefined || true) == true);
+assert("falsy value: empty-string", ("" || true) == true);
+assert("falsy value: false", (false || true) == true);

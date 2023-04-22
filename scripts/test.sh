@@ -106,4 +106,6 @@ done
 echo
 log "SUCCESS"
 log "All tests passed (:"
+echo
+
 exit 0
