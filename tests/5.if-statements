@@ -1,0 +1,83 @@
+# GLOBAL TEST VARIABLES
+var x;
+var y;
+
+# IF STATEMENT
+x = undefined;
+if (true) {
+  x = true
+}
+
+if (false) {
+  x = false
+}
+
+assert("if statement", x == true);
+
+# IF STATEMENT SCOPE
+x = "global";
+
+if (true) {
+  var x = "local"
+}
+
+assert("if statement doesn't have local scope", x == "global");
+
+# ONELINER IF STATEMENT
+x = undefined;
+if (true) x = true;
+if (false) x = false;
+assert("oneliner if statement", x == true);
+
+# IF STATEMENT 'else' CLAUSE
+x = undefined;
+if (false) {}
+else {
+  x = true;
+}
+assert("if statement 'else' clause", x == true);
+
+# IF STATEMENT ONELINER 'else' CLAUSE
+x = undefined;
+if (false) x = false; 
+else x = true;
+assert("if statement oneliner 'else' clause", x == true);
+
+# IF STATEMENT 'else-if' CLAUSE
+x = undefined;
+if (false) {}; 
+else if (true) {
+  x = true
+};
+
+y = true;
+if (false) {}
+else if (false) {
+  y = false;
+}
+
+assert("if statement 'else-if' clause", x == true, y == true);
+
+# IF STATEMENT ONELINER 'else-if' CLAUSE
+x = undefined;
+if (false) {}; 
+else if (true) x = true;
+
+y = true;
+if (false) {}
+else if (false) y = false;
+
+assert("if statement oneliner 'else-if' clause", x == true, y == true);
+
+# IF STATEMENT 'else-if' AND 'else' CLAUSES
+x = undefined;
+if (false) {}
+else if (true) x = true;
+else x = false;
+
+y = undefined;
+if (false) {}
+else if (false) x = false;
+else y = true;
+
+assert("if statement 'else-if' combined with 'else' clause", x == true, y == true);
