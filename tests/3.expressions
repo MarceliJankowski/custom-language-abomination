@@ -1,12 +1,24 @@
 # testing some arbitrarily chosen expressions
 var x;
 
+# EQUALITY
+assert("equality '==' operator", true == true, (false == true) == false, (1 == "1") == false);
+assert("equality '!=' operator", (true != true) == false, (false != true) == true, (1 != "1") == true);
+
+# RELATIONAL
+assert("relational '>' operator", (1 > 2) == false, 2 > 1, (2 > 2) == false);
+assert("relational '>=' operator", (1 >= 2) == false, 2 >= 1, (2 >= 2) == true);
+assert("relational '<' operator", (2 < 1) == false, 1 < 2, (2 < 2) == false);
+assert("relational '<=' operator", (2 <= 1) == false, 1 <= 2, (2 <= 2) == true);
+
 # UNARY PREFIX
 x = 1;
 assert("unary prefix: '--value'", --x == 0);
 
 x = 1;
 assert("unary prefix: '++value'", ++x == 2);
+
+assert("unary prefix: '!value'", !false == true, !true == false, !0 == true, !"test" == false);
 
 # UNARY POSTFIX
 x = 1;
