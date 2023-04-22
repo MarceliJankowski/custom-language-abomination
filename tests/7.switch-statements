@@ -1,0 +1,81 @@
+# GLOBAL VARIABLES
+var x;
+
+# EMPTY BODY SWITCH STATEMENT
+switch(true) {}
+
+# CASE MISMATCH
+x = true;
+switch (x) {
+  case false: {
+    x = false;
+  }
+}
+
+assert("switch statement case runs when it shouldn't", x == true);
+
+# CASE MATCH
+x = false;
+switch (x) {
+  case x: {
+    x = true;
+  }
+}
+
+assert("switch statement case doesn't run when it should", x == true);
+
+# ONELINER CASE
+x = false;
+switch(x) {
+  case x: x = true;
+}
+
+assert("switch statement oneliner case", x == true);
+
+# MULTIPLE CASES
+x = 123;
+switch(x) {
+  case 1: x = 1;
+
+  case 12: x = 12;
+
+  case x: x = true;
+  
+  case 1234: x = 1234;
+}
+
+assert("switch statement with multiple cases", x == true);
+
+# CASE LOCAL SCOPE
+x = true;
+switch(x) {
+  case x: {
+      var x = false;
+  }
+}
+
+assert("switch statement case doesn't have local scope", x == true);
+
+# DEFAULT CASE
+x = true;
+switch(x) {
+  case false: {}
+  case 123: {}
+
+  default: x = "default";
+
+  case x: x = false;
+}
+
+assert("switch statement default case", x == "default");
+
+# CASE BREAK
+x = true;
+switch(x) {
+  case x: {
+    break;    
+    x = false;
+  }
+}
+
+assert("breakStmt doesn't break out of switch statement's case", x == true);
