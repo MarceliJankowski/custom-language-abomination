@@ -82,7 +82,7 @@ export class Interpreter {
         return this.evalAssignmentExpr(astNode as AST_AssignmentExpr, env);
 
       case "BinaryExpr":
-        return this.evalBinaryExpr(astNode as AST_BinaryExpr, env);
+        return this.evalBinaryExprFromBinop(astNode as AST_BinaryExpr, env);
 
       case "PrefixUnaryExpr":
         return this.evalPrefixUnaryExpr(astNode as AST_PrefixUnaryExpr, env);
@@ -301,84 +301,32 @@ export class Interpreter {
         break;
       }
 
-      case "+=": {
-        // @desc valid data types:
-        // number/number | string/string | string/number combinations
-
-        const extractedBinaryOperator = operator[0]; // '+'
-
-        // number/number
-        if (assigneValue.type === "number" && assignmentValue.type === "number") {
-          computedAssignmentValue = this.evalNumericBinaryExpr(
-            assigneValue as Runtime.Number,
-            extractedBinaryOperator,
-            assignmentValue as Runtime.Number,
-            assignmentStart
-          );
-
-          break;
-        }
-
-        // string/string and string/number combinations
-        else if (this.isValidStringNumberCombination(assigneValue.type, assignmentValue.type)) {
-          computedAssignmentValue = this.evalStringBinaryExpr(
-            assigneValue as Runtime.String,
-            extractedBinaryOperator,
-            assignmentValue as Runtime.Number,
-            assignmentStart
-          );
-
-          break;
-        }
-
-        // invalid data types
-        else {
-          throw new Err(
-            `Invalid assignment expression. Operator: '${operator}' incorrectly used with assigne of type: '${assigneValue.type}', at position: ${assignmentStart}`,
-            "interpreter"
-          );
-        }
-      }
-
+      case "+=":
       case "-=":
       case "*=":
       case "/=":
       case "%=": {
-        // @desc valid data types: number/number
+        const extractedBinaryOperator = operator[0];
 
-        // number/number
-        if (assigneValue.type === "number" && assignmentValue.type === "number") {
-          const extractedBinaryOperator = operator[0];
+        computedAssignmentValue = this.evalBinaryExpr(
+          assignmentStart,
+          assigneValue,
+          extractedBinaryOperator,
+          assignmentValue
+        );
 
-          computedAssignmentValue = this.evalNumericBinaryExpr(
-            assigneValue as Runtime.Number,
-            extractedBinaryOperator,
-            assignmentValue as Runtime.Number,
-            assignmentStart
-          );
-
-          break;
-        }
-
-        // invalid data types
-        else {
-          throw new Err(
-            `Invalid assignment expression. Operator: '${operator}' incorrectly used with assigne of type: '${assigneValue.type}', at position: ${assignmentStart}`,
-            "interpreter"
-          );
-        }
+        break;
       }
 
       case "||=":
       case "&&=": {
-        // @desc valid data types: any/any
         const extractedLogicalOperator = operator.slice(0, 2);
 
-        computedAssignmentValue = this.evalBinaryExprSharedOperators(
+        computedAssignmentValue = this.evalBinaryExpr(
+          assignmentStart,
           assigneValue,
           extractedLogicalOperator,
-          assignmentValue,
-          assignmentStart
+          assignmentValue
         );
 
         break;
@@ -722,8 +670,9 @@ export class Interpreter {
       try {
         this.evaluate(whileStmt.body, env);
       } catch (err) {
-        if (err instanceof Break) break; // support 'break' keyword
-        else if (err instanceof Continue) continue; // support 'continue' keyword
+        // support 'break' and 'continue' keywords
+        if (err instanceof Break) break;
+        else if (err instanceof Continue) continue;
         else throw err; // propagate exception
       }
     }
@@ -736,8 +685,9 @@ export class Interpreter {
       try {
         this.evaluate(doWhileStmt.body, env);
       } catch (err) {
-        if (err instanceof Break) break; // support 'break' keyword
-        else if (err instanceof Continue) continue; // support 'continue' keyword
+        // support 'break' and 'continue' keywords
+        if (err instanceof Break) break;
+        else if (err instanceof Continue) continue;
         else throw err; // propagate exception
       }
     } while (this.isTestTruthy(doWhileStmt.test, env));
@@ -745,133 +695,16 @@ export class Interpreter {
     return MK.UNDEFINED();
   }
 
-  private evalBinaryExpr(binop: AST_BinaryExpr, env: VariableEnv): Runtime.Value {
+  private evalBinaryExprFromBinop(binop: AST_BinaryExpr, env: VariableEnv): Runtime.Value {
     const binopStart = binop.left.start;
     const left = this.evaluate(binop.left, env);
     const right = this.evaluate(binop.right, env);
 
-    // NUMBER
-    if (left.type === "number" && right.type === "number") {
-      return this.evalNumericBinaryExpr(
-        left as Runtime.Number,
-        binop.operator,
-        right as Runtime.Number,
-        binopStart
-      );
-    }
-
-    // STRING / STRING && NUMBER COMBINATIONS
-    else if (this.isValidStringNumberCombination(left.type, right.type)) {
-      return this.evalStringBinaryExpr(
-        left as Runtime.String,
-        binop.operator,
-        right as Runtime.Number,
-        binopStart
-      );
-    }
-
-    // HANDLE OTHER DATA-TYPES
-    else return this.evalBinaryExprSharedOperators(left, binop.operator, right, binopStart);
+    return this.evalBinaryExpr(binopStart, left, binop.operator, right);
   }
 
-  private evalNumericBinaryExpr(
-    left: Runtime.Number,
-    operator: string,
-    right: Runtime.Number,
-    start: CharPosition
-  ): Runtime.Number | Runtime.Boolean {
-    const [lhsValue, rhsValue] = [left.value, right.value];
-
-    switch (operator) {
-      // HANDLE UNIQUE OPERATORS
-
-      case "+":
-        return MK.NUMBER(lhsValue + rhsValue);
-
-      case "-":
-        return MK.NUMBER(lhsValue - rhsValue);
-
-      case "*":
-        return MK.NUMBER(lhsValue * rhsValue);
-
-      case "%":
-        return MK.NUMBER(lhsValue % rhsValue);
-
-      case "/": {
-        // handle division by: '0'
-        if (rhsValue === 0)
-          throw new Err(
-            `Invalid division operation. Operation: '${lhsValue} ${operator} ${rhsValue}' (division by '0' is forbidden), at position: ${start}`,
-            "interpreter"
-          );
-
-        return MK.NUMBER(lhsValue / rhsValue);
-      }
-
-      case ">":
-        return MK.BOOL(lhsValue > rhsValue);
-
-      case "<":
-        return MK.BOOL(lhsValue < rhsValue);
-
-      case ">=":
-        return MK.BOOL(lhsValue >= rhsValue);
-
-      case "<=":
-        return MK.BOOL(lhsValue <= rhsValue);
-
-      // HANDLE SHARED OPERATORS
-      default:
-        return this.evalBinaryExprSharedOperators(left, operator, right, start) as Runtime.Number;
-    }
-  }
-
-  private evalStringBinaryExpr(
-    left: Runtime.String,
-    operator: string,
-    right: Runtime.Number,
-    start: CharPosition
-  ): Runtime.String | Runtime.Boolean {
-    const [lhsValue, rhsValue] = [left.value, right.value];
-
-    switch (operator) {
-      // HANDLE UNIQUE OPERATORS
-      case "+":
-        return MK.STRING(lhsValue + rhsValue);
-
-      // HANDLE SHARED OPERATORS
-      default:
-        return this.evalBinaryExprSharedOperators(left, operator, right, start) as Runtime.String;
-    }
-  }
-
-  // -----------------------------------------------
-  //            SHARED HELPER METHODS
-  // -----------------------------------------------
-
-  /**@desc `traversePrototypeChain` wrapper, with added benefit of handling `static-functions`*/
-  private lookupPropertyOnPrototypeChain(value: Runtime.ProtoValue, key: string): Runtime.Value {
-    const property = traversePrototypeChain(value.prototype, key);
-
-    if (property.type === "staticFunction") {
-      // wrapperFn is used for passing property into staticFunction ('value' param is redundant as 'property' is used as value instead)
-      const wrapperFn = STATIC_FUNCTION((_, position, ...args) =>
-        (property as Runtime.StaticFunction).implementation(value, position, ...args)
-      );
-
-      return wrapperFn;
-    }
-
-    return property;
-  }
-
-  /**@desc evaluate all shared (among all data-types) binary operators*/
-  private evalBinaryExprSharedOperators<T extends Runtime.Value, U extends Runtime.Value>(
-    left: T,
-    operator: string,
-    right: U,
-    start: CharPosition
-  ): T | U | Runtime.Boolean {
+  private evalBinaryExpr(start: CharPosition, left: Runtime.Value, operator: string, right: Runtime.Value) {
+    // ALL TYPES
     switch (operator) {
       case "==":
         return MK.BOOL(left.value === right.value);
@@ -879,7 +712,7 @@ export class Interpreter {
       case "!=":
         return MK.BOOL(left.value !== right.value);
 
-      // custom AND/OR logic
+      // Bug: logical operators will always evaluate both sides
 
       case "&&": {
         // 'AND' operator logic:
@@ -904,13 +737,86 @@ export class Interpreter {
         // BOTH ARE 'falsy'
         return right;
       }
-
-      default:
-        throw new Err(
-          `Invalid binary operation. Unsupported use of operator: '${operator}', at position: ${start}`,
-          "interpreter"
-        );
     }
+
+    // NUMBER / NUMBER
+    if (left.type === "number" && right.type === "number") {
+      const [lhsValue, rhsValue] = [left.value, right.value] as [number, number];
+
+      switch (operator) {
+        case "+":
+          return MK.NUMBER(lhsValue + rhsValue);
+
+        case "-":
+          return MK.NUMBER(lhsValue - rhsValue);
+
+        case "*":
+          return MK.NUMBER(lhsValue * rhsValue);
+
+        case "%":
+          return MK.NUMBER(lhsValue % rhsValue);
+
+        case "/": {
+          // handle division by: '0'
+          if (rhsValue === 0)
+            throw new Err(
+              `Invalid division operation. Operation: '${lhsValue} ${operator} ${rhsValue}' (division by '0' is forbidden), at position: ${start}`,
+              "interpreter"
+            );
+
+          return MK.NUMBER(lhsValue / rhsValue);
+        }
+
+        case ">":
+          return MK.BOOL(lhsValue > rhsValue);
+
+        case "<":
+          return MK.BOOL(lhsValue < rhsValue);
+
+        case ">=":
+          return MK.BOOL(lhsValue >= rhsValue);
+
+        case "<=":
+          return MK.BOOL(lhsValue <= rhsValue);
+      }
+    }
+
+    // (STRING / STRING) | (NUMBER / STRING) | (STRING / NUMBER) COMBINATIONS
+    else if (
+      (left.type === "string" && right.type === "string") ||
+      (left.type === "number" && right.type === "string") ||
+      (left.type === "string" && right.type === "number")
+    ) {
+      const [lhsValue, rhsValue] = [left.value, right.value] as [number | string, number | string];
+
+      if (operator === "+") return MK.STRING(lhsValue.toString() + rhsValue);
+    }
+
+    // INVALID BINARY OPERATION
+    throw new Err(
+      `Invalid binary operation. Unsupported use of operator: '${operator}', at position: ${start}`,
+      "interpreter"
+    );
+  }
+
+  // -----------------------------------------------
+  //            SHARED HELPER METHODS
+  // -----------------------------------------------
+
+  /**@desc `traversePrototypeChain` wrapper, with added benefit of handling `static-functions`*/
+  private lookupPropertyOnPrototypeChain(value: Runtime.ProtoValue, key: string): Runtime.Value {
+    const property = traversePrototypeChain(value.prototype, key);
+
+    if (property.type === "staticFunction") {
+      // wrapperFn is used for passing property into staticFunction ('value' param is redundant as 'property' is used as value instead)
+      const wrapperFn = STATIC_FUNCTION((_, position, ...args) =>
+        (property as Runtime.StaticFunction).implementation(value, position, ...args)
+      );
+
+      return wrapperFn;
+    }
+
+    return property;
   }
 
   /**@desc helper method for `'evalUnaryExpr()'` methods and `'evalAssignmentExpr()'` method, handles value assignment*/
@@ -1043,14 +949,5 @@ export class Interpreter {
   /**@desc determine whether `type` is a value member-expression `object`*/
   private isValidMemberExprObject(type: Runtime.ValueType): boolean {
     return VALID_MEMBER_EXPR_RUNTIME_TYPES.some(validType => validType === type);
-  }
-
-  /**@desc determine whether `a` and `b` types form valid string/number combination
-  valid combinations: string/string | string/number | number/string*/
-  private isValidStringNumberCombination(a: string | number, b: string | number): boolean {
-    const validCombinationsRegExpr = /(string string|number string|string number)/;
-    const preparedTypes = a + " " + b;
-
-    return validCombinationsRegExpr.test(preparedTypes);
   }
 }
