@@ -804,8 +804,16 @@ export class Parser {
       const operator = this.advance().value;
       const right = this.parseLogicalExprAND();
 
-      const binaryExpr = this.generateASTBinaryExprNode(left, operator, right);
-      left = binaryExpr;
+      const logicalExpr: AST_LogicalExpr = {
+        kind: "LogicalExpr",
+        left,
+        operator,
+        right,
+        start: left.start,
+        end: right.end,
+      };
+
+      left = logicalExpr;
     }
 
     return left;
@@ -818,8 +826,16 @@ export class Parser {
       const operator = this.advance().value;
       const right = this.parseEqualityExpr();
 
-      const binaryExpr = this.generateASTBinaryExprNode(left, operator, right);
-      left = binaryExpr;
+      const logicalExpr: AST_LogicalExpr = {
+        kind: "LogicalExpr",
+        left,
+        operator,
+        right,
+        start: left.start,
+        end: right.end,
+      };
+
+      left = logicalExpr;
     }
 
     return left;

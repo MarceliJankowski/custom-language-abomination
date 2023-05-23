@@ -26,6 +26,7 @@ type AST_NodeKind =
   | "PrefixUnaryExpr"
   | "PostfixUnaryExpr"
   | "BinaryExpr"
+  | "LogicalExpr"
   | "TernaryExpr"
   | "MemberExpr"
   | "CallExpr"
@@ -164,6 +165,13 @@ interface AST_Identifier extends AST_Expr {
 
 interface AST_BinaryExpr extends AST_Expr {
   kind: "BinaryExpr";
+  left: AST_Expr;
+  right: AST_Expr;
+  operator: string;
+}
+
+interface AST_LogicalExpr extends AST_Expr {
+  kind: "LogicalExpr";
   left: AST_Expr;
   right: AST_Expr;
   operator: string;

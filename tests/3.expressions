@@ -61,8 +61,16 @@ assert("negative and positive number modulo", 8 % -2 == 0);
 # logical 'or'
 assert("logical '||' operator", (1 || 2) == 1, (false || true) == true, (false || null || "a") == "a");
 
+x = true;
+true || (x = false);
+assert("logical '||' operator evaluates RHS when it shouldn't", x == true);
+
 # logical 'and'
 assert("logical '&&' operator", (1 && 2) == 2, (false && true) == false, (true && 1 && 0) == 0);
+
+x = true;
+false && (x = false);
+assert("logical '&&' operator evaluates RHS when it shouldn't", x == true);
 
 # ternary
 assert("ternary operator", (true ? 1 : 0) == 1, (false ? 1 : 0) == 0, (1 == 0 ? 1 : false) == false);

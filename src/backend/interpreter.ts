@@ -82,7 +82,10 @@ export class Interpreter {
         return this.evalAssignmentExpr(astNode as AST_AssignmentExpr, env);
 
       case "BinaryExpr":
-        return this.evalBinaryExprFromBinop(astNode as AST_BinaryExpr, env);
+        return this.evalBinaryExprFromASTNode(astNode as AST_BinaryExpr, env);
+
+      case "LogicalExpr":
+        return this.evalLogicalExprFromASTNode(astNode as AST_LogicalExpr, env);
 
       case "PrefixUnaryExpr":
         return this.evalPrefixUnaryExpr(astNode as AST_PrefixUnaryExpr, env);
@@ -256,14 +259,10 @@ export class Interpreter {
     const operator = assignmentExpr.operator;
     const assigne = assignmentExpr.assigne;
 
-    /**@desc stores runtime `assigne-value`
-    Example: identifierAssigne `'x'` with value: `'5'`; assigneValue equals: `runtime-number` with value: `'5'`*/
     let assigneValue: Runtime.Value;
     let computedAssignmentValue: Runtime.Value;
     let memberExprObj: Runtime.Object | Runtime.Array;
     let memberExprProperty: string | number;
-
-    const assignmentValue = this.evaluate(assignmentExpr.value, env);
 
     // HANDLE ASSIGNE
 
@@ -297,7 +296,7 @@ export class Interpreter {
     // COMPUTE RUNTIME-VALUE BASED ON OPERATOR
     switch (operator) {
       case "=": {
-        computedAssignmentValue = assignmentValue;
+        computedAssignmentValue = this.evaluate(assignmentExpr.value, env);
         break;
       }
 
@@ -307,6 +306,7 @@ export class Interpreter {
       case "/=":
       case "%=": {
         const extractedBinaryOperator = operator[0];
+        const assignmentValue = this.evaluate(assignmentExpr.value, env);
 
         computedAssignmentValue = this.evalBinaryExpr(
           assignmentStart,
@@ -322,11 +322,12 @@ export class Interpreter {
       case "&&=": {
         const extractedLogicalOperator = operator.slice(0, 2);
 
-        computedAssignmentValue = this.evalBinaryExpr(
+        computedAssignmentValue = this.evalLogicalExpr(
           assignmentStart,
           assigneValue,
           extractedLogicalOperator,
-          assignmentValue
+          assignmentExpr.value,
+          env
         );
 
         break;
@@ -695,7 +696,7 @@ export class Interpreter {
     return MK.UNDEFINED();
   }
 
-  private evalBinaryExprFromBinop(binop: AST_BinaryExpr, env: VariableEnv): Runtime.Value {
+  private evalBinaryExprFromASTNode(binop: AST_BinaryExpr, env: VariableEnv): Runtime.Value {
     const binopStart = binop.left.start;
     const left = this.evaluate(binop.left, env);
     const right = this.evaluate(binop.right, env);
@@ -711,32 +712,6 @@ export class Interpreter {
 
       case "!=":
         return MK.BOOL(left.value !== right.value);
-
-      // Bug: logical operators will always evaluate both sides
-
-      case "&&": {
-        // 'AND' operator logic:
-        // - at least one operand is "falsy" -> return first "falsy" operand
-        // - both operands are "truthy" -> return last "truthy" operand
-
-        if (!getBooleanValue(left)) return left;
-        if (!getBooleanValue(right)) return right;
-
-        // BOTH ARE 'truthy'
-        return right;
-      }
-
-      case "||": {
-        // 'OR' operator logic:
-        // - at least one operand is "truthy" -> return first "truthy" operand
-        // - both operands are "falsy" -> return last "falsy" operand
-
-        if (getBooleanValue(left)) return left;
-        if (getBooleanValue(right)) return right;
-
-        // BOTH ARE 'falsy'
-        return right;
-      }
     }
 
     // NUMBER / NUMBER
@@ -799,6 +774,59 @@ export class Interpreter {
     );
   }
 
+  private evalLogicalExprFromASTNode(
+    { start, left, operator, right }: AST_LogicalExpr,
+    env: VariableEnv
+  ): Runtime.Value {
+    const evaluatedLeft = this.evaluate(left, env);
+
+    return this.evalLogicalExpr(start, evaluatedLeft, operator, right, env);
+  }
+
+  private evalLogicalExpr(
+    start: CharPosition,
+    left: Runtime.Value,
+    operator: string,
+    rhs: AST_Expr,
+    env: VariableEnv
+  ): Runtime.Value {
+    switch (operator) {
+      case "&&": {
+        // 'AND' operator logic:
+        // - at least one operand is "falsy" -> return first "falsy" operand
+        // - both operands are "truthy" -> return last "truthy" operand
+
+        if (!getBooleanValue(left)) return left;
+
+        const right = this.evaluate(rhs, env);
+        if (!getBooleanValue(right)) return right;
+
+        // BOTH ARE 'truthy'
+        return right;
+      }
+
+      case "||": {
+        // 'OR' operator logic:
+        // - at least one operand is "truthy" -> return first "truthy" operand
+        // - both operands are "falsy" -> return last "falsy" operand
+
+        if (getBooleanValue(left)) return left;
+
+        const right = this.evaluate(rhs, env);
+        if (getBooleanValue(right)) return right;
+
+        // BOTH ARE 'falsy'
+        return right;
+      }
+
+      default:
+        throw new Err(
+          `Logical operator: '${operator}' has not yet been setup for interpretation, at position: ${start}`,
+          "internal"
+        );
+    }
+  }
+
   // -----------------------------------------------
   //            SHARED HELPER METHODS
   // -----------------------------------------------
@@ -853,7 +881,7 @@ export class Interpreter {
     // invalid
     else
       throw new Err(
-        `Internal interpreter exception. Invalid assignment assigne passed to: 'handleValueAssignment()' method. Assigne: '${assigne}', at position ${assigne.start}`,
+        `Invalid assignment assigne passed to: 'handleValueAssignment()' method. Assigne: '${assigne}', at position ${assigne.start}`,
         "internal"
       );
   }
