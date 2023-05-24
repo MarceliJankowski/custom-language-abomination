@@ -1,0 +1,103 @@
+# GLOBAL VARIABLES
+var str;
+
+# DEFINING STRING
+str = "string";
+assert("defining string", typeof str == "string");
+
+# CONCATENATION
+str = "Hello,"
+str += " World!" 
+assert("string concatenation", str == "Hello, World!")
+
+# INDEX RETRIEVAL
+str = "hello"
+assert("string index member-expression", str[0] == "h")
+
+# .length()
+str = "..."
+assert("string.length()", str.length() == 3);
+
+# .includes()
+str = "abc";
+const includesA = str.includes("a");
+const includesD = str.includes("d");
+assert("string.includes()", includesA, !includesD);
+
+# .trimStart()
+str = " hello ";
+const trimmedStartStr = str.trimStart();
+assert("string.trimStart()", trimmedStartStr == "hello ")
+
+# .trimEnd()
+str = " hello ";
+const trimmedEndStr = str.trimEnd();
+assert("string.trimEnd()", trimmedEndStr == " hello");
+
+# .trim()
+str = " hello ";
+const trimmedStr = str.trim();
+assert("string.trim()", trimmedStr == "hello");
+
+# .toUpperCase()
+str = "hello world";
+const upperCasedStr = str.toUpperCase();
+assert("string.toUpperCase()", upperCasedStr == "HELLO WORLD");
+
+# .toLowerCase()
+str = "HELLO WORLD";
+const lowerCasedStr = str.toLowerCase();
+assert("string.toLowerCase()", lowerCasedStr == "hello world");
+
+# .split()
+str = "John,Doe,Male,35"; # CSV rules!
+const splittedStr = str.split(",");
+assert("string.split()", splittedStr.length() == 4, splittedStr[0] == "John", splittedStr[3] == "35");
+
+# .startsWith()
+str = "Hello world";
+const startsWithHello = str.startsWith("Hello");
+const startsWithGoodbye = str.startsWith("Goodbye");
+assert("string.startsWith()", startsWithHello, !startsWithGoodbye);
+
+# .endsWith()
+str = "Hello world";
+const endsWithWorld = str.endsWith("world");
+const endsWithGoodbye = str.endsWith("universe");
+assert("string.endsWith()", endsWithWorld, !endsWithGoodbye);
+
+# .slice()
+str = "abcdefg";
+const slice = str.slice(1, 4);
+assert("string.slice()", slice == "bcd");
+
+# .indexOf()
+str = "12345";
+const indexOfFour = str.indexOf("4");
+const indexOfSix = str.indexOf("6");
+assert("string.indexOf()", indexOfFour == 3, indexOfSix == -1);
+
+# .lastIndexOf()
+str = "A B A";
+const lastIndexOfA = str.lastIndexOf("A");
+const lastIndexOfC = str.lastIndexOf("C");
+assert("string.lastIndexOf()", lastIndexOfA == 4, lastIndexOfC == -1);
+
+# .repeat()
+str = ".";
+const repeatedStr = str.repeat(3);
+assert("string.repeat()", repeatedStr == "...")
+
+# .replace()
+str = "hello world";
+const replacedStr = str.replace("hello", "goodbye");
+assert("string.replace()", replacedStr == "goodbye world");
+
+# .replaceAll()
+str = "mama";
+const replacedAllStr = str.replaceAll("m", "t");
+assert("string.replaceAll()", replacedAllStr == "tata");
+
+# .toString()
+str = "string";
+assert("string.toString()", str.toString() == str);
