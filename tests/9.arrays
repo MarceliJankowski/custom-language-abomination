@@ -3,7 +3,7 @@ var arr;
 
 # DEFINING ARRAY
 arr = [1,2,3];
-assert("defining array", typeof arr == arr);
+assert("defining array", typeof arr == "array");
 
 # INDEX RETRIEVAL
 arr = [1];

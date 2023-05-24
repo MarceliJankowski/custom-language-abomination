@@ -18,6 +18,9 @@ assert("unary prefix: '--value'", --x == 0);
 x = 1;
 assert("unary prefix: '++value'", ++x == 2);
 
+x = 1;
+assert("unary prefix: 'typeof value'", (typeof ++x) == "number", (typeof x--) == "number", (typeof typeof 5) == "string", (typeof 1 + 1) == "number1", (typeof 1 == 1) == false);
+
 assert("unary prefix: '!value'", !false == true, !true == false, !0 == true, !"test" == false);
 
 # UNARY POSTFIX

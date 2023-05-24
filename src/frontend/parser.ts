@@ -899,9 +899,10 @@ export class Parser {
   }
 
   private parsePrefixUnaryExpr(): AST_Expr {
-    while (this.isUnaryOperator(this.at())) {
+    if (this.isUnaryOperator(this.at())) {
       const operator = this.advance();
-      const operand = operator.type === TokenType.TYPEOF ? this.parseExpr() : this.parsePostfixUnaryExpr();
+      const operand =
+        operator.type === TokenType.TYPEOF ? this.parsePrefixUnaryExpr() : this.parsePostfixUnaryExpr();
 
       const unaryExpr: AST_PrefixUnaryExpr = {
         kind: "PrefixUnaryExpr",
@@ -921,7 +922,7 @@ export class Parser {
   private parsePostfixUnaryExpr(): AST_Expr {
     const left = this.parseCallExpr();
 
-    while (this.isUnaryOperator(this.at())) {
+    if (this.isUnaryOperator(this.at())) {
       const operator = this.advance().value;
 
       const unaryExpr: AST_PostfixUnaryExpr = {
