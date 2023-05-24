@@ -1,0 +1,52 @@
+# GLOBAL VARIABLES
+var obj;
+
+# DEFINING OBJECT
+obj = { a: 1, b: 2 };
+assert("defining object", typeof obj == "object");
+
+# PROPERTY RETRIEVAL
+obj = { a: 1 };
+assert("object property member-expression", obj.a == 1);
+
+# COMPUTED PROPERTY RETRIEVAL
+obj = { a: 1 };
+assert("object property computed member-expression", obj.a == 1);
+
+# PROPERTY ASSIGNMENT
+obj = { a: false };
+obj.a = true;
+assert("object property assignment", obj.a);
+
+# .hasOwn()
+obj = { a: 1 };
+const hasOwnA = obj.hasOwn("a");
+const hasOwnToString = obj.hasOwn("toString");
+assert("object.hasOwn()", hasOwnA, !hasOwnToString);
+
+# .getEntries()
+obj = { a: 1, b: 2 };
+const entries = obj.getEntries();
+const entryA = entries[0];
+const entryB = entries[1];
+assert("object.getEntries()", entryA[0] == "a", entryA[1] == 1, entryB[0] == "b", entryB[1] == 2);
+
+# .getValues()
+obj = { a: 1, b: 2 };
+const values = obj.getValues();
+assert("object.getValues()", values[0] == 1, values[1] == 2);
+
+# .getKeys()
+obj = { a: 1, b: 2 };
+const keys = obj.getKeys();
+assert("object.getKeys()", keys[0] == "a", keys[1] == "b");
+
+# .assign()
+obj = { a: 1 };
+obj.assign({ b: 2 });
+assert("object.assign()", obj.a == 1, obj.b == 2);
+
+# .toString()
+obj = { a: 1 };
+const objStr = obj.toString();
+assert("object.toString()", objStr == "{a: 1}")

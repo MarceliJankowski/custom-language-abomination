@@ -9,6 +9,11 @@ assert("defining array", typeof arr == "array");
 arr = [1];
 assert("array index member-expression", arr[0] == 1 );
 
+# ELEMENT ASSIGNMENT
+arr = [false];
+arr[0] = true;
+assert("array assignment member-expression", arr[0] == true );
+
 # METHODS
 
 # .length()
