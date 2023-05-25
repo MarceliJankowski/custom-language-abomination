@@ -1,4 +1,4 @@
-# testing some arbitrarily chosen expressions
+# GLOBAL VARIABLES
 var x;
 
 # EQUALITY
@@ -77,3 +77,11 @@ assert("logical '&&' operator evaluates RHS when it shouldn't", x == true);
 
 # ternary
 assert("ternary operator", (true ? 1 : 0) == 1, (false ? 1 : 0) == 0, (1 == 0 ? 1 : false) == false);
+
+x = true;
+false ? (x = false) : null;
+assert("ternary operator evaluates consequent when it shouldn't", x == true);
+
+x = true;
+true ? null : (x = false);
+assert("ternary operator evaluates alternate when it shouldn't", x == true);

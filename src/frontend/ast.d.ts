@@ -15,7 +15,6 @@ type AST_NodeKind =
   | "DoWhileStmt"
   | "BreakStmt"
   | "ContinueStmt"
-  | "ContinueStmt"
   | "FunctionDeclaration"
   | "ThrowStmt"
   | "TryCatchStmt"
