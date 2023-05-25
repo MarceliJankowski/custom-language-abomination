@@ -426,7 +426,7 @@ export class Parser {
 
     // allow initializer omission
     if (this.is(TokenType.SEMICOLON)) {
-      initializer = undefined;
+      this.advance();
     }
 
     // initializer as variable declaration
@@ -450,7 +450,8 @@ export class Parser {
     let test;
 
     // allow test omission
-    if (!this.is(TokenType.SEMICOLON)) test = this.parseExpr();
+    if (this.is(TokenType.SEMICOLON)) this.advance();
+    else test = this.parseExpr();
 
     // handle mandatory ';' delimiter
     if (this.previous().type !== TokenType.SEMICOLON)
