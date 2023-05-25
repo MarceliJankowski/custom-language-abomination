@@ -1,6 +1,8 @@
 echo("Calculate fibonacci sequence up to: 'n'");
 echo("Beware its O(2^n) (exponential) time complexity!\n");
 
+# USER INPUT
+
 const userInput = console.prompt("n: ");
 const n = Number(userInput);
 
@@ -9,10 +11,14 @@ if(n == null || !n.isInt() || n < 0) {
   exit(1);
 }
 
+# fibonacci CODE
+
 func fib(n) {
   if (n == 0 || n == 1) return n;
   else return fib(n - 1) + fib(n - 2);
 }
+
+# OUTPUT
 
 const fibOutput = fib(n);
 echo("output: " + fibOutput);
