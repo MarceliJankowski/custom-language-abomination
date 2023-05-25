@@ -413,8 +413,8 @@ export class Parser {
     return doWhileStmt;
   }
 
-  private parseForStmt(): AST_Stmt {
-    const forKeyword = this.advance();
+  private parseForStmt(): AST_ForStmt {
+    const start = this.advance().start;
 
     this.advanceAndExpect(
       TokenType.OPEN_PAREN,
@@ -479,54 +479,18 @@ export class Parser {
     if (this.is(TokenType.OPEN_CURLY_BRACE)) body = this.parseBlockStmt();
     else body = this.parseStmt(); // enable one-liners
 
-    // DESUGARING
-    // forStatement doesn't introduce any "new" capabilities to the language, it can be fully implemented with already defined NODES
-    // therefore, I treat it as syntactic-sugar. Here I'm desugaring forStatement (breaking it up) into its primary components / NODES
-
-    if (update) {
-      const bodyWithUpdate: AST_BlockStmt = {
-        kind: "BlockStmt",
-        body: [body, update],
-        start: body.start,
-        end: body.end,
-      };
-
-      body = bodyWithUpdate;
-    }
-
-    if (test === undefined) {
-      const defaultTestValue: AST_Identifier = {
-        kind: "Identifier",
-        value: "true",
-        start: forKeyword.start,
-        end: forKeyword.end,
-      };
-
-      test = defaultTestValue;
-    }
-
-    const bodyWhileStmt: AST_WhileStmt = {
-      kind: "WhileStmt",
+    // BUILD forStmt
+    const forStmt: AST_ForStmt = {
+      kind: "ForStmt",
+      initializer,
       test,
+      update,
       body,
-      start: body.start,
+      start,
       end: body.end,
     };
 
-    body = bodyWhileStmt;
-
-    if (initializer) {
-      const bodyWithInitializer: AST_BlockStmt = {
-        kind: "BlockStmt",
-        body: [initializer, body],
-        start: body.start,
-        end: body.end,
-      };
-
-      body = bodyWithInitializer;
-    }
-
-    return body;
+    return forStmt;
   }
 
   private parseBreakStmt(): AST_BreakStmt {

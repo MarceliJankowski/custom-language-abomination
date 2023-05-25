@@ -105,6 +105,9 @@ export class Interpreter {
       case "DoWhileStmt":
         return this.evalDoWhileStmt(astNode as AST_DoWhileStmt, env);
 
+      case "ForStmt":
+        return this.evalForStmt(astNode as AST_ForStmt, env);
+
       case "BlockStmt":
         return this.evalBlockStmt(astNode as AST_BlockStmt, env);
 
@@ -692,6 +695,30 @@ export class Interpreter {
         else throw err; // propagate exception
       }
     } while (this.isTestTruthy(doWhileStmt.test, env));
+
+    return MK.UNDEFINED();
+  }
+
+  private evalForStmt(forStmt: AST_ForStmt, env: VariableEnv): Runtime.Undefined {
+    const forStmtEnv = new VariableEnv(env);
+    if (forStmt.initializer) this.evaluate(forStmt.initializer, forStmtEnv);
+
+    while (forStmt.test ? this.isTestTruthy(forStmt.test, forStmtEnv) : true) {
+      try {
+        this.evaluate(forStmt.body, forStmtEnv);
+        if (forStmt.update) this.evaluate(forStmt.update, forStmtEnv);
+      } catch (err) {
+        // support 'break' keyword
+        if (err instanceof Break) break;
+        // support 'continue' keyword
+        else if (err instanceof Continue) {
+          if (forStmt.update) this.evaluate(forStmt.update, forStmtEnv);
+          continue;
+        }
+        // propagate exception
+        else throw err;
+      }
+    }
 
     return MK.UNDEFINED();
   }

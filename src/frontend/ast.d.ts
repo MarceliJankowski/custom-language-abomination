@@ -11,6 +11,7 @@ type AST_NodeKind =
   | "ReturnStmt"
   | "IfStmt"
   | "WhileStmt"
+  | "ForStmt"
   | "DoWhileStmt"
   | "BreakStmt"
   | "ContinueStmt"
@@ -100,6 +101,14 @@ interface AST_WhileStmt extends AST_Stmt {
 interface AST_DoWhileStmt extends AST_Stmt {
   kind: "DoWhileStmt";
   test: AST_Expr;
+  body: AST_Node;
+}
+
+interface AST_ForStmt extends AST_Stmt {
+  kind: "ForStmt";
+  initializer?: AST_Node;
+  test?: AST_Expr;
+  update?: AST_Expr;
   body: AST_Node;
 }
 
