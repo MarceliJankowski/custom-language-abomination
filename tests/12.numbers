@@ -1,0 +1,13 @@
+# DEFINING NUMBER
+assert("defining positive integer", typeof 1 == "number");
+assert("defining positive float", typeof 1.25 == "number");
+assert("defining negative integer", typeof -1 == "number");
+assert("defining negative float", typeof -1.25 == "number");
+
+# METHODS
+
+# .isInt()
+assert("number.isInt()", 123.isInt() == true, 9.99.isInt() == false, -1.isInt() == true, -1.25.isInt() == false);
+
+# .toString()
+assert("number.toString()", 1.toString() == "1", 1.25.toString() == "1.25", -1.toString() == "-1", -1.25.toString() == "-1.25");
