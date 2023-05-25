@@ -1,0 +1,118 @@
+# GLOBAL VARIABLES
+var x;
+
+# FOR LOOP
+x = 0;
+for(var i = 0; i < 5; i++) {
+  x++;
+}
+assert("for loop", x == 5);
+
+# ONELINER FOR LOOP
+x = 0;
+for(var i = 0; i < 5; i++) x++;
+assert("oneliner for loop", x == 5);
+
+# FOR LOOP INITIALIZER SCOPE
+x = null;
+for(var i = 0; i < 1; i++) x = i;
+assert("for loop initializer scope (initializer is not accessible inside of for loop's body)", x == 0);
+
+x = true;
+for(var x = 0; x < 0; x++) {};
+assert("for loop initializer scope (initializer is accessible outside of for loop's body)", x == true);
+
+# FOR LOOP SCOPE
+x = true;
+for(var i = 0; i < 1; i++) {
+  var x = false;
+};
+
+assert("for loops don't have local scope", x == true);
+
+x = true;
+for(var i = 0; i < 1; i++) var x = false;
+assert("for loop oneliners don't have local scope", x == true);
+
+# FOR LOOP BREAK
+x = 0;
+for(var i = 0; i < 2; i++) {
+  x++;
+  break;
+}
+assert("for loop 'break' keyword", x == 1);
+
+# FOR LOOP CONTINUE
+x = 0;
+for(var i = 0; i < 2; i++) {
+  x++;
+  continue;
+  x--;
+}
+assert("for loop 'continue' keyword", x == 2);
+
+# FOR LOOP INITIALIZER OMISSION
+x = 0;
+for(; x < 5; x++) {}
+assert("for loop initializer omission", x == 5);
+
+# FOR LOOP TEST OMISSION
+x = 0;
+for (var i = 0; ; i++) {
+ x++;
+ if(x == 5) break;
+}
+
+assert("for loop test omission", x == 5);
+
+# FOR LOOP UPDATE OMISSION
+x = 0;
+for(var i = 0; i < 5;) {
+  i++;
+  x++;
+}
+assert("for loop update omission", x == 5);
+
+# WHILE LOOP
+x = 0;
+while (x < 5) {
+  x++;
+}
+assert("while loop", x == 5);
+
+# ONELINER WHILE LOOP
+x = 0;
+while (x < 5) x++;
+assert("oneliner while loop", x == 5);
+
+# WHILE LOOP BREAK
+x = 0;
+while (x < 2) {
+  x++;
+  break;
+};
+assert("while loop 'break' keyword", x == 1);
+
+# WHILE LOOP CONTINUE
+x = 0;
+while (x < 2) {
+  x++;
+  continue;
+  x--;
+};
+assert("while loop 'continue' keyword", x == 2);
+
+# WHILE LOOP SCOPE
+x = true;
+while (true) {
+  var x = false;
+  break;
+};
+assert("while loop scope", x == true);
+
+# DO-WHILE LOOP
+x = 0;
+do {
+  x++;
+} while (false);
+assert("while loop", x == 1);
