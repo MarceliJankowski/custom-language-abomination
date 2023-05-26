@@ -422,7 +422,25 @@ const pow = NATIVE_FUNCTION((position, runtimeBase, runtimePower): Runtime.Numbe
   return MK.NUMBER(output);
 });
 
-export const MATH = { randomFloat, randomInt, min, max, floor, ceil, round, abs, pow };
+/**@desc returns the base 10 logarithm of a `number`*/
+const log10 = NATIVE_FUNCTION((position, runtimeNumber): Runtime.Number => {
+  if (runtimeNumber === undefined)
+    throw new RuntimeAPIException("Math.log10()", `Missing 'number' argument`, position);
+
+  if (runtimeNumber.type !== "number")
+    throw new RuntimeAPIException(
+      "Math.log10()",
+      `Invalid 'number' argument type: '${runtimeNumber.type}'`,
+      position
+    );
+
+  const number = (runtimeNumber as Runtime.Number).value;
+  const output = Math.log10(number);
+
+  return MK.NUMBER(output);
+});
+
+export const MATH = { randomFloat, randomInt, min, max, floor, ceil, round, abs, pow, log10 };
 
 // -----------------------------------------------
 //                    UTILS
