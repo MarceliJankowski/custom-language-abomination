@@ -375,7 +375,25 @@ const round = NATIVE_FUNCTION((position, runtimeNumber): Runtime.Number => {
   return MK.NUMBER(roundedNumber);
 });
 
-export const MATH = { randomFloat, randomInt, min, max, floor, ceil, round };
+/**@desc returns absolute value of `number`*/
+const abs = NATIVE_FUNCTION((position, runtimeNumber): Runtime.Number => {
+  if (runtimeNumber === undefined)
+    throw new RuntimeAPIException("Math.abs()", `Missing 'number' argument`, position);
+
+  if (runtimeNumber.type !== "number")
+    throw new RuntimeAPIException(
+      "Math.abs()",
+      `Invalid 'number' argument type: '${runtimeNumber.type}'`,
+      position
+    );
+
+  const number = (runtimeNumber as Runtime.Number).value;
+  const absoluteNumber = Math.abs(number);
+
+  return MK.NUMBER(absoluteNumber);
+});
+
+export const MATH = { randomFloat, randomInt, min, max, floor, ceil, round, abs };
 
 // -----------------------------------------------
 //                    UTILS
