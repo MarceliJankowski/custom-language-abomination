@@ -393,7 +393,36 @@ const abs = NATIVE_FUNCTION((position, runtimeNumber): Runtime.Number => {
   return MK.NUMBER(absoluteNumber);
 });
 
-export const MATH = { randomFloat, randomInt, min, max, floor, ceil, round, abs };
+/**@desc returns value of a `base` raised to the `power`*/
+const pow = NATIVE_FUNCTION((position, runtimeBase, runtimePower): Runtime.Number => {
+  if (runtimeBase === undefined)
+    throw new RuntimeAPIException("Math.pow()", `Missing 'base' argument`, position);
+
+  if (runtimeBase.type !== "number")
+    throw new RuntimeAPIException(
+      "Math.pow()",
+      `Invalid 'base' argument type: '${runtimeBase.type}'`,
+      position
+    );
+
+  if (runtimePower === undefined)
+    throw new RuntimeAPIException("Math.pow()", `Missing 'power' argument`, position);
+
+  if (runtimePower.type !== "number")
+    throw new RuntimeAPIException(
+      "Math.pow()",
+      `Invalid 'power' argument type: '${runtimePower.type}'`,
+      position
+    );
+
+  const base = (runtimeBase as Runtime.Number).value;
+  const power = (runtimePower as Runtime.Number).value;
+  const output = Math.pow(base, power);
+
+  return MK.NUMBER(output);
+});
+
+export const MATH = { randomFloat, randomInt, min, max, floor, ceil, round, abs, pow };
 
 // -----------------------------------------------
 //                    UTILS
