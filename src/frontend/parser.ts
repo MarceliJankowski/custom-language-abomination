@@ -912,7 +912,7 @@ export class Parser {
     // HANDLE ARGUMENTS
     const { argumentList, argumentListEnd } = this.parseArgumentList();
 
-    // BUILD CALL-EXP
+    // BUILD callExpr
     let callExpr: AST_CallExpr = {
       kind: "CallExpr",
       callee,
@@ -921,11 +921,11 @@ export class Parser {
       end: argumentListEnd,
     };
 
-    // handle another call-expression immediately following current callExpr (example: 'func()()')
-    if (this.is(TokenType.OPEN_PAREN)) callExpr = this.parseCallExpr(callExpr) as AST_CallExpr;
+    // HANDLE 'func()()'
+    if (this.is(TokenType.OPEN_PAREN)) return this.parseCallExpr(callExpr);
 
-    // handle immediately following member-expression
-    if (this.isCurrentTokenAccessingProperty()) return this.parseMemberExpr(callExpr);
+    // HANDLE '.toLowerCase().toUpperCase()' (method chaining)
+    if (this.isCurrentTokenAccessingProperty()) return this.parseCallExpr(this.parseMemberExpr(callExpr));
 
     return callExpr;
   }

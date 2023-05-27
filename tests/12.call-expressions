@@ -1,0 +1,37 @@
+# GLOBAL VARIABLES
+var x;
+
+# call-expressions with literal value as callee
+
+x = 123.toString();
+assert("Invoking method on literal positive integer", x == "123");
+
+x = -123.toString();
+assert("Invoking method on literal negative integer", x == "-123");
+
+x = 1.23.toString();
+assert("Invoking method on literal positive float", x == "1.23");
+
+x = -1.23.toString();
+assert("Invoking method on literal negative float", x == "-1.23");
+
+x = "123".slice(1);
+assert("Invoking method on literal string", x == "23")
+
+x = [1,2,3].slice(1);
+assert("Invoking method on literal array", x[0] == 2, x[1] == 3, x.length() == 2);
+
+x = { a: "hello" }.a.toUpperCase();
+assert("Invoking method on literal object", x == "HELLO");
+
+# method chaining
+x = "hello world ".slice(6).toUpperCase().trimEnd();
+assert("Method chaining", x == "WORLD");
+
+# some additional arbitrary tests...
+
+x = "hello world".split(" ")[0].toUpperCase();
+assert("Test: 1", x == "HELLO");
+
+x = "hello".toUpperCase() + " " + 123.toString();
+assert("Test: 2", x == "HELLO 123");

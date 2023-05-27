@@ -5,7 +5,6 @@ var x;
 func fn () {}
 assert("function declaration", typeof fn == "function");
 
-
 # FUNCTION EXPRESSION
 const fnExpr = func () {};
 assert("function expression", typeof fnExpr == "function");
