@@ -1,0 +1,337 @@
+##################################################
+#                   UTILITIES                    #
+##################################################
+
+func swap(array, index1, index2) {
+  var temp = array[index1];
+  array[index1] = array[index2];
+  array[index2] = temp;
+}
+
+func isAgreeing(input) {
+  if(typeof input != "string") throw Error("Developer's a dummy, blame him. Wrong data-type passed to 'isAgreeing()' function"); # just wanted to use throwStmt...
+
+  const lowerCasedInput = input.toLowerCase();
+  if(lowerCasedInput == "y" || lowerCasedInput == "yes") return true;
+
+  return false;
+}
+
+##################################################
+#               SORTING ALGORITHMS               #
+##################################################
+
+# BUBBLE SORT
+
+func bubbleSort(array) {
+  var iteratedWithoutSwap = false;
+
+  for (var i = array.length() - 1; i >= 0; i--) {
+    iteratedWithoutSwap = true;
+
+    for (var j = 0; j < i; j++) {
+      if (array[j] > array[j + 1]) swap(array, j, j + 1);
+      iteratedWithoutSwap = false;
+    }
+
+    if (iteratedWithoutSwap) break;
+  }
+
+  return array;
+}
+
+# SELECTION SORT
+
+func selectionSort(array) {
+  var smallestValueIndex;
+
+  for (var i = 0; i < array.length() - 1; i++) {
+    smallestValueIndex = i;
+
+    for (var j = i + 1; j < array.length(); j++) {
+      if (array[j] < array[smallestValueIndex]) smallestValueIndex = j;
+    }
+
+    if (smallestValueIndex != i) swap(array, i, smallestValueIndex);
+  }
+
+  return array;
+}
+
+# INSERTION SORT
+
+func insertionSort(array) {
+  var current;
+
+  for (var i = 1; i <= array.length() - 1; i++) {
+    current = array[i];
+    var j = i - 1;
+
+    for (; j >= 0 && current < array[j]; j--) array[j + 1] = array[j];
+
+    array[j + 1] = current;
+  }
+
+  return array;
+}
+
+# MERGE SORT
+
+func mergeArrays(firstArr, secondArr) {
+  var mergedArray = [];
+  var firstPointer = 0;
+  var secondPointer = 0;
+
+  while (firstPointer < firstArr.length() && secondPointer < secondArr.length()) {
+    if (firstArr[firstPointer] < secondArr[secondPointer]) {
+      mergedArray.push(firstArr[firstPointer]);
+      firstPointer++;
+      continue;
+    }
+
+    mergedArray.push(secondArr[secondPointer]);
+    secondPointer++;
+  }
+
+  if (firstPointer == firstArr.length()) mergedArray = mergedArray.concat(secondArr.slice(secondPointer));
+  else if (secondPointer == secondArr.length()) mergedArray = mergedArray.concat(firstArr.slice(firstPointer));
+
+  return mergedArray;
+}
+
+func mergeSort(array) {
+  if (array.length() <= 1) return array;
+
+  const indexToSplit = Math.floor((array.length() + 1) / 2);
+
+  return mergeArrays(
+    mergeSort(array.slice(0, indexToSplit)),
+    mergeSort(array.slice(indexToSplit))
+  );
+}
+
+# QUICK SORT
+
+func pivot(array, start, end) {
+  var pointerIndex = start;
+  var pivotElement = array[pointerIndex];
+  var swapIndex = pointerIndex;
+
+  for (var i = pointerIndex + 1; i <= end; i++) {
+    if (pivotElement <= array[i]) continue;
+
+    swapIndex++;
+    if (i != swapIndex - pointerIndex) swap(array, i, swapIndex);
+  }
+
+  if (pointerIndex != swapIndex) swap(array, pointerIndex, swapIndex);
+
+  return swapIndex;
+}
+
+func quickSort(array, start, end) {
+  if(start == undefined) start = 0
+  if(end == undefined) end = array.length() - 1
+
+  # base case
+  if(start >= end) return array;
+
+  const pivotIndex = pivot(array, start, end);
+
+  # left side
+  quickSort(array, start, pivotIndex - 1);
+
+  # right side
+  quickSort(array, pivotIndex + 1, end);
+
+  return array;
+}
+
+# RADIX SORT
+
+func getDigit(number, digitIndex) {
+  return Math.floor(Math.abs(number) / Math.pow(10, digitIndex)) % 10;
+}
+
+func getNumberOfDigits(number) {
+  if(number == 0) return 1;
+
+  return Math.floor(Math.log10(Math.abs(number))) + 1;
+}
+
+func mostDigits(numbers) {
+  var maxDigits = 0;
+
+  for (var i = 0; i < numbers.length(); i++) maxDigits = Math.max(maxDigits, getNumberOfDigits(numbers[i]));
+
+  return maxDigits;
+}
+
+func createBuckets() {
+  const bucket = [];
+
+  for(var i = 0; i < 10; i++) bucket.push([]);
+
+  return bucket;
+}
+
+func radixSort(intArray) {
+  const maxDigitCount = mostDigits(intArray);
+
+  for (var k = 0; k < maxDigitCount; k++) {
+    var buckets = createBuckets();
+
+    for (var j = 0; j < intArray.length(); j++) {
+      const currentElement = intArray[j];
+      const digit = getDigit(currentElement, k);
+      buckets[digit].push(currentElement);
+    }
+
+    intArray = buckets.flat(1);
+  }
+
+  return intArray;
+}
+
+##################################################
+#                   CONSTANTS                    #
+##################################################
+
+const defaultArraySize = 1000;
+const arr = [];
+
+##################################################
+#                  MEAT && MEAD                  #
+##################################################
+
+# GENERATING ARRAY
+
+echo("Sorting algorithms!");
+echo("We all sure love them...");
+echo("\nFirst, let's generate an array of 'n' size filled with random integers (integers are also generated up to 'n')");
+
+const userInputN = console.prompt("You can specify 'n' (defaults to " + defaultArraySize + "): ");
+var n;
+
+if(userInputN != "") {
+  n = Number(userInputN);
+
+  if(typeof n != "number" || !n.isInt() || n < 0)  {
+    console.error("Invalid user input: '" + userInputN + "' only positive integers are valid");
+    exit(1);
+  }
+} else {
+  echo("Defaulting array's size to: " + defaultArraySize + " elements");
+  n = defaultArraySize;
+}  
+
+echo("Filling array with " + n + " random integers...");
+
+for(var i = 0; i < n; i++) {
+  const newRandomInt = Math.randomInt(0, n);
+  arr.push(newRandomInt);
+}
+
+echo("Array successfuly generated!");
+const showArr = console.prompt("Would you like to take a look? ");
+
+if(isAgreeing(showArr)) echo("Here it is:\n", arr);
+else echo("Me neither. Who has time these days to stare at some insignificant randomly generated gibberish?");
+
+# PROGRAM LOOP
+
+while(true) {
+  echo("\n--------------------------------------------------")
+  echo("List of available sorting algorithms:")
+  echo("0. Exit");
+  echo("1. Bubble Sort - O(n^2)");
+  echo("2. Selection Sort - O(n^2)");
+  echo("3. Insertion Sort - O(n^2)");
+  echo("4. Merge Sort - O(n log n)");
+  echo("5. Quick Sort - O(n log n)");
+  echo("6. Radix Sort - O(d * (n + k))");
+  echo("--------------------------------------------------\n")
+  const userChoice = console.prompt("Which one would you like to use? ");
+
+  if(userChoice == "") {
+    console.clear();
+    echo("You need to choose an option!");
+    continue;
+  }
+
+  const option = Number(userChoice);
+  
+  # INVALID OPTION
+  if(option == null || !option.isInt() || option < 0 || option > 6) {
+   console.clear();
+   console.error("INVALID INPUT\nOption: '" + userChoice + "' doesn't exist!");
+   continue;
+  };
+
+  # VALID OPTION
+  console.clear();
+  const startTime = time();
+  var sortedArr = arr;
+
+  switch(option) {
+    case 0: {
+      echo("Exiting...");
+      exit(0);
+    }
+
+    case 1: {
+      echo("Bubble sort was chosen");
+      echo("Bubbling...");
+      bubbleSort(arr);
+      break;
+    }
+
+    case 2: {
+      echo("Selection sort was chosen");
+      echo("Selecting...");
+      selectionSort(arr);
+      break;
+    }
+
+    case 3: {
+      echo("Insertion sort was chosen");
+      echo("Inserting...");
+      insertionSort(arr);
+      break;
+    }
+
+    case 4: {
+      echo("Merge sort was chosen");
+      echo("Merging...");
+      mergeSort(arr);
+      break;
+    }
+
+    case 5: {
+      echo("Quick sort was chosen");
+      echo("Sorting...");
+      quickSort(arr);
+      break;
+    }
+
+    case 6: {
+      echo("Radix sort was chosen");
+      echo("Bucketing...");
+      sortedArr = radixSort(arr);
+      break;
+    }
+
+    default: 
+      throw Error("This option has not yet been setup for evaluation. Blame lazy developer!")
+  }
+
+  const duration = time() - startTime;
+  echo("It took: " + duration + " miliseconds (" + duration / 1000 + " seconds)")
+  const showSortedArr = console.prompt("Would you like to inspect sorted array? ");
+
+  if(isAgreeing(showSortedArr)) {
+    echo("Here you go:");
+    echo(sortedArr);
+  } 
+  else echo("Prudent one. What's the point of inspecting already known output?")
+}

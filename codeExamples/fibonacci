@@ -7,7 +7,7 @@ const userInput = console.prompt("n: ");
 const n = Number(userInput);
 
 if(n == null || !n.isInt() || n < 0) {
-  echo("Invalid user input: '" + userInput + "' only positive integers are valid");
+  console.error("Invalid user input: '" + userInput + "' only positive integers are valid");
   exit(1);
 }
 
