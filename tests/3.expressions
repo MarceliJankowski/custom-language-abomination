@@ -6,10 +6,10 @@ assert("equality '==' operator", true == true, (false == true) == false, (1 == "
 assert("equality '!=' operator", (true != true) == false, (false != true) == true, (1 != "1") == true);
 
 # RELATIONAL
-assert("relational '>' operator", (1 > 2) == false, 2 > 1, (2 > 2) == false);
-assert("relational '>=' operator", (1 >= 2) == false, 2 >= 1, (2 >= 2) == true);
-assert("relational '<' operator", (2 < 1) == false, 1 < 2, (2 < 2) == false);
-assert("relational '<=' operator", (2 <= 1) == false, 1 <= 2, (2 <= 2) == true);
+assert("relational '>' operator", (1 > 2) == false, 2 > 1, (2 > 2) == false, ("." > "..") == false, ".." > ".", ("." > ".") == false);
+assert("relational '>=' operator", (1 >= 2) == false, 2 >= 1, 2 >= 2, ("." >= "..") == false, ".." >= ".", "." >= ".");
+assert("relational '<' operator", (2 < 1) == false, 1 < 2, (2 < 2) == false, (".." < ".") == false, "." < "..", ("." < ".") == false);
+assert("relational '<=' operator", (2 <= 1) == false, 1 <= 2, 2 <= 2, (".." <= ".") == false, "." <= "..", "." <= ".");
 
 # UNARY PREFIX
 x = 1;

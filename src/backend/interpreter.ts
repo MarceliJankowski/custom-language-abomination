@@ -791,7 +791,22 @@ export class Interpreter {
     ) {
       const [lhsValue, rhsValue] = [left.value, right.value] as [number | string, number | string];
 
-      if (operator === "+") return MK.STRING(lhsValue.toString() + rhsValue);
+      switch (operator) {
+        case "+":
+          return MK.STRING(lhsValue.toString() + rhsValue);
+
+        case ">":
+          return MK.BOOL(lhsValue > rhsValue);
+
+        case "<":
+          return MK.BOOL(lhsValue < rhsValue);
+
+        case ">=":
+          return MK.BOOL(lhsValue >= rhsValue);
+
+        case "<=":
+          return MK.BOOL(lhsValue <= rhsValue);
+      }
     }
 
     // INVALID BINARY OPERATION
