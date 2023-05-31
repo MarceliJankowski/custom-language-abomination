@@ -1,0 +1,29 @@
+echo("Determine whether strings 'a' and 'b' are anagrams (arm - ram, meat - team) of each other");
+
+while(true) {
+  # USER INPUT
+  const a = console.prompt("a: ");
+  const b = console.prompt("b: ");
+  
+  if(a.length() != b.length()) {
+    console.clear();
+    console.error("Strings '" + a + "' and '" + b + "' vary in length\nAnagram can't be formed with 2 different sized strings!\nPlease specify them again");
+    continue;
+  }
+
+  # ANAGRAM DETECTION / OUTPUT
+  const str1 = a.split("").sort().join("");
+  const str2 = b.split("").sort().join("");
+
+  if(str1 == str2) echo("Strings: '" + a + "' and '" + b + "' ARE anagrams of each other!")
+  else echo("Strings: '" + a + "' and '" + b + "' are NOT anagrams of each other!")
+
+  # REPEAT
+  const repeat = console.prompt("Would you like to test another pair of strings? ").toLowerCase();
+  if(repeat == "y" || repeat == "yes") continue;
+  else {
+    console.clear
+    echo("Exiting...");
+    break;
+  }
+}
