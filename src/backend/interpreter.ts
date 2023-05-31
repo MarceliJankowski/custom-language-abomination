@@ -159,7 +159,7 @@ export class Interpreter {
     // allow for uninitialized variable declarations, and '=' assignment operator
     if (varDeclaration.operator !== undefined && varDeclaration.operator !== "=")
       throw new Err(
-        `Invalid variable declaration. Invalid assignment operator: '${varDeclaration.operator}', at position ${varDeclaration.start}`,
+        `Invalid variable declaration. Invalid assignment operator: '${varDeclaration.operator}', at position: ${varDeclaration.start}`,
         "interpreter"
       );
 
@@ -338,7 +338,7 @@ export class Interpreter {
 
       default:
         throw new Err(
-          `Invalid variable assignment. Invalid assignment operator: '${operator}', at position ${assignmentStart}`,
+          `Invalid variable assignment. Invalid assignment operator: '${operator}', at position: ${assignmentStart}`,
           "interpreter"
         );
     }
@@ -386,7 +386,7 @@ export class Interpreter {
 
     if (!this.isValidMemberExprObject(runtimeExprObject.type))
       throw new Err(
-        `Invalid member-expression. Invalid object: '${runtimeExprObject.value}' ('${runtimeExprObject.value}' doesn't support member-expressions), at position ${expr.object.start}`,
+        `Invalid member-expression. Invalid object: '${runtimeExprObject.value}' ('${runtimeExprObject.value}' doesn't support member-expressions), at position: ${expr.object.start}`,
         "interpreter"
       );
 
@@ -415,7 +415,7 @@ export class Interpreter {
 
         default:
           throw new Err(
-            `Invalid member-expression. Invalid computed property: '${evaluatedComputedProperty.value}', at position ${expr.property.start}`,
+            `Invalid member-expression. Invalid computed property: '${evaluatedComputedProperty.value}', at position: ${expr.property.start}`,
             "interpreter"
           );
       }
@@ -471,7 +471,7 @@ export class Interpreter {
 
         default:
           throw new Err(
-            `Invalid computed member-expression. Attempted index retrieval on type: '${runtimeObject.type}', at position ${expr.start}`,
+            `Invalid computed member-expression. Attempted index retrieval on type: '${runtimeObject.type}', at position: ${expr.start}`,
             "interpreter"
           );
       }
@@ -514,7 +514,7 @@ export class Interpreter {
 
       default:
         throw new Err(
-          `Invalid call expression. Invalid callee type: '${runtimeCallee.type}', at position ${callExpr.start}`,
+          `Invalid call expression. Invalid callee type: '${runtimeCallee.type}', at position: ${callExpr.start}`,
           "interpreter"
         );
     }
@@ -598,7 +598,7 @@ export class Interpreter {
 
       default:
         throw new Err(
-          `Invalid prefix unary-expression. Unknown operator: '${operator}', at position ${start}`,
+          `Invalid prefix unary-expression. Unknown operator: '${operator}', at position: ${start}`,
           "interpreter"
         );
     }
@@ -628,7 +628,7 @@ export class Interpreter {
 
       default:
         throw new Err(
-          `Invalid postfix unary-expression. Unknown operator: '${operator}', at position ${start}`,
+          `Invalid postfix unary-expression. Unknown operator: '${operator}', at position: ${start}`,
           "interpreter"
         );
     }
@@ -913,7 +913,7 @@ export class Interpreter {
       // make sure that memberExprProperty is an index (forbid users from defining/modifying properties on arrays)
       if (typeof memberExprProperty !== "number")
         throw new Err(
-          `Invalid member-expression value assignment. Defining properties on arrays is forbidden. At position ${start}`,
+          `Invalid member-expression value assignment. Defining properties on arrays is forbidden. At position: ${start}`,
           "interpreter"
         );
 
@@ -923,7 +923,7 @@ export class Interpreter {
     // invalid
     else
       throw new Err(
-        `Invalid assignment assigne passed to: 'handleValueAssignment()' method. Assigne: '${assigne}', at position ${assigne.start}`,
+        `Invalid assignment assigne passed to: 'handleValueAssignment()' method. Assigne: '${assigne}', at position: ${assigne.start}`,
         "internal"
       );
   }

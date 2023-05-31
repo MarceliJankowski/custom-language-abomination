@@ -375,7 +375,7 @@ export class Lexer {
               // make sure that block comment ends
               if (isBlockCommentEnded === false)
                 throw new Err(
-                  `Invalid block comment. Missing ending '##', at position ${this.position}`,
+                  `Invalid block comment. Missing ending '##', at position: ${this.position}`,
                   "lexer"
                 );
             }

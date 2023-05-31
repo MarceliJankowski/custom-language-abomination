@@ -440,7 +440,7 @@ export class Parser {
     // handle mandatory ';' delimiter
     if (this.previous().type !== TokenType.SEMICOLON)
       throw new Err(
-        `Invalid for statement. Missing semicolon (';') delimiter following initializer, at position ${
+        `Invalid for statement. Missing semicolon (';') delimiter following initializer, at position: ${
           this.previous().start
         }`,
         "parser"
@@ -456,7 +456,7 @@ export class Parser {
     // handle mandatory ';' delimiter
     if (this.previous().type !== TokenType.SEMICOLON)
       throw new Err(
-        `Invalid for statement. Missing semicolon (';') delimiter following test, at position ${
+        `Invalid for statement. Missing semicolon (';') delimiter following test, at position: ${
           this.previous().start
         }`,
         "parser"
@@ -981,7 +981,7 @@ export class Parser {
 
         if (property.kind !== "Identifier")
           throw new Err(
-            `Invalid member-expression. Property kind: '${property.kind}' is not an identifier (only identifiers can follow '.' operator), at position ${property.start}`,
+            `Invalid member-expression. Property kind: '${property.kind}' is not an identifier (only identifiers can follow '.' operator), at position: ${property.start}`,
             "parser"
           );
       }
@@ -999,7 +999,7 @@ export class Parser {
       // INVALID OPERATOR
       else
         throw new Err(
-          `Invalid member-expression. Invalid operator: '${operator.value}', at position ${operator.start}`,
+          `Invalid member-expression. Invalid operator: '${operator.value}', at position: ${operator.start}`,
           "parser"
         );
 
