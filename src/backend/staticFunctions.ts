@@ -715,12 +715,26 @@ const map = STATIC_FUNCTION((runtimeArray, position, runtimeCallback): Runtime.A
 });
 
 /**@desc sorts elements in the array based on `compareFunc` (modifies original array), returns reference to sorted array
-@param compareFunc specifies the sorting order (invoked with: `a` and `b` elements)
+@param compareFunc specifies sorting order (invoked with: `a` and `b` elements), if omitted default sorting algorithm is used
 It's expected to return `0` when both elements are equal, `1` when element `a` is greater than element `b`, and `-1` in the opposite case*/
 const sort = STATIC_FUNCTION((runtimeArray, position, runtimeCallback): Runtime.Array => {
-  if (runtimeCallback === undefined)
-    throw new RuntimeAPIException("array.sort()", `Missing 'compareFn' argument`, position);
+  const array = (runtimeArray as Runtime.Array).value;
 
+  // DEFAULT SORT
+  if (runtimeCallback === undefined) {
+    const outputArray = array.sort((a, b) => {
+      const strA = String(a.value);
+      const strB = String(b.value);
+
+      if (strA > strB) return 1;
+      if (strA < strB) return -1;
+      return 0;
+    });
+
+    return MK.ARRAY(outputArray);
+  }
+
+  // compareFn SORT
   if (runtimeCallback.type !== "function")
     throw new RuntimeAPIException(
       "array.sort()",
@@ -728,7 +742,6 @@ const sort = STATIC_FUNCTION((runtimeArray, position, runtimeCallback): Runtime.
       position
     );
 
-  const array = (runtimeArray as Runtime.Array).value;
   const callback = runtimeCallback as Runtime.Function;
 
   const outputArray = array.sort((a, b) => {
