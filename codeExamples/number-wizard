@@ -1,0 +1,294 @@
+##################################################
+#                   CONSTANTS                    #
+##################################################
+
+const ATTACKS = [
+  "Wizard strikes at you with his palm, hits you so hard in the forehead that for a second stars appear in front of your eyes.",
+  "Wizard kicks you in your stomach, immense pain shortly follows.",
+  "Wizard kicks you in your balls, your nutsack starts swelling.",
+  "Wizard swiftly stabs your left eye with his index finger, you feel dizzy.",
+  "Wizard yells at you with such strength and sheer volume that your ears begin to bleed. You lost 43% of your hearing.",
+  "Wizard pushes you lightly, unfortunately you trip on a twig and fall on your ankle. It's broken.",
+  "Wizard stares at you. He's been staring for nearly 2 hours, at this point, you just pinch yourself as punishment.",
+  "Wizard starts making remarks about your right ear. After a minute of awkward silence, he bites it off, while chewing he compliments its taste.",
+  "Wizard reaches for his weiner-shaped staff and hits your head with it.",
+  "Wizard throws a lightning fast jab at you, it'll leave a nasty bruise.",
+  "Wizard makes you eat a rotten plum, your tummy doesn't like it."
+];
+
+const DEATHS = [
+  "Wizard uses his weiner-shaped wand and rips you apart with it while singing some oddly familiar yet strange melody.",
+  "Wizard touches you with his weiner-shaped wand. Initially, you feel anxiety, after a second or two all feelings pass. You're no longer capable of feeling. Your mind beings to drift, you start reminiscing, you think about your parents and your dog, you wonder why you didn't appreciate them as much as you should have. Your death was swift and painless.",
+  "Wizard starts reciting some ancient incantation. After a moment your blood begins to boil, you scream in pain but it doesn't help. You're gone.",
+  "Wizard strucks your head with his wand, he does it with such strength and momentum that you lose consciousness. You never wake up.",
+  "Wizard tells you a joke. You don't get it, yet you laugh as if that would rescue you from your imminent fate. Wizard sees through you and makes some gesture with his hand, you can't stop laughing. You laugh to your death.",
+  "Wizard does nothing. Literally nothing. You backtrack, maybe he'll leave you alone? While backtracking venomous snake bite you in your right toe, shortly after fever kills you.",
+  "Wizard teleports you into hell. You spend eternity submerged in boiling water while demons stab you with a skewer made out of human bones.",
+];
+
+const WIZARD_WRONG_GUESS_REMARKS = [
+  "Screw it!",
+  "Fuck.",
+  "Fuck!",
+  "You're lying aren't you?",
+  "Stupid game.",
+  "Hmmm I think I've gotten little rusty at this over the years.",
+  "Son of a whore!",
+  "Fuck me.",
+  "Piss off!",
+  "Cunt!",
+  "Shit!",
+  "Damn! I thought that was it."
+];
+
+const WIZARD_READY_REMARKS = [
+  "Hurry up!",
+  "I don't have the whole day!",
+  "What's taking you so long?",
+  "Can you please hurry up? Some of us have shit to do.",
+  "I'm not patient.",
+  "Waiting...",
+  "I'm getting tired of you.",
+  "I'm warning you.",
+  "Can you go a bit faster?",
+  "It'll take you a whole day?",
+  "Hmmm.",
+];
+
+##################################################
+#                GLOBAL VARIABLES                #
+##################################################
+
+const playerData = {};
+
+##################################################
+#                   UTILITIES                    #
+##################################################
+
+func prompt(message) {
+  return console.prompt(message).trim();
+}
+
+func isAgreeing(input) {
+  const lowerCasedInput = input.toLowerCase();
+  if(lowerCasedInput == "y" || lowerCasedInput == "yes") return true;
+
+  return false;
+}
+
+func spliceRandomElement(array) {
+  const index = Math.randomInt(0, array.length());
+  const element = array.splice(index, 1)[0];
+  return element;
+}
+
+func echoRandomElement(array) {
+  echo(spliceRandomElement(array));
+}
+
+func isPlayerReady() {
+  var readyIterationCount = 0;
+
+  while(true) {
+    const ready = prompt("Ready? ");
+    console.clear();
+
+    if(isAgreeing(ready) || ready.toLowerCase() == "ready") {
+      if(readyIterationCount > 0) echo("Finally!");
+      break;
+    }
+
+    if(++readyIterationCount == 3) {
+      echo("I've had enough of you!");
+      gameOver();
+    }
+
+    echoRandomElement(WIZARD_READY_REMARKS);
+    continue;
+  }
+}
+
+
+##################################################
+#                   FUNCTIONS                    #
+##################################################
+
+func gameOver() {
+  echo("\n[Death] - " + spliceRandomElement(DEATHS));
+  exit(0);
+}
+
+func wizardAttack() {
+  playerData.lifes--;
+  if(playerData.lifes == 0) gameOver();
+  echo("[Attack] - " + spliceRandomElement(ATTACKS));
+  echo("Your life points decrease to: " + playerData.lifes);
+}
+
+func guessingNumbersGame() {
+  echo("I bet I'll beat you in 3 shots.");
+  echo("Think of a number within 1 to 10 range and tell me when you're ready.");
+  isPlayerReady();
+
+  # GUESSING
+  const possibleNumbers = [1, 2, 3, 4, 5, 6, 7, 8, 9, 10]; # needs to be sorted
+  var wizardChances = 3; # binary search has O(log n) time-complexity, with input array of 10 elements it would require 4 iterations to always find the right answer
+  var guess;
+  var start = 0;
+  var end = possibleNumbers.length() - 1;
+
+  while (start <= end) {
+    guess = Math.floor((start + end) / 2);
+
+    const userAnswer = prompt("Is your number " + possibleNumbers[guess] + "? ");
+
+    # wizard wins
+    if(isAgreeing(userAnswer)) {
+      echo("Muahahaha!");
+      echo("You didn't stand a chance.");
+      gameOver();
+    }
+
+    # wizard misses
+    if(--wizardChances == 0) break;
+    echoRandomElement(WIZARD_WRONG_GUESS_REMARKS);
+
+    const userHint = prompt("Is your number greater or lower than my guess? ").toLowerCase();
+
+    if(userHint == "greater") start = guess + 1;
+    else if(userHint == "lower") end = guess - 1;
+    else {
+      echo("What is it?");
+      echo("You're playing with me boy?");
+      echo("I've had enough of this foolishness!");
+      gameOver();
+    };
+  }
+
+  # wizard loses
+  console.clear();
+  echoRandomElement(WIZARD_WRONG_GUESS_REMARKS);
+  echo("I don't know what kind of trickery you used, but you sure did.");
+}
+
+func generatingNumbersGame() {
+  const min = Math.randomInt(1, 100);
+  const max = min + Math.randomInt(9, 16);
+  const number = Math.randomInt(min, max);
+  playerData.lifes = 4;
+
+  echo("You got 4 chances, four measly life points...");
+  echo("I already got a number in mind.")
+  echo("It's in range from " + min + " to " + max + ".");
+
+  while(true) {
+    const inputGuess = prompt("You guess: ");
+    const guess = Number(inputGuess);
+
+    if(guess == null) {
+      echo("What is it all about?");
+      echo("You think you're being funny?");
+      echo("Think again!");
+      wizardAttack();
+      continue;
+    }
+
+    if(guess < min || guess > max) {
+      echo("You haven't been paying attention have you?")
+      echo("I hope this will teach you!")
+      wizardAttack();
+      continue;
+    }
+
+    if(guess != number) {
+      console.clear();
+      echo("No. It ain't " + guess + ".");
+      wizardAttack();
+
+      if(number > guess) echo("As a hint, I can tell you that my number is higher.");
+      else echo("As a hint, I can tell you that my number is lower.");
+      continue;
+    }
+
+    if(guess == number) {
+      console.clear();
+      echo("Well, I give credit when it's due. You did guess the correct number which was " + number + ".");
+      echo("You had " + playerData.lifes + " life points left.");
+      break;
+    }
+  }
+}
+
+##################################################
+#                      GAME                      #
+##################################################
+
+echo("Hey!")
+echo("Yes you over there!");
+prompt("You want to cross the bridge? ");
+
+console.clear()
+echo("Don't answer, I'm not blind and clearly see what you're up to.");
+echo("Well, bad luck. I'm a number Wizard and I guard this crossing.");
+echo("Hmm, I suppose I could let you pass...");
+echo("Yes, yes I could. But you would have to prove being worthy."); 
+echo("How? Well if you'd manage to beat me in two number games, you'd earn my respect, and therefore be allowed to safely pass."); 
+echo("Beware though, fail and you won't come out of this grove...\n"); 
+
+const startGame = prompt("So, how will it be? You stand up to the challenge like a man or run away like a craven (yes/no)? ");
+console.clear();
+
+# EXITING
+if(!isAgreeing(startGame)) {
+  echo("Well, maybe prudent of you, you didn't stand a chance in the end.");
+  echo("Now, go away!");
+  echo("Before you anger me...");
+  exit(0);
+}
+
+# FIRST GAME
+var firstChallenge;
+
+echo("I wonder whether it's courage or foolishness, we'll find out soon enough.");
+echo("I'll go easy on you, pick the first challenge.");
+const playerGameChoice = prompt("You want me to generate or guess numbers? ").toLowerCase();
+console.clear();
+
+if (playerGameChoice == "generate") {
+  firstChallenge = "generating";
+  echo("So be it!");
+  generatingNumbersGame();
+}
+
+else if (playerGameChoice == "guess") {
+  firstChallenge = "guessing";
+  echo("I'm guessing, and you're comming up with the number.");
+  guessingNumbersGame();
+}
+
+else {
+  echo("You choose neither generating nor guessing.");
+  echo("You'll die for your lack of wit.");
+  gameOver();
+}
+
+
+# SECOND GAME
+echo("You won the first one.\nWhat a queer event...\nI know you need some time to take it in, just tell me when you're ready to move on.");
+isPlayerReady();
+console.clear();
+
+if(firstChallenge == "guessing") {
+  echo("Now you ain't got no choice, you'll be guessing and I'll be comming up with a number.")
+  generatingNumbersGame();
+};
+
+else {
+  echo("You run out of game choices, I'll be guessing.");
+  guessingNumbersGame();
+}
+
+# PLAYER WINS
+echo("Well... You've done it, you managed to beat me at my own game.")
+echo("You may safely cross.");
+echo("As you embark on your trek you look back and see agitated Wizard cursing at some dove.");
