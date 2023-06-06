@@ -1,7 +1,7 @@
 {
-  "name": "basic-interpreter",
+  "name": "custom-language-abomination",
   "version": "1.0.0",
-  "description": "Basic interpreter (name can be a bit misleading I guess..) for custom language abomination written in TS",
+  "description": "Interpreter for CLA (Custom Language Abomination) written in TS",
   "main": "./src/main.ts",
   "scripts": {
     "start": "./scripts/start.sh",
@@ -12,7 +12,7 @@
   },
   "repository": {
     "type": "git",
-    "url": "git+https://github.com/MarceliJankowski/basic-interpreter.git"
+    "url": "git+https://github.com/MarceliJankowski/custom-language-abomination.git"
   },
   "keywords": [
     "interpreter"
@@ -20,9 +20,9 @@
   "author": "Marceli Jankowski",
   "license": "MIT",
   "bugs": {
-    "url": "https://github.com/MarceliJankowski/basic-interpreter/issues"
+    "url": "https://github.com/MarceliJankowski/custom-language-abomination/issues"
   },
-  "homepage": "https://github.com/MarceliJankowski/basic-interpreter#readme",
+  "homepage": "https://github.com/MarceliJankowski/custom-language-abomination#readme",
   "devDependencies": {
     "@types/node": "^18.13.0",
     "@types/prompt-sync": "^4.2.0",

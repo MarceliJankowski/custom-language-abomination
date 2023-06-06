@@ -1,6 +1,6 @@
 #!/bin/bash
 
-# runs tests to make sure that basic-interpreter works as expected
+# runs tests to make sure that CLA works as expected
 
 # VARIABLES
 readonly SCRIPT_INTERNAL_ERROR=255
@@ -63,13 +63,13 @@ throwErr() {
 [[ ! -d "$TESTS_DIR" ]] && throwErr "'${TESTS_DIR}' directory was not found" 2
 
 # handle DIST_DIR
-log "rebuilding basic-interpreter to make sure that '${DIST_DIR}' contains all the latest changes"
+log "rebuilding CLA interpreter to make sure that '${DIST_DIR}' contains all the latest changes"
 npm run build 1>/dev/null
 
 [[ "$?" -ne 0 ]] && exit 3
 
 # sort TESTS
-# due to some tests having precedence over others (like exception handling being tested before basic-interpreter API to prevent misleading errors) sorting step is required
+# due to some tests having precedence over others (like exception handling being tested before CLA API to prevent misleading errors) sorting step is required
 echo
 log "sorting tests by their index..."
 readonly SORTED_TESTS=$(echo "$TESTS" | sort -n)

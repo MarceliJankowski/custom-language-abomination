@@ -1,4 +1,4 @@
-'./tests' directory as the name implies contains various automated tests for basic-interpreter.
+'./tests' directory as the name implies contains various automated tests for CLA.
 
 I'm setting them up quite late in the development process.
 Requirements changed along the way, I wasn't sure what I wanted, hence I waited.

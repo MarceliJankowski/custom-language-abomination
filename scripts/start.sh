@@ -18,9 +18,9 @@ if [[ ! -d "$DIST_DIR" ]]; then
 	fi
 
 	echo
-	echo "$SCRIPT_NAME - build-script succeeded, running basic-interpreter..."
+	echo "$SCRIPT_NAME - build-script succeeded, running CLA interpreter..."
 fi
 
-# run basic-interpreter
+# run CLA interpreter
 echo
 node "${DIST_DIR}/main.js" $@

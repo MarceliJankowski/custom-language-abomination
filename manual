@@ -1,10 +1,10 @@
 NAME
-      basic-interpreter - basic interpreter for custom language abomination written in TS
+      CLA interpreter - interpreter for CLA (Custom Language Abomination) written in TS
 
 SYNOPSIS
-      There are 2 ways of interacting with interpreter:
+      There are 2 ways of running CLA interpreter:
         - Using build-in npm scripts ($ npm start -- args...)
-        - Directly executing 'main.js' after TS transpilation (run: '$ npm run build' to build basic-interpreter)
+        - Directly executing 'main.js' after TS transpilation ('$ npm run build' to build CLA interpreter)
 
 DESCRIPTION
       Read README.md for project description
@@ -12,8 +12,8 @@ DESCRIPTION
 USAGE
       In order to interact with interpreter user MUST provide 'interactionMethod' (provided through: '-r' and '-f' flags)
 
-      For usage information and language capability description, please refer to 'introduction'
-      For a more hands-on approach, go through 'codeExamples', as they provide an array of ready-to-run programs
+      You can learn more about CLA feature set by going through 'tests'
+      For a more hands-on approach please refer to 'codeExamples' (ready-to-run CLA programs)
 
 OPTIONS
       -h
@@ -23,22 +23,22 @@ OPTIONS
           Turn on VERBOSE_MODE (increases output), mostly useful for debugging purposes
           Supplying additional 'v' option will enable ULTRA_VERBOSE_MODE (outputs everything, including prototype-chain)
 
-      -e stage (possible values: ['l', 'lexer', 'p', 'parser', 'i', 'interpreter'])
-          Execute interpreter up to a given 'stage' (useful for examining interpreter stages)
+      -e stage (possible values: 'l', 'lexer', 'p', 'parser', 'i', 'interpreter')
+          Execute interpreter up to a given 'stage' (useful for examining interpreter behaviour)
           Automatically turns on VERBOSE_MODE
 
       -r
-          Interact with interpreter through REPL (set 'interactionMethod' to 'REPL')
-          This flag cannot be present alongside '-f' flag, as they have contradicting behaviour
+          Interact with CLA through REPL (sets 'interactionMethod' to 'REPL')
+          This option cannot be present alongside '-f' flag, as they have contradicting behaviour
 
-      -f filePath (when used with: 'npm start' it's relative to the project's home directory)
-          Interpret/Evaluate file located at 'filePath' (set 'interactionMethod' to 'file')
-          This flag cannot be present alongside '-r' flag, as they have contradicting behaviour
+      -f filePath (when used with: '$ npm start' it's relative to the project's home directory)
+          Evaluate file located at 'filePath' (sets 'interactionMethod' to 'file')
+          This option cannot be present alongside '-r' flag, as they have contradicting behaviour
 
 EXIT CODES
       Exit code indicates whether interpreter succeeded in evaluation or failed for some reason
       Different exit codes indicate different causes of interpreter failure
-      Tip: you can easilly check exit code of the latest run command/script with: 'echo $?'
+      Tip: you can easilly check exit code of the latest run command/script with: '$ echo $?'
 
       0  Interpreter succeeded, no exceptions were raised
 
