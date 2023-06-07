@@ -3,15 +3,21 @@ var obj;
 
 # DEFINING OBJECT
 obj = { a: 1, b: 2 };
-assert("defining object", typeof obj == "object");
+assert("defining object with identifier keys", typeof obj == "object");
+
+obj = { "1": "a", "2": true };
+assert("defining object with string keys", typeof obj == "object");
+
+obj = { "1": "a", b: 2 };
+assert("defining object with string and identifier keys", typeof obj == "object");
 
 # PROPERTY RETRIEVAL
 obj = { a: 1 };
 assert("object property member-expression", obj.a == 1);
 
 # COMPUTED PROPERTY RETRIEVAL
-obj = { a: 1 };
-assert("object property computed member-expression", obj.a == 1);
+obj = { a: 1, "2": 2 };
+assert("object property computed member-expression", obj["a"] == 1, obj["2"] == 2);
 
 # PROPERTY ASSIGNMENT
 obj = { a: false };

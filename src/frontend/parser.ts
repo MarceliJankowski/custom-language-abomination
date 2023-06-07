@@ -1026,7 +1026,13 @@ export class Parser {
 
     // iterate as long as we're inside the object
     while (this.notEOF() && !this.is(TokenType.CLOSE_CURLY_BRACE)) {
-      const key = this.advanceAndExpect(TokenType.IDENTIFIER, "Missing key inside object-literal");
+      if (!this.is(TokenType.IDENTIFIER, TokenType.STRING))
+        throw new Err(
+          `Invalid key type: '${this.at().type}' inside of object-literal at position: ${this.at().start}`,
+          "parser"
+        );
+
+      const key = this.advance();
 
       // HANDLE SHORTHANDS
 
