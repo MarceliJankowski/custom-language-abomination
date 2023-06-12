@@ -1,0 +1,296 @@
+##################################################
+#                   UTILITIES                    #
+##################################################
+
+func prompt(message) {
+  return console.prompt(message).trim();
+}
+
+func isAgreeing(input) {
+  const lowerCasedInput = input.toLowerCase();
+  if(lowerCasedInput == "y" || lowerCasedInput == "yes") return true;
+
+  return false;
+}
+
+##################################################
+#              CONVERSION FUNCTIONS              #
+##################################################
+
+func decimalToBinary(decimalStr) {
+  var decimal = Number(decimalStr);
+  var binary = 0;
+  var rem;
+  var i = 1;
+  var step = 1;
+
+  while (decimal != 0) {
+    rem = decimal % 2;
+    decimal = Math.floor(decimal / 2);
+    binary = binary + rem * i;
+    i = i * 10;
+  }
+
+  return binary.toString();
+}
+
+func hexToBinary(hex) {
+  const hexBinaryMap = {
+    "0": "0000",
+    "1": "0001",
+    "2": "0010",
+    "3": "0011",
+    "4": "0100",
+    "5": "0101",
+    "6": "0110",
+    "7": "0111",
+    "8": "1000",
+    "9": "1001",
+    "A": "1010",
+    "B": "1011",
+    "C": "1100",
+    "D": "1101",
+    "E": "1110",
+    "F": "1111"
+  };
+
+  # standardizing input
+  hex = hex.toUpperCase().replaceAll(" ", "");
+
+  # converting hex to binary
+  var binary = "";
+  for (var i = 0; i < hex.length(); i++) binary += hexBinaryMap[hex[i]];
+
+  # removing trailing starting zeros (yearning for RegExpr...)
+  while(binary.startsWith("0")) binary = binary.slice(1);
+
+  return binary;
+}
+
+func binaryToDecimal(binary) {
+ var decimal = 0;
+ var binaryLength = binary.length();
+
+ for (var i = binaryLength - 1; i >= 0; i--)
+   if (binary[i] == "1") decimal += Math.pow(2, binaryLength - 1 - i);
+
+  return decimal;
+}
+
+func binaryToHex(binary) {
+  const hexDigits = "0123456789ABCDEF";
+  var hex = "";
+  var i = binary.length() - 1;
+  var decimal = 0;
+  var power = 0;
+  var count = 0;
+
+  while (i >= 0) {
+    var bit = binary[i] == "1" ? 1 : 0;
+    decimal += bit * Math.pow(2, power);
+
+    if (power == 3 || i == 0) {
+      hex = hexDigits[decimal] + hex;
+      decimal = 0;
+      power = 0;
+      count++;
+
+      if(count % 2 == 0 && i != 0) hex = " " + hex;
+    }
+    else power++;
+
+    i--;
+  }
+
+  # pad hex with leading zero if necessary
+  if (hex.replaceAll(" ", "").length() % 2 != 0) hex = "0" + hex;
+
+  return hex;
+}
+
+
+##################################################
+#                   FUNCTIONS                    #
+##################################################
+
+func openMenu() {
+  echo("\n----------------------------------------")
+  echo("List of available options:")
+  echo("0. Exit");
+  echo("1. Binary");
+  echo("2. Decimal");
+  echo("3. Hexadecimal");
+  echo("----------------------------------------\n")
+
+  const userInput = prompt("> ");
+  const option = Number(userInput);
+
+  if(userInput == "" || option == null || !option.isInt() || option < 0 || option > 3) {
+    console.clear();
+    echo("You provided an invalid option: '" + userInput + "'\nPlease try again.");
+    return openMenu();
+  }
+
+  switch(option) {
+    case 0: {
+      console.clear();
+      echo("Exiting...");
+      exit(0);
+    }
+
+    case 1:
+      return "binary";
+
+    case 2:
+      return "decimal"
+
+    case 3:
+      return "hexadecimal"
+
+    default:
+      throw Error("openMenu() - this menu option: ' " + option + "' has not yet been implemented!");
+  }
+
+  return option;
+}
+
+func convertNumber(inputNumberStr, inputNumericSystem, outputNumericSystem) {
+  if(inputNumericSystem == outputNumericSystem) return inputNumberStr;
+
+  # convert inputNumberStr into binary
+  var binaryNumberStr;
+
+  switch(inputNumericSystem) {
+    case "binary": {
+      binaryNumberStr = inputNumberStr;
+      break;
+    }
+
+    case "decimal": {
+      binaryNumberStr = decimalToBinary(inputNumberStr);
+      break;
+    }
+
+    case "hexadecimal": {
+      binaryNumberStr = hexToBinary(inputNumberStr);
+      break;
+    }
+
+    default:
+      throw Error("convertNumber() - '" + inputNumericSystem + "' numeric system has not yet been implemented!");
+  }
+
+  # convert binaryNumberStr into outputNumericSystem
+  var outputNumberStr;
+
+  switch(outputNumericSystem) {
+    case "binary": {
+      outputNumberStr = binaryNumberStr;
+      break;
+    }
+
+    case "decimal": {
+      outputNumberStr = binaryToDecimal(binaryNumberStr);
+      break;
+    }
+
+    case "hexadecimal": {
+      outputNumberStr = binaryToHex(binaryNumberStr);
+      break;
+    }
+
+    default:
+      throw Error("convertNumber() - '" + outputNumericSystem + "' numeric system has not yet been implemented!");
+  }
+
+  return outputNumberStr;
+}
+
+func isInputNumberValid(numericSystem, numberStr) {
+  switch(numericSystem) {
+    case "binary": {
+      for (var i = 0; i < numberStr.length(); i++) if (numberStr[i] != "0" && numberStr[i] != "1") return false;
+      return true;
+    }
+
+    case "decimal": {
+      const num = Number(numberStr);
+
+      if(num == null) return false;
+      return true;
+    }
+
+    case "hexadecimal": {
+      # CLA doesn't support Regular Expressions...
+      const standardizedNumberStr = numberStr.toUpperCase().replaceAll(" ", "");
+      const validChars = ["0", "1", "2", "3", "4", "5", "6", "7", "8", "9", "A", "B", "C", "D", "E", "F"];
+
+      for (var i = 0; i < standardizedNumberStr.length(); i++) {
+
+        const isValid = validChars.some(func (validChar) {
+          return standardizedNumberStr[i] == validChar;
+        })
+
+        if(!isValid) return false;
+      }
+
+      return true;
+    }
+
+    default:
+      throw Error("isInputNumberValid() - '" + numericSystem + "' numeric system has not yet been implemented!");
+  }
+}
+
+##################################################
+#                  PROGRAM BODY                  #
+##################################################
+
+echo("Convert input number into a specified numeric system.");
+
+# PROGRAM LOOP
+while(true) {
+  # INPUT NUMERIC SYSTEM
+  echo("Please choose input numeric system:");
+  const inputNumericSystem = openMenu();
+  console.clear();
+
+  # INPUT NUMBER
+  var inputNumber;
+  while(true) {
+    inputNumber = console.prompt("Input " + inputNumericSystem + " number: ");
+
+    # VALIDATING INPUT
+    if(!isInputNumberValid(inputNumericSystem, inputNumber)) {
+      console.clear();
+      echo("You provided an invalid " + inputNumericSystem + " number: '" + inputNumber + "'");
+      continue;
+    }
+
+    break;
+  }
+
+  # OUTPUT NUMERIC SYSTEM
+  console.clear();
+  echo("Please choose output numeric system:");
+  const outputNumericSystem = openMenu();
+
+  # CONVERSION
+  const outputNumber = convertNumber(inputNumber, inputNumericSystem, outputNumericSystem);
+
+  # OUTPUT
+  echo("\nOutput " + outputNumericSystem + " number: " + outputNumber);
+
+  # AGAIN
+  const again = console.prompt("Would you like to do some more converting? ");
+
+  if(isAgreeing(again)) {
+    console.clear();
+    echo("That's the spirit!");
+    continue
+  } else {
+    console.clear();
+    echo("Hope you're satisfied with our services!");
+    break;
+  }
+}
