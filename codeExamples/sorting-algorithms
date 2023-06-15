@@ -198,7 +198,7 @@ func radixSort(intArray) {
 ##################################################
 
 const defaultArraySize = 1000;
-const arr = [];
+const unsortedArr = [];
 
 ##################################################
 #                  MEAT && MEAD                  #
@@ -229,13 +229,13 @@ echo("Filling array with " + n + " random integers...");
 
 for(var i = 0; i < n; i++) {
   const newRandomInt = Math.randomInt(0, n);
-  arr.push(newRandomInt);
+  unsortedArr.push(newRandomInt);
 }
 
 echo("Array successfuly generated!");
 const showArr = console.prompt("Would you like to take a look? ");
 
-if(isAgreeing(showArr)) echo("Here it is:\n", arr);
+if(isAgreeing(showArr)) echo("Here it is:\n", unsortedArr);
 else echo("Me neither. Who has time these days to stare at some insignificant randomly generated gibberish?");
 
 # PROGRAM LOOP
@@ -270,8 +270,12 @@ while(true) {
 
   # VALID OPTION
   console.clear();
+
+  # some sorting algorithms mutate the input array
+  const unsortedArrCopy = [].concat(unsortedArr);
+  var sortedArr;
+
   const startTime = time();
-  var sortedArr = arr;
 
   switch(option) {
     case 0: {
@@ -282,42 +286,42 @@ while(true) {
     case 1: {
       echo("Bubble sort was chosen");
       echo("Bubbling...");
-      bubbleSort(arr);
+      sortedArr = bubbleSort(unsortedArrCopy);
       break;
     }
 
     case 2: {
       echo("Selection sort was chosen");
       echo("Selecting...");
-      selectionSort(arr);
+      sortedArr = selectionSort(unsortedArrCopy);
       break;
     }
 
     case 3: {
       echo("Insertion sort was chosen");
       echo("Inserting...");
-      insertionSort(arr);
+      sortedArr = insertionSort(unsortedArrCopy);
       break;
     }
 
     case 4: {
       echo("Merge sort was chosen");
       echo("Merging...");
-      mergeSort(arr);
+      sortedArr = mergeSort(unsortedArrCopy);
       break;
     }
 
     case 5: {
       echo("Quick sort was chosen");
       echo("Sorting...");
-      quickSort(arr);
+      sortedArr = quickSort(unsortedArrCopy);
       break;
     }
 
     case 6: {
       echo("Radix sort was chosen");
       echo("Bucketing...");
-      sortedArr = radixSort(arr);
+      sortedArr = radixSort(unsortedArrCopy);
       break;
     }
 
