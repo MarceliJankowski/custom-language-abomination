@@ -1,4 +1,4 @@
-// PROJECT MODULES
+// MODULES
 import { Err } from "../utils";
 import { MK, Runtime } from "./";
 import * as NATIVE_FUNCTION from "./nativeFunctions";

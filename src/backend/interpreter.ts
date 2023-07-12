@@ -1,4 +1,4 @@
-// PROJECT MODULES
+// MODULES
 import { Err, getBooleanValue } from "../utils";
 import { VariableEnv } from "./variableEnv";
 import { VALID_MEMBER_EXPR_RUNTIME_TYPES } from "../constants";

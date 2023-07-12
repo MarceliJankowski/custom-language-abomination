@@ -2,7 +2,7 @@
 import promptSyncPackage from "prompt-sync";
 const promptSync = promptSyncPackage();
 
-// PROJECT MODULES
+// MODULES
 import { parseForLogging, getBooleanValue, stringifyPretty, removePrototypeChainRecursively } from "../utils";
 import { Runtime, MK, RuntimeAPIException } from "./";
 

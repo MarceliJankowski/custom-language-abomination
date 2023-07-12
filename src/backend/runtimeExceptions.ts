@@ -1,4 +1,4 @@
-// PROJECT MODULES
+// MODULES
 import { MK, Runtime } from "./";
 
 /**@desc Constructor representing exception raised at runtime (thrown within the input program, not by interpreter itself)

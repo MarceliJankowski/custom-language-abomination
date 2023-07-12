@@ -1,4 +1,4 @@
-// PROJECT MODULES
+// MODULES
 import { MK, Runtime } from "./backend";
 import { TokenType } from "./frontend";
 

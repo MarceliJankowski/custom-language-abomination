@@ -1,7 +1,7 @@
 // PACKAGES
 import stringify from "json-stringify-pretty-compact";
 
-// PROJECT MODULES
+// MODULES
 import { Runtime } from "../backend";
 import { RUNTIME_FALSY_VALUES } from "../constants";
 

@@ -1,4 +1,4 @@
-// PROJECT MODULES
+// MODULES
 import { Runtime } from "./";
 import {
   TOP_PROTOTYPE,

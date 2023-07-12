@@ -1,4 +1,4 @@
-// PROJECT MODULES
+// MODULES
 import { Token, TokenType } from "./token";
 import { Err } from "../utils";
 

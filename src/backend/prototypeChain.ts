@@ -1,4 +1,4 @@
-// PROJECT MODULES
+// MODULES
 import { Runtime, MK } from "./";
 import {
   STATIC_ALL_FUNCTIONS,

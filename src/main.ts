@@ -4,7 +4,7 @@ import path from "path";
 import promptSync from "prompt-sync";
 const prompt = promptSync();
 
-// PROJECT MODULES
+// MODULES
 import { ErrorCode } from "./constants";
 import { Err, parseForLogging, stringifyPretty, removePrototypeChainRecursively } from "./utils";
 import { Lexer, Parser } from "./frontend";
@@ -20,7 +20,7 @@ interface EvaluateSrcOutput {
   interpreter?: ReturnType<typeof Interpreter.prototype.evaluate>;
 }
 
-type EvaluateUpToType = "l" | "lexer" | "p" | "parser" | "i" | "interpreter";
+type EvaluateUpTo = "l" | "lexer" | "p" | "parser" | "i" | "interpreter";
 
 // -----------------------------------------------
 //             INTERPRETER INSTANCE
@@ -37,7 +37,7 @@ class InterpreterInterface {
   private verboseMode = false;
   private ultraVerboseMode = false;
   private filePath: string | undefined;
-  private evaluateUpTo: EvaluateUpToType = "interpreter";
+  private evaluateUpTo: EvaluateUpTo = "interpreter";
   private globalEnv = createGlobalEnv(); // setup global variable environment
 
   /**@desc specifies which method of interacting with interpreter should be used*/
@@ -46,27 +46,22 @@ class InterpreterInterface {
   /**@desc run interpreter!*/
   public run() {
     try {
-      // PROCESS ARGUMENTS
       this.processArgs();
 
-      // RUN INTERPRETER BASED ON 'interactionMethod'
       switch (this.interactionMethod) {
-        // REPL
         case "repl": {
           this.repl();
           break;
         }
 
-        // FILE EXECUTION
         case "file": {
           this.execFile();
           break;
         }
 
-        // INVALID interactionMethod
         default: {
           throw new Err(
-            `InteractionMethod was not provided, please checkout manual for more information`,
+            `'interactionMethod' was not provided, please check manual for more information`,
             "missingArg"
           );
         }
@@ -76,9 +71,8 @@ class InterpreterInterface {
     }
   }
 
-  /**@desc process arguments passed to interpreter*/
   private processArgs() {
-    const args = process.argv.slice(2); // actual arguments passed to interpreter
+    const args = process.argv.slice(2);
 
     /**@desc parsed arguments array
     @original [-vf, fileName, -e, parser]
@@ -100,12 +94,11 @@ class InterpreterInterface {
       else parsedArgs.push(arg);
     });
 
-    // if there are no parsedArgs print manual
     parsedArgs.length === 0 && this.printManual();
 
     // PROCESS ARGUMENTS
-    while (parsedArgs.length > 0) {
-      const arg = parsedArgs.shift();
+    for (let i = 0; i < parsedArgs.length; i++) {
+      const arg = parsedArgs[i];
 
       switch (arg) {
         case "-h": {
@@ -123,7 +116,7 @@ class InterpreterInterface {
         case "-r": {
           if (this.interactionMethod === "file")
             throw new Err(
-              "Invalid arguments. Flags: '-r' and '-f' are present, this is invalid because these flags exclude each other (please checkout manual for more information)",
+              "Invalid arguments. Flags: '-r' and '-f' are simultaneously present (this is invalid due to these flags mutually excluding each other, please refer to manual for more information)",
               "invalidArg"
             );
 
@@ -134,30 +127,30 @@ class InterpreterInterface {
         case "-f": {
           if (this.interactionMethod === "repl")
             throw new Err(
-              "Invalid arguments. Flags: '-r' and '-f' are present, this is invalid because these flags exclude each other (please checkout manual for more information)",
+              "Invalid arguments. Flags: '-r' and '-f' are simultaneously present (this is invalid due to these flags mutually excluding each other, please refer to manual for more information)",
               "invalidArg"
             );
 
           this.interactionMethod = "file";
-          this.filePath = parsedArgs.shift();
+          this.filePath = parsedArgs[++i];
           break;
         }
 
         case "-e": {
-          const arg = parsedArgs.shift();
+          const arg = parsedArgs[++i];
 
           // CHECK 'arg' VALIDITY
           if (arg === undefined) throw new Err("Missing argument following: '-e' flag", "invalidArg");
           if (!this.isEvaluateUpToArgValid(arg))
             throw new Err(
-              `Invalid '-e' flag argument: '${arg}', please checkout manual for more information`,
+              `Invalid '-e' flag argument: '${arg}', please check manual for more information`,
               "invalidArg"
             );
 
           // automatically turn on verbose-mode
           this.verboseMode = true;
 
-          let evaluateUpToValue: EvaluateUpToType = arg as EvaluateUpToType;
+          let evaluateUpToValue: EvaluateUpTo = arg as EvaluateUpTo;
 
           // PARSE SHORTCUTS
 
@@ -179,16 +172,15 @@ class InterpreterInterface {
     }
   }
 
-  /**@desc REPL implementation*/
   private repl() {
-    console.log("\nREPL");
+    console.log("REPL");
 
     while (true) {
       let input = prompt("> ");
 
       // handling SIGINT (Ctr-C) signal
       if (input === null) {
-        console.log("Exiting REPL");
+        console.log("Exiting...");
         process.exit(0);
       }
 
@@ -208,14 +200,13 @@ class InterpreterInterface {
         if (this.verboseMode) this.verboseOutput(input, output);
         else this.log(output.interpreter!);
 
-        // HANDLE EXCEPTION (directly inside while loop to prevent breaking-out of it)
+        // HANDLE EXCEPTION (directly inside while loop to prevent breaking out of it)
       } catch (err) {
         this.handleErr(err);
       }
     }
   }
 
-  /**@desc execute supplied file*/
   private execFile() {
     if (!this.filePath) throw new Err("Filepath hasn't been provided!", "missingArg");
     if (!fs.existsSync(this.filePath)) throw new Err(`File: '${this.filePath}' was not found`, "invalidArg");
@@ -227,7 +218,6 @@ class InterpreterInterface {
     if (this.verboseMode) this.verboseOutput(src, output);
   }
 
-  /**@desc print interpreter manual*/
   private printManual(): void {
     const manual = fs.readFileSync(path.join(__dirname, "../manual"), { encoding: "utf-8" });
 
@@ -235,7 +225,7 @@ class InterpreterInterface {
     process.exit(0);
   }
 
-  /**@desc interpret/evaluate `src` param
+  /**@desc evaluate `src` param
   @return object with outputs of each interpreter stage (impacted by `evaluateUpTo` option)*/
   private evaluateSrc(src: string): EvaluateSrcOutput {
     const lexerOutput = new Lexer(src).tokenize();
@@ -243,7 +233,7 @@ class InterpreterInterface {
     let parserOutput: AST_Program | undefined;
     let interpreterOutput: Runtime.Value | undefined;
 
-    // HANDLE evaluateUpTo OPTION
+    // HANDLE 'evaluateUpTo' OPTION
     if (this.evaluateUpTo === "parser" || this.evaluateUpTo === "interpreter") {
       parserOutput = new Parser([...lexerOutput]).buildAST(); // passing shallow-copy of lexerOutput because parser modifies it and I need original for the verboseOutput
 
@@ -264,7 +254,7 @@ class InterpreterInterface {
 
   /**@desc determine whether `arg` is valid evaluateUpTo value*/
   private isEvaluateUpToArgValid(arg: unknown): boolean {
-    const validEvaluateUpToValues: EvaluateUpToType[] = ["l", "lexer", "p", "parser", "i", "interpreter"];
+    const validEvaluateUpToValues: EvaluateUpTo[] = ["l", "lexer", "p", "parser", "i", "interpreter"];
     const isValid = validEvaluateUpToValues.some(validValue => validValue === arg);
 
     return isValid;

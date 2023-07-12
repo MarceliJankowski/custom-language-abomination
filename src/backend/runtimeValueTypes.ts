@@ -1,4 +1,4 @@
-// PROJECT MODULES
+// MODULES
 import { VariableEnv } from "./variableEnv";
 
 // -----------------------------------------------

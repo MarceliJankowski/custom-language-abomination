@@ -1,4 +1,4 @@
-// PROJECT MODULES
+// MODULES
 import { ErrorCode } from "../constants";
 
 type ErrCause = "internal" | "lexer" | "parser" | "interpreter" | "missingArg" | "invalidArg";
