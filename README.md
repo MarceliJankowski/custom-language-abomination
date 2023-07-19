@@ -4,7 +4,7 @@
 
 CLA is a dynamically and weakly typed programming language, with no real use beyond being a fun little side-project. <br>
 I ~~designed~~ (to be honest there wasn't much designing involved) implemented it with an interpreter written in **TS**. <br>
-**TypeScript** may come off as a peculiar choice for such task, but that's the language that I'm most familiar with, besides performance was never on my bullet list.
+**TypeScript** may come off as a peculiar choice for such task, but that's the language that I'm most familiar with (besides performance never really mattered for this one).
 
 ## Table of Contents
 
@@ -20,22 +20,22 @@ I ~~designed~~ (to be honest there wasn't much designing involved) implemented i
 
 I started working on CLA because I wanted to learn something new.
 Instead of reaching for another library, language, or framework, I settled on interpreter creation.
-I've always been fascinated with inner workings of programming languages, so I figured I may give it a go.
+I've always been fascinated with the inner workings of programming languages, so I figured I might give it a go.
 And give it a go I did, it was an amazing adventure, an experience that taught me a lot.
 
-I started out having no knowledge, nor even the simplest clue of what to do and where to start.
+I started out having no knowledge, nor even the slightest clue of what to do and where to start.
 We've all been there at one point, we all know the feeling of confusion and sheer overwhelment when dealing with new and unknown.
-And like most of us, over time I managed to overcome those obstacles, and by the end of it I've put together my own language abomination.
+And like most of us, over time I managed to overcome those obstacles, and by the end of it, I've put together my own language abomination.
 
-The whole experience ended up teaching me soo much, I've gone from being completely green in the field to well... having the slightest clue of what it's all about!
-Developers need to constantly sharpen their toolset, we're expected to know all the latest and greatest technologies, In this never-ending vicious cycle I think it's important to step back and try something new, something that may not have any direct impact on your work, something that we'll do for fun, just for the sake of learning.
+The whole experience ended up teaching me soo much, I've gone from being completely green in the field to well... having the tiniest clue of what it's all about!
+Developers need to constantly sharpen their toolset, we're expected to know all the latest and greatest technologies, In this never-ending vicious cycle I think it's important to step back and try something new, something that may not have any direct impact on our work, something that we'll just do for fun, for the sake of learning.
 If you haven't tried anything like that before, I definitely encourage you to do so!
 
 ## Capabilities
 
 CLA isn't capable of much, but it does have a few features:
 
-- Single and multi line comments
+- Single and multi-line comments
 - Mutable and immutable variables: `var` and `const`
 - Logical operators: `||`, `&&`
 - Equality operators: `==`, `!=`
@@ -45,29 +45,29 @@ CLA isn't capable of much, but it does have a few features:
 - Unary operators: `typeof x`, `!x`, `++x`, `--x`, `x++`, `x--`
 - Ternary operator
 - Five data-types: `string`, `number`, `boolean`, `undefined`, `null`
-- First class functions and function expressions
-- `For`, `while` and `do-while` loops
-- `If` and `switch` statements
-- Multiple build-in static functions, like: `"Hello".toLowerCase()`
-- Multiple build-in native functions, like: `echo("Hello, World!")`
+- First-class functions and function expressions
+- `for`, `while` and `do-while` loops
+- `if` and `switch` statements
+- Multiple built-in static functions, like: `"Hello".toLowerCase()`
+- Multiple built-in native functions, like: `echo("Hello, World!")`
 - Array data-structure: `[1, 2, 3]`
 - Hash Table data-structure: `{ name: "John", age: 27 }`
 - Exception handling system: `throw`, `try` and `catch` statements
 - Few additional reserved keywords: `break`, `continue`, `return`, `default`
 - Scope
 
-Feature list may seem long at first, but in reality it's a **VERY** simple language. <br>
+Feature list may seem long at first, but in reality, it's a **VERY** simple language. <br>
 It has in it just enough for you to write simple scripts (see [codeExamples](./codeExamples)).
 
 ## Usage
 
-If you want a hands-on approach, you can refer to [codeExamples](./codeExamples) to get the general idea of this language. <br>
+If you want a hands-on approach, you can refer to [codeExamples](./codeExamples) to get a general idea of this language. <br>
 For a more exhaustive feature set, you can go through [tests](./tests).
 
 ## Disclaimer
 
 With CLA I ventured into the unknown.
-This is my first attempt at writing an interpreter, parser, or even lexer.
+This is my first attempt at writing an interpreter, parser, or even a lexer.
 With that in mind, bugs are expected to creep in.
 And creep in they did.
 
