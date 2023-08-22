@@ -32,7 +32,7 @@ export const echo = NATIVE_FUNCTION((_, ...args): Runtime.Undefined => {
   return MK.UNDEFINED();
 });
 
-/**@desc terminate process with `exitCode` 
+/**@desc terminate process with `exitCode`
 @param exitCode integer in range of `0-255`*/
 export const exit = NATIVE_FUNCTION((position, runtimeExitCode): never => {
   if (runtimeExitCode !== undefined) {

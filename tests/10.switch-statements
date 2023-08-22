@@ -40,7 +40,7 @@ switch(x) {
   case 12: x = 12;
 
   case x: x = true;
-  
+
   case 1234: x = 1234;
 }
 
@@ -73,7 +73,7 @@ assert("switch statement default case", x == "default");
 x = true;
 switch(x) {
   case x: {
-    break;    
+    break;
     x = false;
   }
 }

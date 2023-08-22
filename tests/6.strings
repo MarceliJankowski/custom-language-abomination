@@ -7,7 +7,7 @@ assert("defining string", typeof str == "string");
 
 # CONCATENATION
 str = "Hello,"
-str += " World!" 
+str += " World!"
 assert("string concatenation", str == "Hello, World!")
 
 # INDEX RETRIEVAL

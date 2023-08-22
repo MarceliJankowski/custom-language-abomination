@@ -4,10 +4,10 @@ try { throw "try/catch statement didn't prevent throwStmt from propagating" } ca
 # 'throw' keyword stops block execution
 try {
   throw "err";
-  
+
   # instructions after 'throw' shouldn't be evaluated
   console.error("throw keyword didn't stop block execution")
-  exit(1); 
+  exit(1);
 } catch (err) {}
 
 # catch clause catches exception

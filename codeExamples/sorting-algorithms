@@ -223,7 +223,7 @@ if(userInputN != "") {
 } else {
   echo("Defaulting array's size to: " + defaultArraySize + " elements");
   n = defaultArraySize;
-}  
+}
 
 echo("Filling array with " + n + " random integers...");
 
@@ -260,7 +260,7 @@ while(true) {
   }
 
   const option = Number(userChoice);
-  
+
   # INVALID OPTION
   if(option == null || !option.isInt() || option < 0 || option > 6) {
    console.clear();
@@ -325,7 +325,7 @@ while(true) {
       break;
     }
 
-    default: 
+    default:
       throw Error("This option has not yet been setup for evaluation. Blame lazy developer!")
   }
 
@@ -336,6 +336,6 @@ while(true) {
   if(isAgreeing(showSortedArr)) {
     echo("Here you go:");
     echo(sortedArr);
-  } 
+  }
   else echo("Prudent one. What's the point of inspecting already known output?")
 }

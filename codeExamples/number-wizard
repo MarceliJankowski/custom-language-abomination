@@ -231,9 +231,9 @@ console.clear()
 echo("Don't answer, I'm not blind and clearly see what you're up to.");
 echo("Well, bad luck. I'm a number Wizard and I guard this crossing.");
 echo("Hmm, I suppose I could let you pass...");
-echo("Yes, yes I could. But you would have to prove being worthy."); 
-echo("How? Well if you'd manage to beat me in two number games, you'd earn my respect, and therefore be allowed to safely pass."); 
-echo("Beware though, fail and you won't come out of this grove...\n"); 
+echo("Yes, yes I could. But you would have to prove being worthy.");
+echo("How? Well if you'd manage to beat me in two number games, you'd earn my respect, and therefore be allowed to safely pass.");
+echo("Beware though, fail and you won't come out of this grove...\n");
 
 const startGame = prompt("So, how will it be? You stand up to the challenge like a man or run away like a craven (yes/no)? ");
 console.clear();

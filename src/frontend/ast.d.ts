@@ -40,7 +40,6 @@ type AST_NodeKind =
   | "ObjectLiteral"
   | "ArrayLiteral";
 
-/**@desc represents `AST` node*/
 type AST_Node = AST_Stmt | AST_Expr;
 
 // -----------------------------------------------

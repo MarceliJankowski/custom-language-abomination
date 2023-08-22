@@ -39,13 +39,13 @@ assert("if statement 'else' clause", x == true);
 
 # IF STATEMENT ONELINER 'else' CLAUSE
 x = undefined;
-if (false) x = false; 
+if (false) x = false;
 else x = true;
 assert("if statement oneliner 'else' clause", x == true);
 
 # IF STATEMENT 'else-if' CLAUSE
 x = undefined;
-if (false) {}; 
+if (false) {};
 else if (true) {
   x = true
 };
@@ -60,7 +60,7 @@ assert("if statement 'else-if' clause", x == true, y == true);
 
 # IF STATEMENT ONELINER 'else-if' CLAUSE
 x = undefined;
-if (false) {}; 
+if (false) {};
 else if (true) x = true;
 
 y = true;

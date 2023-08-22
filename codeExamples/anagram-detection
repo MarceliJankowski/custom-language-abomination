@@ -4,7 +4,7 @@ while(true) {
   # USER INPUT
   const a = console.prompt("a: ");
   const b = console.prompt("b: ");
-  
+
   if(a.length() != b.length()) {
     console.clear();
     console.error("Strings '" + a + "' and '" + b + "' vary in length\nAnagram can't be formed with 2 different sized strings!\nPlease specify them again");
