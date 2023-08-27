@@ -12,8 +12,8 @@ DESCRIPTION
 USAGE
       In order to interact with interpreter user MUST provide 'interactionMethod' (provided through: '-r' and '-f' flags)
 
-      You can learn more about CLA feature set by going through 'tests'
-      For a more hands-on approach please refer to 'codeExamples' (ready-to-run CLA programs)
+      You can learn more about CLA feature set by going through './tests'
+      For a more hands-on approach please refer to './codeExamples' (ready-to-run CLA programs)
 
 OPTIONS
       -h
@@ -29,16 +29,16 @@ OPTIONS
 
       -r
           Interact with CLA through REPL (sets 'interactionMethod' to 'REPL')
-          This option cannot be present alongside '-f' flag, as they have contradicting behaviour
+          This option cannot be present alongside '-f' flag (contradicting behaviour)
 
       -f filePath (when used with: '$ npm start' it's relative to the project's home directory)
           Evaluate file located at 'filePath' (sets 'interactionMethod' to 'file')
-          This option cannot be present alongside '-r' flag, as they have contradicting behaviour
+          This option cannot be present alongside '-r' flag (contradicting behaviour)
 
 EXIT CODES
       Exit code indicates whether interpreter succeeded in evaluation or failed for some reason
       Different exit codes indicate different causes of interpreter failure
-      Tip: you can easilly check exit code of the latest run command/script with: '$ echo $?'
+      Tip: you can easily check exit code of the latest run command/script with: '$ echo $?'
 
       0  Interpreter succeeded, no exceptions were raised
 
