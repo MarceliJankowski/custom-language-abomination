@@ -128,3 +128,8 @@ Here's the list of dependencies that CLA has (excluding dev dependencies):
 - TypeScript: ~5.0.4
 - json-stringify-pretty-compact: ~3.0.0
 - prompt-sync: ~4.2.0
+
+## License
+
+Distributed under the MIT License. <br>
+You are free to use, modify, and distribute the source code as long as you include the original copyright notice.
